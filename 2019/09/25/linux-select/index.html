@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html class="has-navbar-fixed-top">
+<head>
+    <meta charset="utf-8">
+<title>Linux Select 源码分析 - 绯色的魔法世界</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/outdated-browser/1.1.5/outdatedbrowser.min.css">
+
+
+
+
+<meta name="description" content="">
+
+
+
+
+
+    <meta name="description" content="先说明一些关于Linux进程间通信的基本知识：Linux的进程间通信是基于文件的，也可以称之为设备，因为所有设备其实都是文件。描述符其实指的是文件描述符，与文件系统中的一个文件对应，每当你创建出一个描述符，就创建出一个设备驱动进程，该进程一直监听着该文件的变化。">
+<meta name="keywords" content="Linux,I&#x2F;O">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Linux Select 源码分析">
+<meta property="og:url" content="http:&#x2F;&#x2F;yoursite.com&#x2F;2019&#x2F;09&#x2F;25&#x2F;linux-select&#x2F;index.html">
+<meta property="og:site_name" content="绯色的魔法世界">
+<meta property="og:description" content="先说明一些关于Linux进程间通信的基本知识：Linux的进程间通信是基于文件的，也可以称之为设备，因为所有设备其实都是文件。描述符其实指的是文件描述符，与文件系统中的一个文件对应，每当你创建出一个描述符，就创建出一个设备驱动进程，该进程一直监听着该文件的变化。">
+<meta property="og:locale" content="cn">
+<meta property="og:updated_time" content="2019-11-20T14:33:14.103Z">
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+<link rel="icon" href="/favicon.png">
+
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Ovo|Source+Code+Pro">
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/bulma/0.6.2/css/bulma.min.css">
+
+
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/lightgallery/1.6.8/css/lightgallery.min.css">
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/justifiedGallery/3.6.5/css/justifiedGallery.min.css">
+
+
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/atom-one-light.min.css">
+
+<link rel="stylesheet" href="/css/style.css">
+
+<script defer src="//use.fontawesome.com/releases/v5.0.8/js/all.js"></script>
+
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+    
+
+
+</head>
+<body>
+    
+
+<nav class="navbar is-transparent is-fixed-top navbar-main" role="navigation" aria-label="main navigation">
+    <div class="top-title-line">
+        <div class="top-title">
+            <a href="/"><span>绯色的魔法世界</span></a>
+        </div>
+    </div>
+    <div class="nav-tool-line">
+        <div class="nav-tool">
+            
+            <a class="navbar-item search" title="Search" href="javascript:;" target="_blank" rel="noopener">
+                <i class="fas fa-search"></i>
+            </a>
+            
+            
+            <a class="navbar-item" title="GitHub" href="https://github.com/ppoffice/hexo-theme-minos" target="_blank" rel="noopener">
+                
+                <i class="fab fa-github"></i>
+                
+            </a>
+               
+            
+        </div>    
+    </div>
+    <div class="container">
+        <div class="navbar-brand">
+            <!-- <a class="navbar-item navbar-logo" href="/">
+                
+                <img src="/images/logo.png" alt="" height="28">
+                
+            </a> -->
+            <div class="navbar-burger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+        
+        <div class="navbar-menu navbar-start">
+            
+            <a class="navbar-item "
+               href="/">Home</a>
+            
+            <a class="navbar-item "
+               href="/archives">归档</a>
+            
+            <a class="navbar-item "
+               href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F">操作系统</a>
+            
+            <a class="navbar-item "
+               href="/categories/NLP">NLP</a>
+            
+            <a class="navbar-item "
+               href="/categories/%E5%BC%BA%E5%8C%96%E5%AD%A6%E4%B9%A0">强化学习</a>
+            
+            <a class="navbar-item "
+               href="/categories/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0">深度学习</a>
+            
+            <a class="navbar-item "
+               href="/about">About</a>
+            
+        </div>
+        
+        
+    </div>
+</nav>
+
+    <section class="section">
+    <div class="container">
+    
+<div class="article-cover">
+   <img class="article-cover-img" src="https://i.loli.net/2019/11/20/IyNbgZP4WXS6CDJ.jpg"> 
+</div>
+
+<article class="article content gallery" itemscope itemprop="blogPost">
+    <h1 class="article-title is-size-3 is-size-4-mobile" itemprop="name">
+        
+            Linux Select 源码分析
+        
+    </h1>
+    <div class="article-meta columns is-variable is-1 is-multiline is-mobile is-size-7-mobile">
+        <span class="column is-narrow">
+            2019-09-25
+            <!-- <time datetime="2019-09-24T16:00:00.000Z" itemprop="datePublished">Sep 25 2019</time> -->
+        </span>
+        
+        <span class="column is-narrow article-category">
+            <i class="far fa-folder"></i>
+            <a class="article-category-link" href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/">操作系统</a>
+        </span>
+        
+        <!--  -->
+    </div>
+    <div class="article-entry is-size-6-mobile" itemprop="articleBody">
+    
+        <p>先说明一些关于Linux进程间通信的基本知识：Linux的进程间通信是基于文件的，也可以称之为设备，因为所有设备其实都是文件。描述符其实指的是文件描述符，与文件系统中的一个文件对应，每当你创建出一个描述符，就创建出一个设备驱动进程，该进程一直监听着该文件的变化。</p>
+<a id="more"></a>
+
+<h2 id="核心"><a href="#核心" class="headerlink" title="核心"></a>核心</h2><p>select 源码可以参考<a href="https://elixir.bootlin.com/linux/latest/source/fs/select.c" target="_blank" rel="noopener">这里</a>。</p>
+<p>首先select不会一直轮询，轮询一次发现没有可处理的事件，进程就会挂起。那为何select中为何能够感知到某一个描述符发生了变化，其实是文件IO事件触发回调函数唤醒了挂起的select进程。而一旦被唤醒后，则记录一个triggered参数，使得select进程以后不再挂起。</p>
+<p>当调用select函数，会创建一个实体缓存队列(poll_wqueues)，尔后会调用 <code>poll_initwait(poll_wqueues)</code> 去初始化该缓存队列，缓存队列将缓存一些实体(poll_table_entry)。（队列大小是有限的，可以通过 poll_table_page 结构体扩容，这个不是重点，这里不展开讲。）<br><figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-comment">// poll 表格</span></span><br><span class="line"><span class="hljs-keyword">typedef</span> <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">poll_table_struct</span> &#123;</span></span><br><span class="line">	poll_queue_proc _qproc;</span><br><span class="line">	<span class="hljs-keyword">__poll_t</span> _key;</span><br><span class="line">&#125; poll_table;</span><br><span class="line"></span><br><span class="line"><span class="hljs-comment">// 实体缓存队列</span></span><br><span class="line"><span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">poll_wqueues</span> &#123;</span></span><br><span class="line">    poll_table pt;</span><br><span class="line">    <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">poll_table_page</span>* <span class="hljs-title">table</span>;</span></span><br><span class="line">    <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">task_struct</span>* <span class="hljs-title">polling_task</span>;</span> <span class="hljs-comment">//保存当前调用select的用户进程struct task_struct结构体</span></span><br><span class="line">    <span class="hljs-keyword">int</span> triggered;            <span class="hljs-comment">// 当前用户进程被唤醒后置成1，以免该进程接着进睡眠</span></span><br><span class="line">    <span class="hljs-keyword">int</span> error;                 <span class="hljs-comment">// 错误码</span></span><br><span class="line">    <span class="hljs-keyword">int</span> inline_index;        <span class="hljs-comment">// 数组inline_entries的引用下标</span></span><br><span class="line">    <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">poll_table_entry</span> <span class="hljs-title">inline_entries</span>[<span class="hljs-title">N_INLINE_POLL_ENTRIES</span>];</span> <span class="hljs-comment">// 实体数组，后面会讲</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="hljs-comment">// select 的核心函数</span></span><br><span class="line"><span class="hljs-function"><span class="hljs-keyword">int</span> <span class="hljs-title">do_select</span><span class="hljs-params">(<span class="hljs-keyword">int</span> n, fd_set_bits *fds, struct timespec *end_time)</span></span></span><br><span class="line"><span class="hljs-function"></span>&#123;</span><br><span class="line">    <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">poll_wqueues</span> <span class="hljs-title">table</span>;</span></span><br><span class="line">    <span class="hljs-comment">// ...</span></span><br><span class="line">    poll_initwait(&amp;table);</span><br><span class="line">    <span class="hljs-comment">// ...</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">poll_initwait</span><span class="hljs-params">(struct poll_wqueues *pwq)</span></span></span><br><span class="line"><span class="hljs-function"></span>&#123;</span><br><span class="line">    init_poll_funcptr(&amp;pwq-&gt;pt, __pollwait);</span><br><span class="line">    <span class="hljs-comment">// ...</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="hljs-function"><span class="hljs-keyword">static</span> <span class="hljs-keyword">inline</span> <span class="hljs-keyword">void</span> <span class="hljs-title">init_poll_funcptr</span><span class="hljs-params">(poll_table *pt, poll_queue_proc qproc)</span></span></span><br><span class="line"><span class="hljs-function"></span>&#123;</span><br><span class="line">       pt-&gt;qproc = qproc;</span><br><span class="line">       pt-&gt;key   = ~<span class="hljs-number">0U</span>L; <span class="hljs-comment">/* all events enabled */</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>每个设备驱动进程都有一个等待队列，等待队列存放一个等待项(wait_queue_entry_t)，首次发生事件时，会调用 pollwait 往队列放入一个等待项，等待项保存了回调函数，由等待项可会获得一个实体(entry)，实体存放一个指针函数与监听事件掩码key，监听事件掩码的不同二进制位存储是否监听对应事件，由此可知道用户想监听哪些事件。当驱动程序发送IO事件，就会扫描等待队列中的实体，检测是否注册了对应事件，并回调函数，该回调函数是一个唤醒函数(pollwake)。<br><figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-comment">// 等待项</span></span><br><span class="line"><span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">wait_queue_entry</span> &#123;</span></span><br><span class="line">    <span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">int</span>        flags;</span><br><span class="line">    <span class="hljs-keyword">void</span>            *<span class="hljs-keyword">private</span>;</span><br><span class="line">    <span class="hljs-keyword">wait_queue_func_t</span>    func; <span class="hljs-comment">// 回调函数</span></span><br><span class="line">    <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">list_head</span>    <span class="hljs-title">entry</span>;</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="hljs-comment">// 实体</span></span><br><span class="line"><span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">poll_table_entry</span> &#123;</span></span><br><span class="line">    <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">file</span>     *<span class="hljs-title">filp</span>;</span>                 <span class="hljs-comment">// 指向特定fd对应的file结构体;</span></span><br><span class="line">    <span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">long</span>   key;                   <span class="hljs-comment">// 等待特定fd对应硬件设备的事件掩码，如POLLIN、 POLLOUT、POLLERR;</span></span><br><span class="line">    wait_queue_entry    wait;              <span class="hljs-comment">// 需要放入等待队列的等待项</span></span><br><span class="line">    <span class="hljs-keyword">wait_queue_head_t</span>   *wait_address;     <span class="hljs-comment">// 设备驱动程序中特定事件的等待队列头</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="hljs-comment">// 新增一个等待项</span></span><br><span class="line"><span class="hljs-comment">// pollwait() -&gt; __pollwait()</span></span><br><span class="line"><span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> __pollwait(struct file *filp, <span class="hljs-keyword">wait_queue_head_t</span> *wait_address, poll_table *p) &#123;</span><br><span class="line">   <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">poll_wqueues</span> *<span class="hljs-title">pwq</span> = <span class="hljs-title">container_of</span>(<span class="hljs-title">p</span>, <span class="hljs-title">struct</span> <span class="hljs-title">poll_wqueues</span>, <span class="hljs-title">pt</span>);</span></span><br><span class="line">   <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">poll_table_entry</span> *<span class="hljs-title">entry</span> = <span class="hljs-title">poll_get_entry</span>(<span class="hljs-title">pwq</span>);</span></span><br><span class="line">   <span class="hljs-keyword">if</span> (!entry)</span><br><span class="line">      <span class="hljs-keyword">return</span>;</span><br><span class="line">   get_file(filp);</span><br><span class="line">   entry-&gt;filp = filp;      <span class="hljs-comment">// 保存对应的file结构体</span></span><br><span class="line">   entry-&gt;wait_address = wait_address;  <span class="hljs-comment">// 保存来自设备驱动程序的等待队列头</span></span><br><span class="line">   entry-&gt;key = p-&gt;key;  <span class="hljs-comment">// 保存对该fd关心的事件掩码</span></span><br><span class="line">   init_waitqueue_func_entry(&amp;entry-&gt;wait, pollwake);<span class="hljs-comment">// 初始化等待队列项，pollwake是唤醒该等待队列项时候调用的函数</span></span><br><span class="line">   entry-&gt;wait.<span class="hljs-keyword">private</span> = pwq; <span class="hljs-comment">// 将poll_wqueues作为该等待队列项的私有数据，后面使用</span></span><br><span class="line">   add_wait_queue(wait_address, &amp;entry-&gt;wait);<span class="hljs-comment">// 将该等待队列项添加到从驱动程序中传递过来的等待队列头中去。</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="hljs-comment">// 唤醒</span></span><br><span class="line"><span class="hljs-function"><span class="hljs-keyword">static</span> <span class="hljs-keyword">int</span> <span class="hljs-title">pollwake</span><span class="hljs-params">(wait_queue_entry *wait, <span class="hljs-keyword">unsigned</span> mode, <span class="hljs-keyword">int</span> sync, <span class="hljs-keyword">void</span> *key)</span></span></span><br><span class="line"><span class="hljs-function"></span>&#123;</span><br><span class="line">       <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">poll_table_entry</span> *<span class="hljs-title">entry</span>;</span></span><br><span class="line">       entry = container_of(wait, struct poll_table_entry, wait);<span class="hljs-comment">// 取得poll_table_entry结构体指针</span></span><br><span class="line">       <span class="hljs-keyword">if</span> (key &amp;&amp; !((<span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">long</span>)key &amp; entry-&gt;key))<span class="hljs-comment">/*这里的条件判断至关重要，避免应用进程被误唤醒，什么意思？*/</span></span><br><span class="line">              <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;</span><br><span class="line">       <span class="hljs-keyword">return</span> __pollwake(wait, mode, sync, key);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="hljs-keyword">static</span> <span class="hljs-keyword">int</span> __pollwake(<span class="hljs-keyword">wait_queue_t</span> *wait, <span class="hljs-keyword">unsigned</span> mode, <span class="hljs-keyword">int</span> sync, <span class="hljs-keyword">void</span> *key)</span><br><span class="line">&#123;</span><br><span class="line">   <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">poll_wqueues</span> *<span class="hljs-title">pwq</span> = <span class="hljs-title">wait</span>-&gt;<span class="hljs-title">private</span>;</span></span><br><span class="line">   DECLARE_WAITQUEUE(dummy_wait, pwq-&gt;polling_task);</span><br><span class="line">   smp_wmb();</span><br><span class="line">   pwq-&gt;triggered = <span class="hljs-number">1</span>; <span class="hljs-comment">// select()用户进程只要有被唤醒过，就不可能再次进入睡眠，因为这个标志在睡眠的时候有用</span></span><br><span class="line">   <span class="hljs-keyword">return</span> default_wake_function(&amp;dummy_wait, mode, sync, key); <span class="hljs-comment">// 默认通用的唤醒函数</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h2 id="调用结构"><a href="#调用结构" class="headerlink" title="调用结构"></a>调用结构</h2><p><figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">select() &#123;</span><br><span class="line">   sys_select(); </span><br><span class="line">&#125;</span><br><span class="line">sys_select()&#123; <span class="hljs-comment">// 将用户态参数拷贝到内核</span></span><br><span class="line">    core_sys_select();</span><br><span class="line">&#125;</span><br><span class="line">core_sys_select()&#123; <span class="hljs-comment">// 填充 fd_set_bits</span></span><br><span class="line">    do_select();</span><br><span class="line">&#125;</span><br><span class="line">do_select() &#123; <span class="hljs-comment">// 轮询</span></span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h2 id="do-select"><a href="#do-select" class="headerlink" title="do select"></a>do select</h2><p>do_select 是上面我所说的一切工作的外部函数。</p>
+<p>接口：<br><figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-function"><span class="hljs-keyword">static</span> <span class="hljs-keyword">int</span> <span class="hljs-title">do_select</span><span class="hljs-params">(<span class="hljs-keyword">int</span> n, fd_set_bits *fds, struct timespec64 *end_time)</span></span></span><br></pre></td></tr></table></figure></p>
+<ul>
+<li>n 即n个描述符</li>
+<li>fds 类型fd_set_bits是一个结构体，包含了可读，可写，异常三个状态的监听数组，以及三个对应的状态输出数组。<br><figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">typedef</span> <span class="hljs-class"><span class="hljs-keyword">struct</span> &#123;</span></span><br><span class="line">    <span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">long</span> *in, *out, *ex;</span><br><span class="line">    <span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">long</span> *res_in, *res_out, *res_ex;</span><br><span class="line">&#125; fd_set_bits;</span><br></pre></td></tr></table></figure></li>
+<li>end_time 结束时间</li>
+</ul>
+<p>源码：<br><figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-function"><span class="hljs-keyword">static</span> <span class="hljs-keyword">int</span> <span class="hljs-title">do_select</span><span class="hljs-params">(<span class="hljs-keyword">int</span> n, fd_set_bits *fds, struct timespec64 *end_time)</span></span></span><br><span class="line"><span class="hljs-function"></span>&#123;</span><br><span class="line">    <span class="hljs-keyword">ktime_t</span> expire, *to = <span class="hljs-literal">NULL</span>;</span><br><span class="line">    <span class="hljs-comment">// 实体缓存队列</span></span><br><span class="line">    <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">poll_wqueues</span> <span class="hljs-title">table</span>;</span></span><br><span class="line">    <span class="hljs-comment">// poll 表格</span></span><br><span class="line">    poll_table* wait;</span><br><span class="line">    <span class="hljs-keyword">int</span> retval, i, timed_out = <span class="hljs-number">0</span>;</span><br><span class="line">    u64 slack = <span class="hljs-number">0</span>;</span><br><span class="line">    <span class="hljs-keyword">__poll_t</span> busy_flag = net_busy_loop_on() ? POLL_BUSY_LOOP : <span class="hljs-number">0</span>;</span><br><span class="line">    <span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">long</span> busy_start = <span class="hljs-number">0</span>;</span><br><span class="line"></span><br><span class="line">    rcu_read_lock();</span><br><span class="line"></span><br><span class="line">    <span class="hljs-comment">// 等一下按位移动查询，所以先计算需要位移的数量</span></span><br><span class="line">    <span class="hljs-comment">// retval = n * BITS_PER_LONG</span></span><br><span class="line">    <span class="hljs-comment">// BITS_PER_LONG = in | out | exp </span></span><br><span class="line">    retval = max_select_fd(n, fds);</span><br><span class="line">    rcu_read_unlock();</span><br><span class="line"></span><br><span class="line">    <span class="hljs-keyword">if</span> (retval &lt; <span class="hljs-number">0</span>)</span><br><span class="line">        <span class="hljs-keyword">return</span> retval;</span><br><span class="line">    <span class="hljs-comment">// 注意，这里给了n</span></span><br><span class="line">    n = retval;</span><br><span class="line"></span><br><span class="line">    <span class="hljs-comment">// 初始化等待队列</span></span><br><span class="line">    poll_initwait(&amp;table);</span><br><span class="line">    <span class="hljs-comment">// 将初始化后的 poll 表格拿出来，后面传入vfs_poll用于构造等待项</span></span><br><span class="line">    wait = &amp;table.pt;</span><br><span class="line">    <span class="hljs-keyword">if</span> (end_time &amp;&amp; !end_time-&gt;tv_sec &amp;&amp; !end_time-&gt;tv_nsec) &#123;</span><br><span class="line">        wait-&gt;_qproc = <span class="hljs-literal">NULL</span>;</span><br><span class="line">        timed_out = <span class="hljs-number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="hljs-keyword">if</span> (end_time &amp;&amp; !timed_out)</span><br><span class="line">        slack = select_estimate_accuracy(end_time);</span><br><span class="line"></span><br><span class="line">    retval = <span class="hljs-number">0</span>;</span><br><span class="line">    <span class="hljs-keyword">for</span> (;;) &#123; <span class="hljs-comment">// 轮询</span></span><br><span class="line">        <span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">long</span> *rinp, *routp, *rexp, *inp, *outp, *<span class="hljs-built_in">exp</span>;</span><br><span class="line">        <span class="hljs-keyword">bool</span> can_busy_loop = <span class="hljs-literal">false</span>;</span><br><span class="line"></span><br><span class="line">        inp = fds-&gt;in; outp = fds-&gt;out; <span class="hljs-built_in">exp</span> = fds-&gt;ex;</span><br><span class="line">        rinp = fds-&gt;res_in; routp = fds-&gt;res_out; rexp = fds-&gt;res_ex;</span><br><span class="line"></span><br><span class="line">        <span class="hljs-comment">// 在描述符数组上按位移动</span></span><br><span class="line">        <span class="hljs-keyword">for</span> (i = <span class="hljs-number">0</span>; i &lt; n; ++rinp, ++routp, ++rexp) &#123;</span><br><span class="line">            <span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">long</span> in, out, ex, all_bits, bit = <span class="hljs-number">1</span>, j;</span><br><span class="line">            <span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">long</span> res_in = <span class="hljs-number">0</span>, res_out = <span class="hljs-number">0</span>, res_ex = <span class="hljs-number">0</span>;</span><br><span class="line">            <span class="hljs-keyword">__poll_t</span> mask;</span><br><span class="line"></span><br><span class="line">            in = *inp++; out = *outp++; ex = *<span class="hljs-built_in">exp</span>++;</span><br><span class="line">            </span><br><span class="line">            <span class="hljs-comment">// 当前描述符监听了哪些事件</span></span><br><span class="line">            all_bits = in | out | ex;</span><br><span class="line">            <span class="hljs-keyword">if</span> (all_bits == <span class="hljs-number">0</span>) &#123; <span class="hljs-comment">// 没有监听事件，到下一个描述符</span></span><br><span class="line">                i += BITS_PER_LONG;</span><br><span class="line">                <span class="hljs-keyword">continue</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            </span><br><span class="line">            </span><br><span class="line">            <span class="hljs-keyword">for</span> (j = <span class="hljs-number">0</span>; j &lt; BITS_PER_LONG; ++j, ++i, bit &lt;&lt;= <span class="hljs-number">1</span>) &#123;</span><br><span class="line">                <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">fd</span> <span class="hljs-title">f</span>;</span></span><br><span class="line">                <span class="hljs-keyword">if</span> (i &gt;= n)</span><br><span class="line">                    <span class="hljs-keyword">break</span>;</span><br><span class="line"></span><br><span class="line">                <span class="hljs-comment">// bit 每次左移一位看看监听哪些事件</span></span><br><span class="line">                <span class="hljs-keyword">if</span> (!(bit &amp; all_bits))</span><br><span class="line">                    <span class="hljs-keyword">continue</span>;</span><br><span class="line"></span><br><span class="line">                <span class="hljs-comment">// 找到一个监听的事件，则获取描述符的文件对象</span></span><br><span class="line">                f = fdget(i);</span><br><span class="line">                <span class="hljs-keyword">if</span> (f.file) &#123;</span><br><span class="line">                    wait_key_set(wait, in, out, bit,</span><br><span class="line">                             busy_flag);</span><br><span class="line">                    <span class="hljs-comment">// 调用设备驱动程序的poll</span></span><br><span class="line">                    <span class="hljs-comment">// 得到事件掩码</span></span><br><span class="line">                    <span class="hljs-comment">// 除了返回掩码外，内部将调用 pollwait() 构造等待项，并放入等待队列</span></span><br><span class="line">                    mask = vfs_poll(f.file, wait);</span><br><span class="line"></span><br><span class="line">                    fdput(f);</span><br><span class="line">                    <span class="hljs-comment">// 通过事件掩码查看到底发生了哪些事件</span></span><br><span class="line">                    <span class="hljs-keyword">if</span> ((mask &amp; POLLIN_SET) &amp;&amp; (in &amp; bit)) &#123;</span><br><span class="line">                        res_in |= bit;</span><br><span class="line">                        retval++;</span><br><span class="line">                        wait-&gt;_qproc = <span class="hljs-literal">NULL</span>;</span><br><span class="line">                    &#125;</span><br><span class="line">                    <span class="hljs-keyword">if</span> ((mask &amp; POLLOUT_SET) &amp;&amp; (out &amp; bit)) &#123;</span><br><span class="line">                        res_out |= bit;</span><br><span class="line">                        retval++;</span><br><span class="line">                        wait-&gt;_qproc = <span class="hljs-literal">NULL</span>;</span><br><span class="line">                    &#125;</span><br><span class="line">                    <span class="hljs-keyword">if</span> ((mask &amp; POLLEX_SET) &amp;&amp; (ex &amp; bit)) &#123;</span><br><span class="line">                        res_ex |= bit;</span><br><span class="line">                        retval++;</span><br><span class="line">                        wait-&gt;_qproc = <span class="hljs-literal">NULL</span>;</span><br><span class="line">                    &#125;</span><br><span class="line">                    <span class="hljs-comment">/* got something, stop busy polling */</span></span><br><span class="line">                    <span class="hljs-keyword">if</span> (retval) &#123;</span><br><span class="line">                        can_busy_loop = <span class="hljs-literal">false</span>;</span><br><span class="line">                        busy_flag = <span class="hljs-number">0</span>;</span><br><span class="line"></span><br><span class="line">                    <span class="hljs-comment">/*</span></span><br><span class="line"><span class="hljs-comment">                     * only remember a returned</span></span><br><span class="line"><span class="hljs-comment">                     * POLL_BUSY_LOOP if we asked for it</span></span><br><span class="line"><span class="hljs-comment">                     */</span></span><br><span class="line">                    &#125; <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (busy_flag &amp; mask)</span><br><span class="line">                        can_busy_loop = <span class="hljs-literal">true</span>;</span><br><span class="line"></span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="hljs-keyword">if</span> (res_in)</span><br><span class="line">                *rinp = res_in;</span><br><span class="line">            <span class="hljs-keyword">if</span> (res_out)</span><br><span class="line">                *routp = res_out;</span><br><span class="line">            <span class="hljs-keyword">if</span> (res_ex)</span><br><span class="line">                *rexp = res_ex;</span><br><span class="line">            cond_resched();</span><br><span class="line">        &#125;</span><br><span class="line">        wait-&gt;_qproc = <span class="hljs-literal">NULL</span>;</span><br><span class="line">        <span class="hljs-comment">// 发现事件 或 超时 或 当前进程有信号要处理 则打断轮询</span></span><br><span class="line">        <span class="hljs-keyword">if</span> (retval || timed_out || signal_pending(current))</span><br><span class="line">            <span class="hljs-keyword">break</span>;</span><br><span class="line">        <span class="hljs-keyword">if</span> (table.error) &#123;</span><br><span class="line">            retval = table.error;</span><br><span class="line">            <span class="hljs-keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="hljs-comment">/* only if found POLL_BUSY_LOOP sockets &amp;&amp; not out of time */</span></span><br><span class="line">        <span class="hljs-keyword">if</span> (can_busy_loop &amp;&amp; !need_resched()) &#123;</span><br><span class="line">            <span class="hljs-keyword">if</span> (!busy_start) &#123;</span><br><span class="line">                busy_start = busy_loop_current_time();</span><br><span class="line">                <span class="hljs-keyword">continue</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="hljs-keyword">if</span> (!busy_loop_timeout(busy_start))</span><br><span class="line">                <span class="hljs-keyword">continue</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        busy_flag = <span class="hljs-number">0</span>;</span><br><span class="line"></span><br><span class="line">        <span class="hljs-comment">/*</span></span><br><span class="line"><span class="hljs-comment">         * If this is the first loop and we have a timeout</span></span><br><span class="line"><span class="hljs-comment">         * given, then we convert to ktime_t and set the to</span></span><br><span class="line"><span class="hljs-comment">         * pointer to the expiry value.</span></span><br><span class="line"><span class="hljs-comment">         */</span></span><br><span class="line">        <span class="hljs-keyword">if</span> (end_time &amp;&amp; !to) &#123;</span><br><span class="line">            expire = timespec64_to_ktime(*end_time);</span><br><span class="line">            to = &amp;expire;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="hljs-comment">// 挂起当前进程，直到被唤醒或timeout</span></span><br><span class="line">        <span class="hljs-keyword">if</span> (!poll_schedule_timeout(&amp;table, TASK_INTERRUPTIBLE,</span><br><span class="line">                       to, slack))</span><br><span class="line">            timed_out = <span class="hljs-number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="hljs-comment">// 释放实体缓存队列的内存</span></span><br><span class="line">    poll_freewait(&amp;table);</span><br><span class="line"></span><br><span class="line">    <span class="hljs-keyword">return</span> retval;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h2 id="总结过程"><a href="#总结过程" class="headerlink" title="总结过程"></a>总结过程</h2><p>select调用的基本步骤就是，</p>
+<ol>
+<li>调用 select</li>
+<li>select 轮询一次，找出需要监听事件的描述符，把等待项(监听掩码+回调函数)放到描述符对应的驱动程序的等待队列里边，并返回一个结果掩码，比对所有结果掩码，如果没有发生事件，则挂起。（一般第一次轮询都是挂起的，否则就是第一次轮询之前就发生了事件）</li>
+<li>发生IO事件</li>
+<li>select进程被唤醒，第二次轮询，找出发生事件的描述符及其具体事件，在fd事件数组上对应位置上做标记。但可能发生的IO事件并非用户要求监听的事件，这时候就不再挂起，而是一直轮询，等待下一次IO事件</li>
+<li>清除缓存</li>
+<li>返回一个发生事件描述符的数量</li>
+<li>用户调用 FD_ISSET() 找出哪个描述符发生事件，处理一些事情</li>
+<li>处理完后，又循环回到第1步</li>
+</ol>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><ul>
+<li><a href="https://my.oschina.net/fileoptions/blog/911091" target="_blank" rel="noopener">https://my.oschina.net/fileoptions/blog/911091</a></li>
+<li><a href="https://elixir.bootlin.com/linux/latest/source/fs/select.c" target="_blank" rel="noopener">https://elixir.bootlin.com/linux/latest/source/fs/select.c</a></li>
+</ul>
+
+    
+    </div>
+    
+    <div class="columns is-variable is-1 is-multiline is-mobile">
+    
+        <span class="column is-narrow"><a class="tag is-light article-tag" href="/tags/Linux/">#Linux</a></span>
+    
+        <span class="column is-narrow"><a class="tag is-light article-tag" href="/tags/I-O/">#I/O</a></span>
+    
+    </div>
+    
+    
+    <div class="go-next columns is-mobile is-multiline article-nav">
+        <span class="column is-12-mobile is-half-desktop is-hidden-mobile article-nav-prev">
+            
+        </span>
+        <span class="column is-12-mobile is-half-desktop  article-nav-next">
+            
+            <a href="/2019/03/28/bi-transformer/">Transformer双向编码器</a>
+            
+        </span>
+    </div>
+    
+</article>
+
+
+
+
+<div class="comments">
+    <h3 class="title is-4">Comments</h3>
+    
+<div id="disqus_thread">
+    
+    <div class="notification is-danger">
+        You forgot to set the <code>shortname</code> for Disqus. Please set it in <code>_config.yml</code>.
+    </div>
+    
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</div>
+
+    </div>
+</section>
+    <footer class="footer">
+    <div class="container">
+        <div class="columns content">
+            <div class="column is-narrow has-text-centered">
+                &copy; 2019 Black Redscarf&nbsp;
+                Powered by <a href="http://hexo.io/" target="_blank">Hexo</a> & <a
+                        href="http://github.com/ppoffice/hexo-theme-minos">Minos</a>
+            </div>
+            <div class="column is-hidden-mobile"></div>
+
+            
+            <div class="column is-narrow">
+                <div class="columns is-mobile is-multiline is-centered">
+                
+                    
+                <a class="column is-narrow has-text-black" title="GitHub" href="https://github.com/ppoffice/hexo-theme-minos" target="_blank" rel="noopener">
+                    
+                    GitHub
+                    
+                </a>
+                
+                </div>
+            </div>
+            
+            
+        </div>
+    </div>
+</footer>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment-with-locales.min.js"></script>
+
+<!-- test if the browser is outdated -->
+<div id="outdated">
+    <h6>Your browser is out-of-date!</h6>
+    <p>Update your browser to view this website correctly. <a id="btnUpdateBrowser" href="http://outdatedbrowser.com/" target="_blank" rel="noopener">Update my browser now </a></p>
+    <p class="last"><a href="#" id="btnCloseUpdateBrowser" title="Close">&times;</a></p>
+</div>
+<script src="//cdnjs.cloudflare.com/ajax/libs/outdated-browser/1.1.5/outdatedbrowser.min.js"></script>
+<script>
+    $(document).ready(function () {
+        // plugin function, place inside DOM ready function
+        outdatedBrowser({
+            bgColor: '#f25648',
+            color: '#ffffff',
+            lowerThan: 'flex'
+        })
+    });
+</script>
+
+<script>
+    window.FontAwesomeConfig = {
+        searchPseudoElements: true
+    }
+    moment.locale("cn");
+</script>
+
+
+    
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+<script>
+    MathJax.Hub.Config({
+        "HTML-CSS": {
+            matchFontHeight: false
+        },
+        SVG: {
+            matchFontHeight: false
+        },
+        CommonHTML: {
+            matchFontHeight: false
+        },
+        tex2jax: {
+            inlineMath: [ ['$','$'],['\\(','\\)'] ],
+            displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+            processEscapes: false
+        }
+    });
+</script>
+
+    
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/katex.min.css" integrity="sha384-9eLZqc9ds8eNjO3TmqPeYcDj8n+Qfa4nuSiGYa6DjLNcv9BtN69ZIulL9+8CqC9Y" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/katex.min.js" integrity="sha384-K3vbOmF2BtaVai+Qk37uypf7VrgBubhQreNQe9aGsz9lB63dIFiQVlJbr92dw2Lx" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/contrib/auto-render.min.js" integrity="sha384-kmZOZB5ObwgQnS/DuDg6TScgOiWWBiVt0plIRkZCmE6rDZGrEOQeHM5PcHi+nyqe" crossorigin="anonymous"
+        onload="renderMathInElement(document.body);"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    renderMathInElement(document.body, {
+        // ...options...
+    });
+});
+</script>
+
+    
+    
+<script src="//cdnjs.cloudflare.com/ajax/libs/lightgallery/1.6.8/js/lightgallery-all.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/justifiedGallery/3.6.5/js/jquery.justifiedGallery.min.js"></script>
+<script>
+    (function ($) {
+        $(document).ready(function () {
+            if (typeof($.fn.lightGallery) === 'function') {
+                $('.article.gallery').lightGallery({ selector: '.gallery-item' });
+            }
+            if (typeof($.fn.justifiedGallery) === 'function') {
+                $('.justified-gallery').justifiedGallery();
+            }
+        });
+    })(jQuery);
+</script>
+
+    
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script>
+    <style>
+        .hljs {
+            position: relative;
+        }
+
+        .hljs .clipboard-btn {
+            float: right;
+            color: #9a9a9a;
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+
+        .hljs .clipboard-btn:hover {
+          color: #8a8a8a;
+        }
+
+        .hljs > .clipboard-btn {
+            display: none;
+            position: absolute;
+            right: 4px;
+            top: 4px;
+        }
+
+        .hljs:hover > .clipboard-btn {
+            display: inline;
+        }
+
+        .hljs > figcaption > .clipboard-btn {
+            margin-right: 4px;
+        }
+    </style>
+    <script>
+      $(document).ready(function () {
+        $('figure.hljs').each(function(i, figure) {
+          var codeId = 'code-' + i;
+          var code = figure.querySelector('.code');
+          var copyButton = $('<button>Copy <i class="far fa-clipboard"></i></button>');
+          code.id = codeId;
+          copyButton.addClass('clipboard-btn');
+          copyButton.attr('data-clipboard-target-id', codeId);
+
+          var figcaption = figure.querySelector('figcaption');
+
+          if (figcaption) {
+            figcaption.append(copyButton[0]);
+          } else {
+            figure.prepend(copyButton[0]);
+          }
+        })
+
+        var clipboard = new ClipboardJS('.clipboard-btn', {
+          target: function(trigger) {
+            return document.getElementById(trigger.getAttribute('data-clipboard-target-id'));
+          }
+        });
+        clipboard.on('success', function(e) {
+          e.clearSelection();
+        })
+      })
+    </script>
+
+    
+    
+
+    
+
+
+<script src="/js/script.js"></script>
+
+    
+    <div class="searchbox ins-search">
+    <div class="searchbox-mask"></div>
+    <div class="searchbox-container ins-search-container">
+        <div class="searchbox-input-wrapper">
+            <input type="text" class="searchbox-input ins-search-input" placeholder="Type something..." />
+            <span class="searchbox-close ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="searchbox-result-wrapper ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+    (function (window) {
+        var INSIGHT_CONFIG = {
+            TRANSLATION: {
+                POSTS: 'Posts',
+                PAGES: 'Pages',
+                CATEGORIES: 'Categories',
+                TAGS: 'Tags',
+                UNTITLED: '(Untitled)',
+            },
+            CONTENT_URL: '/content.json',
+        };
+        window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+    })(window);
+</script>
+<script src="/js/insight.js"></script>
+    
+</body>
+</html>

@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html class="has-navbar-fixed-top">
+<head>
+    <meta charset="utf-8">
+<title>Transformer模型与自注意力 - 绯色的魔法世界</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/outdated-browser/1.1.5/outdatedbrowser.min.css">
+
+
+
+
+<meta name="description" content="">
+
+
+
+
+
+    <meta name="description" content="Facebook激进地使用卷积网络处理NLP问题，意外地取得了很不错的效果。而 Google 一不做二不休，发布了一种新型的网络结构，transformer模型  [1]，该网络结构既不使用RNN，也不使用CNN，而且也获得不错的效果。">
+<meta name="keywords" content="NLP,深度学习">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Transformer模型与自注意力">
+<meta property="og:url" content="http:&#x2F;&#x2F;yoursite.com&#x2F;2019&#x2F;02&#x2F;27&#x2F;transformer&#x2F;index.html">
+<meta property="og:site_name" content="绯色的魔法世界">
+<meta property="og:description" content="Facebook激进地使用卷积网络处理NLP问题，意外地取得了很不错的效果。而 Google 一不做二不休，发布了一种新型的网络结构，transformer模型  [1]，该网络结构既不使用RNN，也不使用CNN，而且也获得不错的效果。">
+<meta property="og:locale" content="cn">
+<meta property="og:image" content="https:&#x2F;&#x2F;i.loli.net&#x2F;2019&#x2F;02&#x2F;27&#x2F;5c767c284d850.png">
+<meta property="og:image" content="https:&#x2F;&#x2F;i.loli.net&#x2F;2019&#x2F;02&#x2F;27&#x2F;5c767c43178d7.png">
+<meta property="og:image" content="https:&#x2F;&#x2F;i.loli.net&#x2F;2019&#x2F;02&#x2F;27&#x2F;5c767c575e8c8.png">
+<meta property="og:image" content="https:&#x2F;&#x2F;i.loli.net&#x2F;2019&#x2F;02&#x2F;27&#x2F;5c767c6c2a295.png">
+<meta property="og:image" content="https:&#x2F;&#x2F;i.loli.net&#x2F;2019&#x2F;02&#x2F;27&#x2F;5c767c8369fc9.png">
+<meta property="og:updated_time" content="2019-11-20T14:35:33.280Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https:&#x2F;&#x2F;i.loli.net&#x2F;2019&#x2F;02&#x2F;27&#x2F;5c767c284d850.png">
+
+
+
+
+
+<link rel="icon" href="/favicon.png">
+
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Ovo|Source+Code+Pro">
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/bulma/0.6.2/css/bulma.min.css">
+
+
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/lightgallery/1.6.8/css/lightgallery.min.css">
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/justifiedGallery/3.6.5/css/justifiedGallery.min.css">
+
+
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/atom-one-light.min.css">
+
+<link rel="stylesheet" href="/css/style.css">
+
+<script defer src="//use.fontawesome.com/releases/v5.0.8/js/all.js"></script>
+
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+    
+
+
+</head>
+<body>
+    
+
+<nav class="navbar is-transparent is-fixed-top navbar-main" role="navigation" aria-label="main navigation">
+    <div class="top-title-line">
+        <div class="top-title">
+            <a href="/"><span>绯色的魔法世界</span></a>
+        </div>
+    </div>
+    <div class="nav-tool-line">
+        <div class="nav-tool">
+            
+            <a class="navbar-item search" title="Search" href="javascript:;" target="_blank" rel="noopener">
+                <i class="fas fa-search"></i>
+            </a>
+            
+            
+            <a class="navbar-item" title="GitHub" href="https://github.com/ppoffice/hexo-theme-minos" target="_blank" rel="noopener">
+                
+                <i class="fab fa-github"></i>
+                
+            </a>
+               
+            
+        </div>    
+    </div>
+    <div class="container">
+        <div class="navbar-brand">
+            <!-- <a class="navbar-item navbar-logo" href="/">
+                
+                <img src="/images/logo.png" alt="" height="28">
+                
+            </a> -->
+            <div class="navbar-burger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+        
+        <div class="navbar-menu navbar-start">
+            
+            <a class="navbar-item "
+               href="/">Home</a>
+            
+            <a class="navbar-item "
+               href="/archives">归档</a>
+            
+            <a class="navbar-item "
+               href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F">操作系统</a>
+            
+            <a class="navbar-item "
+               href="/categories/NLP">NLP</a>
+            
+            <a class="navbar-item "
+               href="/categories/%E5%BC%BA%E5%8C%96%E5%AD%A6%E4%B9%A0">强化学习</a>
+            
+            <a class="navbar-item "
+               href="/categories/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0">深度学习</a>
+            
+            <a class="navbar-item "
+               href="/about">About</a>
+            
+        </div>
+        
+        
+    </div>
+</nav>
+
+    <section class="section">
+    <div class="container">
+    
+<div class="article-cover">
+   <img class="article-cover-img" src="https://i.loli.net/2019/11/20/IAFcDHUlQBM4jVT.jpg"> 
+</div>
+
+<article class="article content gallery" itemscope itemprop="blogPost">
+    <h1 class="article-title is-size-3 is-size-4-mobile" itemprop="name">
+        
+            Transformer模型与自注意力
+        
+    </h1>
+    <div class="article-meta columns is-variable is-1 is-multiline is-mobile is-size-7-mobile">
+        <span class="column is-narrow">
+            2019-02-27
+            <!-- <time datetime="2019-02-26T16:00:00.000Z" itemprop="datePublished">Feb 27 2019</time> -->
+        </span>
+        
+        <span class="column is-narrow article-category">
+            <i class="far fa-folder"></i>
+            <a class="article-category-link" href="/categories/NLP/">NLP</a><span>,</span><a class="article-category-link" href="/categories/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/">深度学习</a>
+        </span>
+        
+        <!--  -->
+    </div>
+    <div class="article-entry is-size-6-mobile" itemprop="articleBody">
+    
+        <p>Facebook激进地使用卷积网络处理NLP问题，意外地取得了很不错的效果。而 Google 一不做二不休，发布了一种新型的网络结构，transformer模型  <a href="https://arxiv.org/abs/1706.03762" target="_blank" rel="noopener">[1]</a>，该网络结构既不使用RNN，也不使用CNN，而且也获得不错的效果。</p>
+<a id="more"></a>
+
+<h2 id="1-模型结构"><a href="#1-模型结构" class="headerlink" title="1. 模型结构"></a>1. 模型结构</h2><p>Encoder和Decoder都是从下往上的栈结构。</p>
+<h3 id="1-1-Encoder"><a href="#1-1-Encoder" class="headerlink" title="1.1 Encoder"></a>1.1 Encoder</h3><p>Encoder有6个相同的独立层，每层有2个子层。第一个子层是多头自注意力层（multi-head self-attention），第二个子层是前馈传播层。</p>
+<h3 id="1-2-Decoder"><a href="#1-2-Decoder" class="headerlink" title="1.2 Decoder"></a>1.2 Decoder</h3><p>Decoder同样有6个相同的独立层，每层有3个子层。第一个子层是遮罩了未来信息的多头自注意力层，第二个子层是联合encoder最后一层的输出的多头注意力层，第三个子层是前馈传播层。</p>
+<p>下图是当只有1个独立层时候的网络结构 <a href="https://arxiv.org/abs/1706.03762" target="_blank" rel="noopener">[1]</a>：</p>
+<img src="https://i.loli.net/2019/02/27/5c767c284d850.png" width="550px">
+
+<h3 id="1-3-注意力"><a href="#1-3-注意力" class="headerlink" title="1.3 注意力"></a>1.3 注意力</h3><p>注意力函数从 Query, Key, Value 映射到一个输出，这里的 Query, Key, Value 是什么可以先不管，先理解注意力模型的构造。</p>
+<h4 id="1-3-1-缩放的点积注意力-（Scaled-Dot-Product-Attention-）"><a href="#1-3-1-缩放的点积注意力-（Scaled-Dot-Product-Attention-）" class="headerlink" title="1.3.1 缩放的点积注意力 （Scaled Dot-Product Attention ）"></a>1.3.1 缩放的点积注意力 （Scaled Dot-Product Attention ）</h4><p>假设 query, key, value 描述为矩阵 $\large Q, K, V$,   query 和 key 的特征维度是 $\large d_k$，而 value 的特征维度是 $\large d_v$，那么缩放的点积注意力函数为，</p>
+<p>$$<br>Attention(Q,K,V)=softmax(\frac{QK^T}{\sqrt{d_k}})V<br>$$</p>
+<h4 id="1-3-2-多头注意力（Multi-Head-Attention）"><a href="#1-3-2-多头注意力（Multi-Head-Attention）" class="headerlink" title="1.3.2 多头注意力（Multi-Head Attention）"></a>1.3.2 多头注意力（Multi-Head Attention）</h4><p>把 query, key, value 从一个大的特征维度映射出多个小特征维度，由 $\large d_{model}$ 映射到若干个 $\large d_k$ 或 $\large d_v$，假设有 $\large h$ 个head，那么就有 $\large d_k = d_v = d_{model}/h$，每一个 head 进行一次 Scaled Dot-Product Attention，最后再把所有head连接回 $\large d_{model}$ 维度。</p>
+<p>注意力结构如下图：</p>
+<img src="https://i.loli.net/2019/02/27/5c767c43178d7.png" width="600px">
+
+<p>那么 query, key, value 到底是什么呢？联系上面的模型结构图。</p>
+<ul>
+<li>对于encoder来说，第一层输入的 query, key, value 三者皆是源句子的词向量，而后面的层的输入就是上一层的输出。</li>
+<li>decoder的第一个子层和encoder相同，三者皆是目标句子的词向量，但是有一个Masked的标识，说明对于decoder来说，我们需要消除该词汇位置往后的参数的影响，消除方法是设置参数为负无穷。</li>
+<li>decoder的第二个子层中，query 是第一个子层的输出，key 和 value 是encoder 最后一层的输出。</li>
+</ul>
+<h3 id="1-4-前馈传播网络"><a href="#1-4-前馈传播网络" class="headerlink" title="1.4 前馈传播网络"></a>1.4 前馈传播网络</h3><p>前馈传播网络包含两个线性层， 计算如下：</p>
+<p>$$<br>FFN(x) = f_2(ReLU(f_1(x)))<br>$$</p>
+<h3 id="1-5-位置编码（Positional-Encoding）"><a href="#1-5-位置编码（Positional-Encoding）" class="headerlink" title="1.5 位置编码（Positional Encoding）"></a>1.5 位置编码（Positional Encoding）</h3><p>一个非RNN的模型无法很好的判断一个词汇在句子中的位置，解决办法是为词向量附加一个位置参数，使得模型能够学习和判断词汇的位置。论文中提出了一个使用余弦和正弦曲线的方法，<br>$$<br>PE(pos, 2i)=sin(pos/10000^{2i/d_{model}}) \<br>\Large<br>PE(pos, 2i+1)=cos(pos/10000^{2i/d_{model}})<br>$$<br>其中 $\large pos$ 为词在序列的位置，$\large i$ 为词向量的维度，最后的编码矩阵 $\large PE \in \mathbb{R}^{T \times E}$。</p>
+<p>假设当前序列长 $\large t$ ，那么词向量为 $\large emb + PE(t) \rightarrow emb  \in \mathbb{R}^{t \times E}$ 。</p>
+<p>函数对于维度的数值是区分偶数和奇数的，以偶数为例，当位置为1, 5, 10时，位置向量的曲线如图所示，</p>
+<img src="https://i.loli.net/2019/02/27/5c767c575e8c8.png" width="648px">
+
+<p>可以发现，不同位置会进行不同的线性变换，模型会学习到不同位置的固有位置向量，当词向量附加了某一位置向量后，模型就能知道该词在句子中的所在位置。</p>
+<h2 id="2-详细过程"><a href="#2-详细过程" class="headerlink" title="2. 详细过程"></a>2. 详细过程</h2><p>前面大概讲了一下结构和概念，但实际实现模型时还是有很多细节需要弄懂。</p>
+<p>源句子的最大序列长度为 $\large T$, 目标句子的最大序列长度为 $\large T’$，批次大小为 $\large B$，词向量大小为 $\large E$， 源语言词汇数量为 $\large V$，目标语言词汇数量为 $\large V’$。</p>
+<h3 id="2-1-Encoder"><a href="#2-1-Encoder" class="headerlink" title="2.1 Encoder"></a>2.1 Encoder</h3><p>(1) 计算整个句子的词向量为 $\large dropout(s \cdot emb(x) + emb_pos(x)) \rightarrow X  \in \mathbb{R}^{B \times T \times E}$，$\large s$ 为 $\large \sqrt{E}$</p>
+<p>(2) 进入第一子层，记录残差 $\large R \leftarrow X$，标准化 $\large X \leftarrow Norm(X)$</p>
+<p>(3) 把 $\large X$ 作为query, key, value，输入自注意力层 $\large Atten(X, X, X) \rightarrow X \in \mathbb{R}^{B \times T \times D}$，维度 $\large D$ 即 $\large d_{model}$</p>
+<p>，和词向量大小 $\large E$ 是一样的</p>
+<p>(4) dropout 正则化后加上残差 $\large X \leftarrow dropout(X) + R$</p>
+<p>(5) 进入第二子层，记录残差 $\large R \leftarrow X$，标准化 $\large X \leftarrow Norm(X)$</p>
+<p>(6) 输入到前馈传播网络，再加上残差 $\large X \leftarrow FFN(X) + R$</p>
+<p>(7) 从步骤 (2) 到 (6) 就结束一个层了，多个层则做同样计算即可。 </p>
+<p>(8) 最终输出为 $\large O \in \mathbb{R}^{B \times T \times E}$</p>
+<h3 id="2-2-Decoder"><a href="#2-2-Decoder" class="headerlink" title="2.2 Decoder"></a>2.2 Decoder</h3><p>Decoder 的第一个子层和第三个子层的步骤和encoder基本相同，这里列出第二子层的过程</p>
+<p>(1) 记录残差 $\large R \leftarrow X  \in \mathbb{R}^{B \times T’ \times E}$ <a href="https://arxiv.org/abs/1512.03385" target="_blank" rel="noopener">[2]</a>，标准化 $\large X \leftarrow Norm(X)$ <a href="https://arxiv.org/abs/1607.06450" target="_blank" rel="noopener">[3]</a></p>
+<p>(2) 需要输入到另外一个自注意力层中 $\large Atten(X, O, O) \rightarrow X$</p>
+<p>(3) dropout 正则化后加上残差 $\large X \leftarrow dropout(X) + R$，再记录残差 $\large R \leftarrow X$</p>
+<p>(4) 输入到第三子层中</p>
+<p>(5) 最后一层输出后，通过线性层映射出去 $\large W^TX \rightarrow X \in \mathbb{R}^{B \times T’ \times V’}$</p>
+<p>(6) 计算softmax交叉熵，反向传播，更新梯度</p>
+<h3 id="2-3-Self-Attention"><a href="#2-3-Self-Attention" class="headerlink" title="2.3 Self-Attention"></a>2.3 Self-Attention</h3><p>(1) $\large d_k = d_v = D / h$，则query，key 和 value 分别对应的线性层为 $W_q \in \mathbb{R}^{D \times (h\cdot d)}$，$W_q \in \mathbb{R}^{D \times (h\cdot d)}$</p>
+<p>，$W_q \in \mathbb{R}^{D \times (h\cdot d)}$</p>
+<p>(2) 三个输入参数分别经过线性层后，并把维度转换为 $\large Q, K, V \in \mathbb{R}^{B \times h \times T \times d}$</p>
+<p>(3) 矩阵乘法得到相似性得分矩阵 $\large (s \cdot Q) * K \rightarrow A  \in \mathbb{R}^{B \times h \times T’ \times T}$，其中 $\large s=1/\sqrt{d}$</p>
+<p>(4) 遮罩计算，$\large A \leftarrow masked(A)$。对于encoder的第一个子层和decoder的第二个子层，把源句子中的边缘位置得分设为负无穷，对于decoder的第一个子层，我们还需要把每一个位置的后面位置的得分设为负无穷。</p>
+<p>(5) 计算softmax得到归一化的相似性矩阵，$\large A \leftarrow softmax(A)$，正则化 $\large A \leftarrow dropout(A)$</p>
+<p>(6) 通过矩阵乘法与 value 加权求和，求得注意力得分 $\large A * V \rightarrow X  \in \mathbb{R}^{B \times h \times T \times d}$</p>
+<p>(7) 连接 $\large h$ 个head $\large X \in \mathbb{R}^{B \times T \times D}$</p>
+<p>(8) 经过一个线性层后输出 $\large W^TX \rightarrow X \in \mathbb{R}^{B \times T \times D}$</p>
+<p>前面提到我们在计算decoder第一子层的注意力时把每一个位置的后面位置的得分设为负无穷，目的是防止未来无用信息的干扰。我们构造该句子的方法是在去边缘的遮罩矩阵基础上，取该矩阵的上三角矩阵，即把相似性矩阵的边缘位置和上三角位置都设为负无穷。</p>
+<h3 id="2-4-Feed-Forward-Network"><a href="#2-4-Feed-Forward-Network" class="headerlink" title="2.4 Feed-Forward Network"></a>2.4 Feed-Forward Network</h3><p>构造两个线性层，$\large W_1  \in \mathbb{R}^{D \times F}$ 和 $\large W_2  \in \mathbb{R}^{F \times D}$ 。</p>
+<p>(1) 记录残差 $\large R \leftarrow X  \in \mathbb{R}^{B \times T’ \times D}$，标准化 $\large X \leftarrow Norm(X)$</p>
+<p>(2) 通过第一个线性层并使用ReLU激活函数 $\large ReLu(W_1^TX) \rightarrow X  \in \mathbb{R}^{B \times T’ \times F}$</p>
+<p>(3) 正则化后在通过第二个线性层 $\large W_2^T(dropout(X)) \rightarrow X  \in \mathbb{R}^{B \times T’ \times D}$</p>
+<p>(4) 加上残差后输出 $\large X \leftarrow X + R$</p>
+<p>上述过程与论文不同的是，我们把标准化 Layer Normalization 移到注意力层的前面。这么做的原因在于当我不做改动时，模型预测结果很糟糕，结果全是 padding 或 eos，个人感觉是因为残差连接后再标准化会把残差丢失，详细原因也不是很肯定。而tensor2tensor中的建议也是放在前面的，既然如此，我就放在前面了。</p>
+<h3 id="2-5-Optimizer"><a href="#2-5-Optimizer" class="headerlink" title="2.5 Optimizer"></a>2.5 Optimizer</h3><p>基于Adam，设 $\large \beta_1 =0.9$，$\large \beta_2=0.98$ 和 $\large \epsilon = 10^{-9}$ ，热更新步为 $\large w=4000$，在第 $\large s$ 步时，则学习率更新规则为，<br>$$<br>lr = D^{-0.5} \cdot min(s^{-0.5}, s \cdot w^{-1.5})<br>$$<br>学习率的变化如图所示，</p>
+<img src="https://i.loli.net/2019/02/27/5c767c6c2a295.png" width="400px">
+
+
+<h2 id="4-参数细节"><a href="#4-参数细节" class="headerlink" title="4. 参数细节"></a>4. 参数细节</h2><ul>
+<li>词向量大小取 512</li>
+<li>head的数量为 8</li>
+<li>encoder和decoder都是 6 层</li>
+<li>前馈传播网络的维度 $\large F$ 为 2048</li>
+<li>dropout 为 0.1</li>
+</ul>
+<h2 id="5-结果"><a href="#5-结果" class="headerlink" title="5. 结果"></a>5. 结果</h2><p>从论文中公示的结果来看，Transformer 模型得到了相当不错的结果，略胜 ConvS2S 一筹。</p>
+<img src="https://i.loli.net/2019/02/27/5c767c8369fc9.png" width="600px">
+
+
+<h2 id="6-自注意力的有效性"><a href="#6-自注意力的有效性" class="headerlink" title="6. 自注意力的有效性"></a>6. 自注意力的有效性</h2><p>自注意力（self-Attention）主要特点是解决了远程依赖问题（long-range dependencies）。信号传递的距离越远，信号就变得越弱，远程依赖就越弱。RNN需要通过时间步的计算传递，信号传递长度是 $\large \mathcal{O}(n)$，而自注意力是把整个序列的信号进行前一层和后一层的直接计算，所以只要 $\large \mathcal{O}(1)$。</p>
+<h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><ul>
+<li><p><a href="https://arxiv.org/abs/1706.03762" target="_blank" rel="noopener">[1] Attention Is All You Need. 2017</a></p>
+</li>
+<li><p><a href="https://arxiv.org/abs/1512.03385" target="_blank" rel="noopener">[2] Deep Residual Learning for Image Recognition. 2015</a> </p>
+</li>
+<li><p><a href="https://arxiv.org/abs/1607.06450" target="_blank" rel="noopener">[3] Layer Normalization. 2016</a></p>
+</li>
+</ul>
+
+    
+    </div>
+    
+    <div class="columns is-variable is-1 is-multiline is-mobile">
+    
+        <span class="column is-narrow"><a class="tag is-light article-tag" href="/tags/NLP/">#NLP</a></span>
+    
+        <span class="column is-narrow"><a class="tag is-light article-tag" href="/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/">#深度学习</a></span>
+    
+    </div>
+    
+    
+    <div class="go-next columns is-mobile is-multiline article-nav">
+        <span class="column is-12-mobile is-half-desktop  article-nav-prev">
+            
+            <a href="/2019/03/28/bi-transformer/">Transformer双向编码器</a>
+            
+        </span>
+        <span class="column is-12-mobile is-half-desktop  article-nav-next">
+            
+            <a href="/2019/01/27/cnn-seq/">卷积序列模型</a>
+            
+        </span>
+    </div>
+    
+</article>
+
+
+
+
+<div class="comments">
+    <h3 class="title is-4">Comments</h3>
+    
+<div id="disqus_thread">
+    
+    <div class="notification is-danger">
+        You forgot to set the <code>shortname</code> for Disqus. Please set it in <code>_config.yml</code>.
+    </div>
+    
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</div>
+
+    </div>
+</section>
+    <footer class="footer">
+    <div class="container">
+        <div class="columns content">
+            <div class="column is-narrow has-text-centered">
+                &copy; 2019 Black Redscarf&nbsp;
+                Powered by <a href="http://hexo.io/" target="_blank">Hexo</a> & <a
+                        href="http://github.com/ppoffice/hexo-theme-minos">Minos</a>
+            </div>
+            <div class="column is-hidden-mobile"></div>
+
+            
+            <div class="column is-narrow">
+                <div class="columns is-mobile is-multiline is-centered">
+                
+                    
+                <a class="column is-narrow has-text-black" title="GitHub" href="https://github.com/ppoffice/hexo-theme-minos" target="_blank" rel="noopener">
+                    
+                    GitHub
+                    
+                </a>
+                
+                </div>
+            </div>
+            
+            
+        </div>
+    </div>
+</footer>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment-with-locales.min.js"></script>
+
+<!-- test if the browser is outdated -->
+<div id="outdated">
+    <h6>Your browser is out-of-date!</h6>
+    <p>Update your browser to view this website correctly. <a id="btnUpdateBrowser" href="http://outdatedbrowser.com/" target="_blank" rel="noopener">Update my browser now </a></p>
+    <p class="last"><a href="#" id="btnCloseUpdateBrowser" title="Close">&times;</a></p>
+</div>
+<script src="//cdnjs.cloudflare.com/ajax/libs/outdated-browser/1.1.5/outdatedbrowser.min.js"></script>
+<script>
+    $(document).ready(function () {
+        // plugin function, place inside DOM ready function
+        outdatedBrowser({
+            bgColor: '#f25648',
+            color: '#ffffff',
+            lowerThan: 'flex'
+        })
+    });
+</script>
+
+<script>
+    window.FontAwesomeConfig = {
+        searchPseudoElements: true
+    }
+    moment.locale("cn");
+</script>
+
+
+    
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+<script>
+    MathJax.Hub.Config({
+        "HTML-CSS": {
+            matchFontHeight: false
+        },
+        SVG: {
+            matchFontHeight: false
+        },
+        CommonHTML: {
+            matchFontHeight: false
+        },
+        tex2jax: {
+            inlineMath: [ ['$','$'],['\\(','\\)'] ],
+            displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+            processEscapes: false
+        }
+    });
+</script>
+
+    
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/katex.min.css" integrity="sha384-9eLZqc9ds8eNjO3TmqPeYcDj8n+Qfa4nuSiGYa6DjLNcv9BtN69ZIulL9+8CqC9Y" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/katex.min.js" integrity="sha384-K3vbOmF2BtaVai+Qk37uypf7VrgBubhQreNQe9aGsz9lB63dIFiQVlJbr92dw2Lx" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/contrib/auto-render.min.js" integrity="sha384-kmZOZB5ObwgQnS/DuDg6TScgOiWWBiVt0plIRkZCmE6rDZGrEOQeHM5PcHi+nyqe" crossorigin="anonymous"
+        onload="renderMathInElement(document.body);"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    renderMathInElement(document.body, {
+        // ...options...
+    });
+});
+</script>
+
+    
+    
+<script src="//cdnjs.cloudflare.com/ajax/libs/lightgallery/1.6.8/js/lightgallery-all.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/justifiedGallery/3.6.5/js/jquery.justifiedGallery.min.js"></script>
+<script>
+    (function ($) {
+        $(document).ready(function () {
+            if (typeof($.fn.lightGallery) === 'function') {
+                $('.article.gallery').lightGallery({ selector: '.gallery-item' });
+            }
+            if (typeof($.fn.justifiedGallery) === 'function') {
+                $('.justified-gallery').justifiedGallery();
+            }
+        });
+    })(jQuery);
+</script>
+
+    
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script>
+    <style>
+        .hljs {
+            position: relative;
+        }
+
+        .hljs .clipboard-btn {
+            float: right;
+            color: #9a9a9a;
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+
+        .hljs .clipboard-btn:hover {
+          color: #8a8a8a;
+        }
+
+        .hljs > .clipboard-btn {
+            display: none;
+            position: absolute;
+            right: 4px;
+            top: 4px;
+        }
+
+        .hljs:hover > .clipboard-btn {
+            display: inline;
+        }
+
+        .hljs > figcaption > .clipboard-btn {
+            margin-right: 4px;
+        }
+    </style>
+    <script>
+      $(document).ready(function () {
+        $('figure.hljs').each(function(i, figure) {
+          var codeId = 'code-' + i;
+          var code = figure.querySelector('.code');
+          var copyButton = $('<button>Copy <i class="far fa-clipboard"></i></button>');
+          code.id = codeId;
+          copyButton.addClass('clipboard-btn');
+          copyButton.attr('data-clipboard-target-id', codeId);
+
+          var figcaption = figure.querySelector('figcaption');
+
+          if (figcaption) {
+            figcaption.append(copyButton[0]);
+          } else {
+            figure.prepend(copyButton[0]);
+          }
+        })
+
+        var clipboard = new ClipboardJS('.clipboard-btn', {
+          target: function(trigger) {
+            return document.getElementById(trigger.getAttribute('data-clipboard-target-id'));
+          }
+        });
+        clipboard.on('success', function(e) {
+          e.clearSelection();
+        })
+      })
+    </script>
+
+    
+    
+
+    
+
+
+<script src="/js/script.js"></script>
+
+    
+    <div class="searchbox ins-search">
+    <div class="searchbox-mask"></div>
+    <div class="searchbox-container ins-search-container">
+        <div class="searchbox-input-wrapper">
+            <input type="text" class="searchbox-input ins-search-input" placeholder="Type something..." />
+            <span class="searchbox-close ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="searchbox-result-wrapper ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+    (function (window) {
+        var INSIGHT_CONFIG = {
+            TRANSLATION: {
+                POSTS: 'Posts',
+                PAGES: 'Pages',
+                CATEGORIES: 'Categories',
+                TAGS: 'Tags',
+                UNTITLED: '(Untitled)',
+            },
+            CONTENT_URL: '/content.json',
+        };
+        window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+    })(window);
+</script>
+<script src="/js/insight.js"></script>
+    
+</body>
+</html>
