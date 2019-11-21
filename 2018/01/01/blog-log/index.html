@@ -76,12 +76,12 @@
     <div class="nav-tool-line">
         <div class="nav-tool">
             
-            <a class="navbar-item search" title="Chercher" href="javascript:;" target="_blank" rel="noopener">
+            <a class="navbar-item search" title="Search" href="javascript:;" target="_blank" rel="noopener">
                 <i class="fas fa-search"></i>
             </a>
             
             
-            <a class="navbar-item" title="GitHub" href="https://github.com/ppoffice/hexo-theme-minos" target="_blank" rel="noopener">
+            <a class="navbar-item" title="GitHub" href="https://github.com/blackredscarf/blackredscarf.github.io" target="_blank" rel="noopener">
                 
                 <i class="fab fa-github"></i>
                 
@@ -160,6 +160,7 @@
         <p>hexo博客的一些坑和技巧写在这里。</p>
 <a id="more"></a>
 
+
     
     </div>
     
@@ -173,7 +174,7 @@
     <div class="go-next columns is-mobile is-multiline article-nav">
         <span class="column is-12-mobile is-half-desktop  article-nav-prev">
             
-            <a href="/2018/06/30/centos-upgrade-gcc/">CentOS6升级gcc4.9</a>
+            <a href="/2018/06/30/centos-upgrade-glibc/">CentOS6升级glibc2.17</a>
             
         </span>
         <span class="column is-12-mobile is-half-desktop is-hidden-mobile article-nav-next">
@@ -187,16 +188,24 @@
 
 
 <div class="comments">
-    <h3 class="title is-4">Commentaires</h3>
+    <h3 class="title is-4">Comments</h3>
     
-<div id="disqus_thread">
-    
-    <div class="notification is-danger">
-        You forgot to set the <code>shortname</code> for Disqus. Please set it in <code>_config.yml</code>.
-    </div>
-    
-    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
-</div>
+<div id="comment-container"></div>
+<link rel="stylesheet" href="https://imsun.github.io/gitment/style/default.css">
+<script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+<script>
+	var gitment = new Gitment({
+		id: '2018/01/01/blog-log/',
+		owner: 'blackredscarf',
+		repo: 'blackredscarf.github.io',
+		oauth: {
+			client_id: '85da87b1664f169cc5ed',
+			client_secret: '548f07567e3c0ed01e7800f9690203bf8d53c615',
+		},
+	})
+	gitment.render('comment-container')
+</script>
+
 </div>
 
     </div>
@@ -216,7 +225,7 @@
                 <div class="columns is-mobile is-multiline is-centered">
                 
                     
-                <a class="column is-narrow has-text-black" title="GitHub" href="https://github.com/ppoffice/hexo-theme-minos" target="_blank" rel="noopener">
+                <a class="column is-narrow has-text-black" title="GitHub" href="https://github.com/blackredscarf/blackredscarf.github.io" target="_blank" rel="noopener">
                     
                     GitHub
                     
@@ -390,7 +399,7 @@ document.addEventListener("DOMContentLoaded", function() {
     <div class="searchbox-mask"></div>
     <div class="searchbox-container ins-search-container">
         <div class="searchbox-input-wrapper">
-            <input type="text" class="searchbox-input ins-search-input" placeholder="Que voulez-vous chercher ?" />
+            <input type="text" class="searchbox-input ins-search-input" placeholder="Type something..." />
             <span class="searchbox-close ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
         </div>
         <div class="searchbox-result-wrapper ins-section-wrapper">
@@ -404,9 +413,9 @@ document.addEventListener("DOMContentLoaded", function() {
             TRANSLATION: {
                 POSTS: 'Posts',
                 PAGES: 'Pages',
-                CATEGORIES: 'Catégories',
+                CATEGORIES: 'Categories',
                 TAGS: 'Tags',
-                UNTITLED: '(Sans Titre)',
+                UNTITLED: '(Untitled)',
             },
             CONTENT_URL: '/content.json',
         };
