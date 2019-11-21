@@ -16,13 +16,13 @@
 
 
 
-    <meta name="description" content="使用长短时期记忆（LSTM）用于序列模型取得了很好的效果，在2017年由Facebook提出了使用卷积神经网络构建Seq2Seq模型 [1]。循环神经网络通过窗口移动方式输入数据进行训练，当句子有 $\large n$ 个窗口时，获得对应的特征表示的时间复杂度为 $\large \mathcal{O}(n)$。而使用卷积神经网络进行并行化计算，当卷积核宽度为 $\large k$ ，其时间复杂度为">
+    <meta name="description" content="使用长短时期记忆（LSTM）用于序列模型取得了很好的效果，在2017年由Facebook提出了使用卷积神经网络构建Seq2Seq模型 [1]。循环神经网络通过窗口移动方式输入数据进行训练，当句子有 \(\large n\) 个窗口时，获得对应的特征表示的时间复杂度为 \(\large \mathcal{O}(n)\)。而使用卷积神经网络进行并行化计算，当卷积核宽度为 \(\large k\) ，其">
 <meta name="keywords" content="NLP,深度学习">
 <meta property="og:type" content="article">
 <meta property="og:title" content="卷积序列模型">
 <meta property="og:url" content="http:&#x2F;&#x2F;yoursite.com&#x2F;2019&#x2F;01&#x2F;27&#x2F;cnn-seq&#x2F;index.html">
 <meta property="og:site_name" content="绯色的魔法世界">
-<meta property="og:description" content="使用长短时期记忆（LSTM）用于序列模型取得了很好的效果，在2017年由Facebook提出了使用卷积神经网络构建Seq2Seq模型 [1]。循环神经网络通过窗口移动方式输入数据进行训练，当句子有 $\large n$ 个窗口时，获得对应的特征表示的时间复杂度为 $\large \mathcal{O}(n)$。而使用卷积神经网络进行并行化计算，当卷积核宽度为 $\large k$ ，其时间复杂度为">
+<meta property="og:description" content="使用长短时期记忆（LSTM）用于序列模型取得了很好的效果，在2017年由Facebook提出了使用卷积神经网络构建Seq2Seq模型 [1]。循环神经网络通过窗口移动方式输入数据进行训练，当句子有 \(\large n\) 个窗口时，获得对应的特征表示的时间复杂度为 \(\large \mathcal{O}(n)\)。而使用卷积神经网络进行并行化计算，当卷积核宽度为 \(\large k\) ，其">
 <meta property="og:locale" content="cn">
 <meta property="og:image" content="https:&#x2F;&#x2F;i.loli.net&#x2F;2019&#x2F;01&#x2F;27&#x2F;5c4d42fa80b78.png">
 <meta property="og:updated_time" content="2019-11-20T14:38:31.519Z">
@@ -78,7 +78,7 @@
     <div class="nav-tool-line">
         <div class="nav-tool">
             
-            <a class="navbar-item search" title="Search" href="javascript:;" target="_blank" rel="noopener">
+            <a class="navbar-item search" title="Chercher" href="javascript:;" target="_blank" rel="noopener">
                 <i class="fas fa-search"></i>
             </a>
             
@@ -163,56 +163,78 @@
     </div>
     <div class="article-entry is-size-6-mobile" itemprop="articleBody">
     
-        <p>使用长短时期记忆（LSTM）用于序列模型取得了很好的效果，在2017年由Facebook提出了使用卷积神经网络构建Seq2Seq模型 <a href="https://arxiv.org/abs/1705.03122" target="_blank" rel="noopener">[1]</a>。循环神经网络通过窗口移动方式输入数据进行训练，当句子有 $\large n$ 个窗口时，获得对应的特征表示的时间复杂度为 $\large \mathcal{O}(n)$。而使用卷积神经网络进行并行化计算，当卷积核宽度为 $\large k$ ，其时间复杂度为 $\large \mathcal{O}(\frac{n}{k})$。</p>
+        <p>使用长短时期记忆（LSTM）用于序列模型取得了很好的效果，在2017年由Facebook提出了使用卷积神经网络构建Seq2Seq模型 <a href="https://arxiv.org/abs/1705.03122" target="_blank" rel="noopener">[1]</a>。循环神经网络通过窗口移动方式输入数据进行训练，当句子有 <span class="math inline">\(\large n\)</span> 个窗口时，获得对应的特征表示的时间复杂度为 <span class="math inline">\(\large \mathcal{O}(n)\)</span>。而使用卷积神经网络进行并行化计算，当卷积核宽度为 <span class="math inline">\(\large k\)</span> ，其时间复杂度为 <span class="math inline">\(\large \mathcal{O}(\frac{n}{k})\)</span>。</p>
 <a id="more"></a>
-
-<h2 id="Encoder结构"><a href="#Encoder结构" class="headerlink" title="Encoder结构"></a>Encoder结构</h2><p>我们采用一维卷积对序列进行处理，假设输入序列长度为 $\large T$，卷积核宽度为 $\large f$，边缘为 $\large p$，则输出宽度为 $\large T + 2p - f + 1$。</p>
-<p>源句子的最大序列长度为 $\large T$, 目标句子的最大序列长度为 $\large T’$，批次大小为 $\large B$，词向量大小为 $\large E$， 源语言词汇数量为 $\large V$，目标语言词汇数量为 $\large V’$，第一层卷积的通道数为 $\large C$。</p>
-<p>(1) 整个句子的词向量为 $\large $$\large X \leftarrow emb \in \mathbb{R}^{T \times B \times E}$</p>
-<p>(2) 输入卷积层之前，要先通过一个线性层将维度规范到 $\large $$\large X \in \mathbb{R}^{T \times B \times C}$，同时对维度做一个转置 $\large X \in \mathbb{R}^{B \times C \times T}$</p>
-<p>(3) 卷积块带有残差结构 (residual)，所以计算下一个卷积块之前保留一份残差 $\large R \leftarrow X$</p>
-<p>(4) 在卷积计算时，我们不希望边缘向量产生影响，所以构造一个遮罩矩阵，将 $\large \langle pad \rangle$ 位置值设为0， </p>
-<p>$$<br>mask \in \mathbb{R}^{T \times B}<br>\begin{cases}<br>0 &amp; if ; x = pad \<br>1 &amp; otherwise<br>\end{cases}<br>$$</p>
-<p>转置和扩充维度 $\large mask  \in \mathbb{R}^{B \times C \times T}$，把边缘值的通道设为0，$\large X \leftarrow X \circ mask$</p>
-<p>(4) 然后把 $\large X$ 输入到一维卷积中 $\large X \overset{conv}{\rightarrow} X \in \mathbb{R}^{B \times T \times 2C}$，这里指定输出通道是输入通道的2倍，而采用Same Convolution，所以序列长度不变</p>
-<p>(5) 我们使用门控线性单元（Gated Linear Units）对卷积块的输出进行计算 <a href="https://arxiv.org/abs/1612.08083" target="_blank" rel="noopener">[2]</a>，输出后通道数减半，</p>
-<p>$$<br>\begin{align}<br>&amp; X \overset{split}{\rightarrow}A,B \in \mathbb{R}^{B \times C \times T} \<br>&amp; X = A \circ \sigma(B)<br>\end{align}<br>$$</p>
-<p>(6) 加上残差，$\large X \leftarrow X + R$；更新残差 $\large R \leftarrow X$</p>
-<p>(7) 把 $\large X$ 输入到下一卷积块，即下一层</p>
-<p>(8) 从最后一个卷积块输出后，再经过线性层得到 $\large O \in \mathbb{R}^{B \times T \times E}$</p>
-<p>(9) 除了 $\large O$ 外，还要输出一个向量用于注意力计算 $\large U \leftarrow O + emb^T$</p>
-<p>卷积块的计算过程如图所示：（图是我自己画的，如有错误请指出）</p>
-<img src="https://i.loli.net/2019/01/27/5c4d42fa80b78.png" width="800px">
-
-
-
-<h2 id="Decoder结构"><a href="#Decoder结构" class="headerlink" title="Decoder结构"></a>Decoder结构</h2><p>Decdoer前面的结构基本与encoder一致，不同处有三个，</p>
-<p>(1) decoder的卷积层边缘 $\large padding$ 设置为 kernel_size - 1。当输出时，我们去掉序列最后的 $\large padding $ 个，以保持输入输出序列相同。这么做是为了确保当前信息不会受未来信息的影响</p>
-<p>(2) 上述 (5) 计算完GLU后，还要输入到注意力层进行计算，注意力层输出后接上 (6)</p>
-<p>(3) 上述 (8) 后再经过一个线性层得到对所有词汇的得分矩阵 $\large X  \in \mathbb{R}^{T’ \times B \times V’}$</p>
-<h2 id="注意力层结构"><a href="#注意力层结构" class="headerlink" title="注意力层结构"></a>注意力层结构</h2><p>注意力层接收decoder的隐藏状态，目标序列词向量，encoder的输出。</p>
-<p>(1) 保留一个残差 $\large R \leftarrow X$ ，结合decoder的隐藏状态和目标序列词向量，$\large X \leftarrow W^TX + emb_t ,; X \in \mathbb{R}^{B \times T’ \times E}$</p>
-<p>(2) 再与encoder的输出计算注意力得分矩阵 $\large A \leftarrow X * O,; A \in \mathbb{R}^{B \times T’ \times T}$</p>
-<p>(3) 我们不需要 $\large \langle pad \rangle$ 的产生注意，所以把 $\large \langle pad \rangle$ 位置的得分都设置为负无穷</p>
-<p>(4) 通过softmax对 $\large A$ 计算注意力分布，得到对齐矩阵 $\large A \leftarrow softmax(A)$</p>
-<p>(5) 论文中提到，对于注意力的输出，我们还需要计算一个conditional vector，$\large Co \leftarrow A * U,;Co  \in \mathbb{R}^{B \times T’ \times E}$</p>
-<p>(6) 最后加上残差后输出 $\large X \leftarrow W^TX + R,; X \in \mathbb{R}^{B \times C \times T’}$</p>
-<p>不同于RNN中所有时间步共享一个注意力层，这里的每一个卷积层后面都是一个独立的注意力层，当你有10层卷积层，那么就有10个独立的注意力层。</p>
-<h2 id="位置向量（Position-Embeddings-）"><a href="#位置向量（Position-Embeddings-）" class="headerlink" title="位置向量（Position Embeddings ）"></a>位置向量（Position Embeddings ）</h2><p>为了让卷积网络在处理序列时有一种空间感，我们要对词向量加上一个位置向量 $\large emb \leftarrow emb + pos_emb$。其中 $\large pos_emb$ 表示对于词汇在该句子的索引编号。</p>
-<h2 id="初始化策略"><a href="#初始化策略" class="headerlink" title="初始化策略"></a>初始化策略</h2><ol>
-<li>为了抑制加上残差导致数值持续变大而导致高方差，所以每次加上残差或者加上词向量后，都乘以 $\large \sqrt{0.5}$ 。</li>
-<li>在获得词向量后和输入卷积块之前进行 $\large p=0.1$ 的dropout正则化</li>
-<li>对于卷积块的参数初始化，我们指定其正态分布 $\large \mathcal{N}(0, \sqrt{4p/C})$，其中乘以 $\large p$ 是为了抵消dropout时乘以的 $\large 1/p$。</li>
-<li>线性层初始化参数符合 $\large \mathcal{N}(0, \sqrt{(1-p)/N})$</li>
-<li>词向量和位置向量在 $\large [0, 0.1]$ 之间均匀分布，并且 $\large \langle pad \rangle$ 对应的词向量设为0</li>
+<h2 id="encoder结构">Encoder结构</h2>
+<p>我们采用一维卷积对序列进行处理，假设输入序列长度为 <span class="math inline">\(\large T\)</span>，卷积核宽度为 <span class="math inline">\(\large f\)</span>，边缘为 <span class="math inline">\(\large p\)</span>，则输出宽度为 <span class="math inline">\(\large T + 2p - f + 1\)</span>。</p>
+<p>源句子的最大序列长度为 <span class="math inline">\(\large T\)</span>, 目标句子的最大序列长度为 <span class="math inline">\(\large T&#39;\)</span>，批次大小为 <span class="math inline">\(\large B\)</span>，词向量大小为 <span class="math inline">\(\large E\)</span>， 源语言词汇数量为 <span class="math inline">\(\large V\)</span>，目标语言词汇数量为 <span class="math inline">\(\large V&#39;\)</span>，第一层卷积的通道数为 <span class="math inline">\(\large C\)</span>。</p>
+<ol type="1">
+<li><p>整个句子的词向量为 $$<span class="math inline">\(\large X \leftarrow emb \in \mathbb{R}^{T \times B \times E}\)</span></p></li>
+<li><p>输入卷积层之前，要先通过一个线性层将维度规范到 $$<span class="math inline">\(\large X \in \mathbb{R}^{T \times B \times C}\)</span>，同时对维度做一个转置 <span class="math inline">\(\large X \in \mathbb{R}^{B \times C \times T}\)</span></p></li>
+<li><p>卷积块带有残差结构 (residual)，所以计算下一个卷积块之前保留一份残差 <span class="math inline">\(\large R \leftarrow X\)</span></p></li>
+<li><p>在卷积计算时，我们不希望边缘向量产生影响，所以构造一个遮罩矩阵，将 <span class="math inline">\(\large \langle pad \rangle\)</span> 位置值设为0，</p></li>
 </ol>
-<h2 id="生成（Generation）"><a href="#生成（Generation）" class="headerlink" title="生成（Generation）"></a>生成（Generation）</h2><p>在训练时，我们可以一次性把整个目标句子输入到CNN中并行计算，不用像RNN中一步一步的输入，理论上的训练速度会有所提升，实际跑起来后会因为其中大量的注意力层会把训练速度拖慢。</p>
-<p>在decoder生成预测序列时，我们需要以递进式的输入到CNN，需要输入 $\large \frac{T(T-1)}{2}$ 次，而RNN逐个输入也就 $\large T$ 次，所以生成速度上，CNN明显要慢。论文中提出的解决方案是把前面序列的卷积参数保留下来，不用重复计算，但并没有详细讲要怎么做，实现起来貌似难度挺大的。</p>
-<h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><ul>
-<li><p><a href="https://arxiv.org/abs/1705.03122" target="_blank" rel="noopener">[1] Convolutional Sequence to Sequence Learning.  2017</a></p>
-</li>
-<li><p><a href="https://arxiv.org/abs/1612.08083" target="_blank" rel="noopener">[2] Language Modeling with Gated Convolutional Networks. 2016</a></p>
-</li>
+<p><span class="math display">\[ 
+mask \in \mathbb{R}^{T \times B}
+\begin{cases}
+0 &amp; if \; x = pad \\
+1 &amp; otherwise
+\end{cases}
+\]</span></p>
+<p>转置和扩充维度 <span class="math inline">\(\large mask \in \mathbb{R}^{B \times C \times T}\)</span>，把边缘值的通道设为0，<span class="math inline">\(\large X \leftarrow X \circ mask\)</span></p>
+<ol start="4" type="1">
+<li><p>然后把 <span class="math inline">\(\large X\)</span> 输入到一维卷积中 <span class="math inline">\(\large X \overset{conv}{\rightarrow} X \in \mathbb{R}^{B \times T \times 2C}\)</span>，这里指定输出通道是输入通道的2倍，而采用Same Convolution，所以序列长度不变</p></li>
+<li><p>我们使用门控线性单元（Gated Linear Units）对卷积块的输出进行计算 <a href="https://arxiv.org/abs/1612.08083" target="_blank" rel="noopener">[2]</a>，输出后通道数减半，</p></li>
+</ol>
+<p><span class="math display">\[
+\begin{align}
+&amp; X \overset{split}{\rightarrow}A,B \in \mathbb{R}^{B \times C \times T} \\
+&amp; X = A \circ \sigma(B)
+\end{align}
+\]</span></p>
+<ol start="6" type="1">
+<li><p>加上残差，<span class="math inline">\(\large X \leftarrow X + R\)</span>；更新残差 <span class="math inline">\(\large R \leftarrow X\)</span></p></li>
+<li><p>把 <span class="math inline">\(\large X\)</span> 输入到下一卷积块，即下一层</p></li>
+<li><p>从最后一个卷积块输出后，再经过线性层得到 <span class="math inline">\(\large O \in \mathbb{R}^{B \times T \times E}\)</span></p></li>
+<li><p>除了 <span class="math inline">\(\large O\)</span> 外，还要输出一个向量用于注意力计算 <span class="math inline">\(\large U \leftarrow O + emb^T\)</span></p></li>
+</ol>
+<p>卷积块的计算过程如图所示：（图是我自己画的，如有错误请指出）</p>
+<p><img src="https://i.loli.net/2019/01/27/5c4d42fa80b78.png" width="800px"></p>
+<h2 id="decoder结构">Decoder结构</h2>
+<p>Decdoer前面的结构基本与encoder一致，不同处有三个，</p>
+<ol type="1">
+<li><p>decoder的卷积层边缘 <span class="math inline">\(\large padding\)</span> 设置为 kernel_size - 1。当输出时，我们去掉序列最后的 $padding $ 个，以保持输入输出序列相同。这么做是为了确保当前信息不会受未来信息的影响</p></li>
+<li><p>上述 (5) 计算完GLU后，还要输入到注意力层进行计算，注意力层输出后接上 (6)</p></li>
+<li><p>上述 (8) 后再经过一个线性层得到对所有词汇的得分矩阵 <span class="math inline">\(\large X \in \mathbb{R}^{T&#39; \times B \times V&#39;}\)</span></p></li>
+</ol>
+<h2 id="注意力层结构">注意力层结构</h2>
+<p>注意力层接收decoder的隐藏状态，目标序列词向量，encoder的输出。</p>
+<ol type="1">
+<li><p>保留一个残差 <span class="math inline">\(\large R \leftarrow X\)</span> ，结合decoder的隐藏状态和目标序列词向量，<span class="math inline">\(\large X \leftarrow W^TX + emb_t ,\; X \in \mathbb{R}^{B \times T&#39; \times E}\)</span></p></li>
+<li><p>再与encoder的输出计算注意力得分矩阵 <span class="math inline">\(\large A \leftarrow X * O,\; A \in \mathbb{R}^{B \times T&#39; \times T}\)</span></p></li>
+<li><p>我们不需要 <span class="math inline">\(\large \langle pad \rangle\)</span> 的产生注意，所以把 <span class="math inline">\(\large \langle pad \rangle\)</span> 位置的得分都设置为负无穷</p></li>
+<li><p>通过softmax对 <span class="math inline">\(\large A\)</span> 计算注意力分布，得到对齐矩阵 <span class="math inline">\(\large A \leftarrow softmax(A)\)</span></p></li>
+<li><p>论文中提到，对于注意力的输出，我们还需要计算一个conditional vector，<span class="math inline">\(\large Co \leftarrow A * U,\;Co \in \mathbb{R}^{B \times T&#39; \times E}\)</span></p></li>
+<li><p>最后加上残差后输出 <span class="math inline">\(\large X \leftarrow W^TX + R,\; X \in \mathbb{R}^{B \times C \times T&#39;}\)</span></p></li>
+</ol>
+<p>不同于RNN中所有时间步共享一个注意力层，这里的每一个卷积层后面都是一个独立的注意力层，当你有10层卷积层，那么就有10个独立的注意力层。</p>
+<h2 id="位置向量position-embeddings">位置向量（Position Embeddings ）</h2>
+<p>为了让卷积网络在处理序列时有一种空间感，我们要对词向量加上一个位置向量 <span class="math inline">\(\large emb \leftarrow emb + pos\_emb\)</span>。其中 <span class="math inline">\(\large pos\_emb\)</span> 表示对于词汇在该句子的索引编号。</p>
+<h2 id="初始化策略">初始化策略</h2>
+<ol type="1">
+<li>为了抑制加上残差导致数值持续变大而导致高方差，所以每次加上残差或者加上词向量后，都乘以 <span class="math inline">\(\large \sqrt{0.5}\)</span> 。</li>
+<li>在获得词向量后和输入卷积块之前进行 <span class="math inline">\(\large p=0.1\)</span> 的dropout正则化</li>
+<li>对于卷积块的参数初始化，我们指定其正态分布 <span class="math inline">\(\large \mathcal{N}(0, \sqrt{4p/C})\)</span>，其中乘以 <span class="math inline">\(\large p\)</span> 是为了抵消dropout时乘以的 <span class="math inline">\(\large 1/p\)</span>。</li>
+<li>线性层初始化参数符合 <span class="math inline">\(\large \mathcal{N}(0, \sqrt{(1-p)/N})\)</span></li>
+<li>词向量和位置向量在 <span class="math inline">\(\large [0, 0.1]\)</span> 之间均匀分布，并且 <span class="math inline">\(\large \langle pad \rangle\)</span> 对应的词向量设为0</li>
+</ol>
+<h2 id="生成generation">生成（Generation）</h2>
+<p>在训练时，我们可以一次性把整个目标句子输入到CNN中并行计算，不用像RNN中一步一步的输入，理论上的训练速度会有所提升，实际跑起来后会因为其中大量的注意力层会把训练速度拖慢。</p>
+<p>在decoder生成预测序列时，我们需要以递进式的输入到CNN，需要输入 <span class="math inline">\(\large \frac{T(T-1)}{2}\)</span> 次，而RNN逐个输入也就 <span class="math inline">\(\large T\)</span> 次，所以生成速度上，CNN明显要慢。论文中提出的解决方案是把前面序列的卷积参数保留下来，不用重复计算，但并没有详细讲要怎么做，实现起来貌似难度挺大的。</p>
+<h2 id="参考文献">参考文献</h2>
+<ul>
+<li><p><a href="https://arxiv.org/abs/1705.03122" target="_blank" rel="noopener">[1] Convolutional Sequence to Sequence Learning. 2017</a></p></li>
+<li><p><a href="https://arxiv.org/abs/1612.08083" target="_blank" rel="noopener">[2] Language Modeling with Gated Convolutional Networks. 2016</a></p></li>
 </ul>
 
     
@@ -246,7 +268,7 @@
 
 
 <div class="comments">
-    <h3 class="title is-4">Comments</h3>
+    <h3 class="title is-4">Commentaires</h3>
     
 <div id="disqus_thread">
     
@@ -449,7 +471,7 @@ document.addEventListener("DOMContentLoaded", function() {
     <div class="searchbox-mask"></div>
     <div class="searchbox-container ins-search-container">
         <div class="searchbox-input-wrapper">
-            <input type="text" class="searchbox-input ins-search-input" placeholder="Type something..." />
+            <input type="text" class="searchbox-input ins-search-input" placeholder="Que voulez-vous chercher ?" />
             <span class="searchbox-close ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
         </div>
         <div class="searchbox-result-wrapper ins-section-wrapper">
@@ -463,9 +485,9 @@ document.addEventListener("DOMContentLoaded", function() {
             TRANSLATION: {
                 POSTS: 'Posts',
                 PAGES: 'Pages',
-                CATEGORIES: 'Categories',
+                CATEGORIES: 'Catégories',
                 TAGS: 'Tags',
-                UNTITLED: '(Untitled)',
+                UNTITLED: '(Sans Titre)',
             },
             CONTENT_URL: '/content.json',
         };

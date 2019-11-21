@@ -72,7 +72,7 @@
     <div class="nav-tool-line">
         <div class="nav-tool">
             
-            <a class="navbar-item search" title="Search" href="javascript:;" target="_blank" rel="noopener">
+            <a class="navbar-item search" title="Chercher" href="javascript:;" target="_blank" rel="noopener">
                 <i class="fas fa-search"></i>
             </a>
             
@@ -160,7 +160,7 @@
     
         <p>先说明一些关于Linux进程间通信的基本知识：Linux的进程间通信是基于文件的，也可以称之为设备，因为所有设备其实都是文件。描述符其实指的是文件描述符，与文件系统中的一个文件对应，每当你创建出一个描述符，就创建出一个设备驱动进程，该进程一直监听着该文件的变化。</p>
         <p class="article-more-link">
-            <a href="/2019/09/25/linux-select/#more">Read More</a>
+            <a href="/2019/09/25/linux-select/#more">Lire la Suite</a>
         </p>
     
     </div>
@@ -198,10 +198,10 @@
     </div>
     <div class="article-entry is-size-6-mobile" itemprop="articleBody">
     
-        <p>BERT，完整描述是使用双向编码器的Transformer (Bidirectional Encoder Representations from<br>Transformers)， 是Google在2018年发布的一个神经网络模型 <a href="https://arxiv.org/abs/1810.04805" target="_blank" rel="noopener">[1]</a>。该模型与以往大多数NLP模型不同，它本身便是一个用于迁移训练的模型。</p>
+        <p>BERT，完整描述是使用双向编码器的Transformer (Bidirectional Encoder Representations from Transformers)， 是Google在2018年发布的一个神经网络模型 <a href="https://arxiv.org/abs/1810.04805" target="_blank" rel="noopener">[1]</a>。该模型与以往大多数NLP模型不同，它本身便是一个用于迁移训练的模型。</p>
 <p>对于迁移训练，在计算机视觉中迁移训练已经是个常态了，一般都是在经过ImageNet数据训练的预训练模型上进行微调。如今，研究人员在处理NLP问题上也希望能够通过预训练来提高模型能力。而BERT的该论文主要阐述如何在BERT模型上进行预训练，然后基于预训练模型，对于不同任务(task)进行微调。</p>
         <p class="article-more-link">
-            <a href="/2019/03/28/bi-transformer/#more">Read More</a>
+            <a href="/2019/03/28/bi-transformer/#more">Lire la Suite</a>
         </p>
     
     </div>
@@ -239,9 +239,9 @@
     </div>
     <div class="article-entry is-size-6-mobile" itemprop="articleBody">
     
-        <p>Facebook激进地使用卷积网络处理NLP问题，意外地取得了很不错的效果。而 Google 一不做二不休，发布了一种新型的网络结构，transformer模型  <a href="https://arxiv.org/abs/1706.03762" target="_blank" rel="noopener">[1]</a>，该网络结构既不使用RNN，也不使用CNN，而且也获得不错的效果。</p>
+        <p>Facebook激进地使用卷积网络处理NLP问题，意外地取得了很不错的效果。而 Google 一不做二不休，发布了一种新型的网络结构，transformer模型 <a href="https://arxiv.org/abs/1706.03762" target="_blank" rel="noopener">[1]</a>，该网络结构既不使用RNN，也不使用CNN，而且也获得不错的效果。</p>
         <p class="article-more-link">
-            <a href="/2019/02/27/transformer/#more">Read More</a>
+            <a href="/2019/02/27/transformer/#more">Lire la Suite</a>
         </p>
     
     </div>
@@ -279,9 +279,9 @@
     </div>
     <div class="article-entry is-size-6-mobile" itemprop="articleBody">
     
-        <p>使用长短时期记忆（LSTM）用于序列模型取得了很好的效果，在2017年由Facebook提出了使用卷积神经网络构建Seq2Seq模型 <a href="https://arxiv.org/abs/1705.03122" target="_blank" rel="noopener">[1]</a>。循环神经网络通过窗口移动方式输入数据进行训练，当句子有 $\large n$ 个窗口时，获得对应的特征表示的时间复杂度为 $\large \mathcal{O}(n)$。而使用卷积神经网络进行并行化计算，当卷积核宽度为 $\large k$ ，其时间复杂度为 $\large \mathcal{O}(\frac{n}{k})$。</p>
+        <p>使用长短时期记忆（LSTM）用于序列模型取得了很好的效果，在2017年由Facebook提出了使用卷积神经网络构建Seq2Seq模型 <a href="https://arxiv.org/abs/1705.03122" target="_blank" rel="noopener">[1]</a>。循环神经网络通过窗口移动方式输入数据进行训练，当句子有 <span class="math inline">\(\large n\)</span> 个窗口时，获得对应的特征表示的时间复杂度为 <span class="math inline">\(\large \mathcal{O}(n)\)</span>。而使用卷积神经网络进行并行化计算，当卷积核宽度为 <span class="math inline">\(\large k\)</span> ，其时间复杂度为 <span class="math inline">\(\large \mathcal{O}(\frac{n}{k})\)</span>。</p>
         <p class="article-more-link">
-            <a href="/2019/01/27/cnn-seq/#more">Read More</a>
+            <a href="/2019/01/27/cnn-seq/#more">Lire la Suite</a>
         </p>
     
     </div>
@@ -319,10 +319,11 @@
     </div>
     <div class="article-entry is-size-6-mobile" itemprop="articleBody">
     
-        <h2 id="编码和解码"><a href="#编码和解码" class="headerlink" title="编码和解码"></a>编码和解码</h2><p>我们把源句子（source sentence）表示为 $\large (x_1, x_2, \dots, x_n) \in x$, 目标句子（target sentence）表示为 $\large (y_1, y_2, \dots, y_n) \in y$。</p>
+        <h2 id="编码和解码">编码和解码</h2>
+<p>我们把源句子（source sentence）表示为 <span class="math inline">\(\large (x_1, x_2, \dots, x_n) \in x\)</span>, 目标句子（target sentence）表示为 <span class="math inline">\(\large (y_1, y_2, \dots, y_n) \in y\)</span>。</p>
 <p>使用编码网路（encoder）对源句子进行编码，使用解码网络（decoder）对源句子的编码进行解码，解码出预测句子。同时，作为监督，把目标句子作为解码网络的输入。</p>
         <p class="article-more-link">
-            <a href="/2018/12/31/rnn-nmt/#more">Read More</a>
+            <a href="/2018/12/31/rnn-nmt/#more">Lire la Suite</a>
         </p>
     
     </div>
@@ -362,7 +363,7 @@
     
         <p>GloVe（Global Vector），是一种结合全局矩阵分解和本地上下文窗口的方法。LSA（latent semantic analysis）虽然能够有效的统计信息，但在词汇类比任务中表现很差。而Skip-gram虽然在词汇类比任务中表现很好，但依赖于窗口的移动，而不能有效统计全局的计数。论文作者认为，全局计数的对数加上双线性回归方法会非常合适。</p>
         <p class="article-more-link">
-            <a href="/2018/11/20/glove/#more">Read More</a>
+            <a href="/2018/11/20/glove/#more">Lire la Suite</a>
         </p>
     
     </div>
@@ -402,7 +403,7 @@
     
         <p>Word2Vec模型中，主要有Skip-Gram和CBOW两种模型，从直观上理解，Skip-Gram是给定 Input Word 来预测上下文。而CBOW是给定上下文来预测。本篇文章仅讲解Skip-Gram模型。</p>
         <p class="article-more-link">
-            <a href="/2018/10/08/skip-gram/#more">Read More</a>
+            <a href="/2018/10/08/skip-gram/#more">Lire la Suite</a>
         </p>
     
     </div>
@@ -440,9 +441,9 @@
     </div>
     <div class="article-entry is-size-6-mobile" itemprop="articleBody">
     
-        <p>虽然DQN的表现很好，但它有一个致命的缺点是无法学习连续动作空间。回想一下，DQN 是根据greddy策略找到最大Q值对应的行为，即 $\large a = \mathop{argmax}\limits_{a \in \mathcal{A}} Q(s)$，也就说每一个行为对应一个Q值，当动作是高维度的或者是连续的，那么DQN的计算代价就很大，甚至无法进行学习。这时使用策略梯度就能很好解决这个问题。我们把环境动作设计成连续的，用动作特征表示一个动作，使用策略梯度，我们不需要计算每一个动作的Q值，而是可以通过参数化近似的办法直接输出一个动作特征，而不是从某个值映射到某个动作。DDPG (Deep Deterministic Policy Gradient)算法很好的弥补了DQN的缺陷。当然，并不是DDPG只能解决连续动作问题，只要把动作特征映射到某一个动作上就能应对非连续动作空间问题了。</p>
+        <p>虽然DQN的表现很好，但它有一个致命的缺点是无法学习连续动作空间。回想一下，DQN 是根据greddy策略找到最大Q值对应的行为，即 <span class="math inline">\(\large a = \mathop{argmax}\limits_{a \in \mathcal{A}} Q(s)\)</span>，也就说每一个行为对应一个Q值，当动作是高维度的或者是连续的，那么DQN的计算代价就很大，甚至无法进行学习。这时使用策略梯度就能很好解决这个问题。我们把环境动作设计成连续的，用动作特征表示一个动作，使用策略梯度，我们不需要计算每一个动作的Q值，而是可以通过参数化近似的办法直接输出一个动作特征，而不是从某个值映射到某个动作。DDPG (Deep Deterministic Policy Gradient)算法很好的弥补了DQN的缺陷。当然，并不是DDPG只能解决连续动作问题，只要把动作特征映射到某一个动作上就能应对非连续动作空间问题了。</p>
         <p class="article-more-link">
-            <a href="/2018/09/18/ddpg/#more">Read More</a>
+            <a href="/2018/09/18/ddpg/#more">Lire la Suite</a>
         </p>
     
     </div>
@@ -482,7 +483,7 @@
     
         <p>本文主要讲一下 DQN 和 DDQN，以及它们的实验对比。</p>
         <p class="article-more-link">
-            <a href="/2018/08/30/ddqn/#more">Read More</a>
+            <a href="/2018/08/30/ddqn/#more">Lire la Suite</a>
         </p>
     
     </div>
@@ -496,13 +497,13 @@
     
         
 <div class="article-cover">
-   <img class="article-cover-img" src="https://i.loli.net/2019/11/20/divTygY7NJe34pG.jpg"> 
+   <img class="article-cover-img" src="https://i.loli.net/2019/11/20/bYZkx9ElfBth6J8.jpg"> 
 </div>
 
 <article class="article content gallery" itemscope itemprop="blogPost">
     <h1 class="article-title is-size-3 is-size-4-mobile" itemprop="name">
         
-            <a href="/2018/06/30/centos-upgrade-gcc/" itemprop="url">CentOS6升级gcc4.9</a>
+            <a href="/2018/06/30/centos-upgrade-glibc/" itemprop="url">CentOS6升级glibc2.17</a>
         
     </h1>
     <div class="article-meta columns is-variable is-1 is-multiline is-mobile is-size-7-mobile">
@@ -520,9 +521,10 @@
     </div>
     <div class="article-entry is-size-6-mobile" itemprop="articleBody">
     
-        <p>前段时间在CentOS6集群上跑TensorFlow的时候遇到了glibc和gcc版本过低的问题。本篇讲升级gcc。</p>
+        <p>前段时间在CentOS6集群上跑TensorFlow的时候遇到了glibc和gcc版本过低的问题。本篇先讲升级glibc。</p>
+<p>注意，glibc是linux的核心底层库，一旦升级失败，系统基本就完蛋了。虽然这个教程我有九成把握能升级成功，但是为了避免突发情况，建议你在实际环境上升级之前，先跑一台虚拟机去模拟升级。</p>
         <p class="article-more-link">
-            <a href="/2018/06/30/centos-upgrade-gcc/#more">Read More</a>
+            <a href="/2018/06/30/centos-upgrade-glibc/#more">Lire la Suite</a>
         </p>
     
     </div>
@@ -538,10 +540,10 @@
         
 <nav class="pagination is-centered is-rounded" role="navigation" aria-label="pagination">
     <div class="pagination-previous is-invisible is-hidden-mobile">
-        <a href="/page/0/">Prev</a>
+        <a href="/page/0/">Précédent</a>
     </div>
     <div class="pagination-next">
-        <a href="/page/2/">Next</a>
+        <a href="/page/2/">Suivant</a>
     </div>
     <ul class="pagination-list is-hidden-mobile">
         
@@ -743,7 +745,7 @@ document.addEventListener("DOMContentLoaded", function() {
     <div class="searchbox-mask"></div>
     <div class="searchbox-container ins-search-container">
         <div class="searchbox-input-wrapper">
-            <input type="text" class="searchbox-input ins-search-input" placeholder="Type something..." />
+            <input type="text" class="searchbox-input ins-search-input" placeholder="Que voulez-vous chercher ?" />
             <span class="searchbox-close ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
         </div>
         <div class="searchbox-result-wrapper ins-section-wrapper">
@@ -757,9 +759,9 @@ document.addEventListener("DOMContentLoaded", function() {
             TRANSLATION: {
                 POSTS: 'Posts',
                 PAGES: 'Pages',
-                CATEGORIES: 'Categories',
+                CATEGORIES: 'Catégories',
                 TAGS: 'Tags',
-                UNTITLED: '(Untitled)',
+                UNTITLED: '(Sans Titre)',
             },
             CONTENT_URL: '/content.json',
         };
