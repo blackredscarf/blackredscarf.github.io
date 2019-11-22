@@ -16,13 +16,13 @@
 
 
 
-    <meta name="description" content="编码和解码 我们把源句子（source sentence）表示为 \(\large (x_1, x_2, \dots, x_n) \in x\), 目标句子（target sentence）表示为 \(\large (y_1, y_2, \dots, y_n) \in y\)。 使用编码网路（encoder）对源句子进行编码，使用解码网络（decoder）对源句子的编码进行解码，解码出预测句子">
+    <meta name="description" content="编码和解码我们把源句子（source sentence）表示为 $\large (x_1, x_2, \dots, x_n) \in x$, 目标句子（target sentence）表示为 $\large (y_1, y_2, \dots, y_n) \in y$。 使用编码网路（encoder）对源句子进行编码，使用解码网络（decoder）对源句子的编码进行解码，解码出预测句子。同时，作为监">
 <meta name="keywords" content="NLP,深度学习">
 <meta property="og:type" content="article">
 <meta property="og:title" content="循环神经机器翻译">
 <meta property="og:url" content="http:&#x2F;&#x2F;yoursite.com&#x2F;2018&#x2F;12&#x2F;31&#x2F;rnn-nmt&#x2F;index.html">
 <meta property="og:site_name" content="绯色的魔法世界">
-<meta property="og:description" content="编码和解码 我们把源句子（source sentence）表示为 \(\large (x_1, x_2, \dots, x_n) \in x\), 目标句子（target sentence）表示为 \(\large (y_1, y_2, \dots, y_n) \in y\)。 使用编码网路（encoder）对源句子进行编码，使用解码网络（decoder）对源句子的编码进行解码，解码出预测句子">
+<meta property="og:description" content="编码和解码我们把源句子（source sentence）表示为 $\large (x_1, x_2, \dots, x_n) \in x$, 目标句子（target sentence）表示为 $\large (y_1, y_2, \dots, y_n) \in y$。 使用编码网路（encoder）对源句子进行编码，使用解码网络（decoder）对源句子的编码进行解码，解码出预测句子。同时，作为监">
 <meta property="og:locale" content="en">
 <meta property="og:image" content="https:&#x2F;&#x2F;i.loli.net&#x2F;2018&#x2F;12&#x2F;31&#x2F;5c29a8db94faa.png">
 <meta property="og:image" content="https:&#x2F;&#x2F;i.loli.net&#x2F;2018&#x2F;12&#x2F;31&#x2F;5c29a948f34fd.png">
@@ -166,124 +166,95 @@
     </div>
     <div class="article-entry is-size-6-mobile" itemprop="articleBody">
     
-        <h2 id="编码和解码">编码和解码</h2>
-<p>我们把源句子（source sentence）表示为 <span class="math inline">\(\large (x_1, x_2, \dots, x_n) \in x\)</span>, 目标句子（target sentence）表示为 <span class="math inline">\(\large (y_1, y_2, \dots, y_n) \in y\)</span>。</p>
+        <h2 id="编码和解码"><a href="#编码和解码" class="headerlink" title="编码和解码"></a>编码和解码</h2><p>我们把源句子（source sentence）表示为 $\large (x_1, x_2, \dots, x_n) \in x$, 目标句子（target sentence）表示为 $\large (y_1, y_2, \dots, y_n) \in y$。</p>
 <p>使用编码网路（encoder）对源句子进行编码，使用解码网络（decoder）对源句子的编码进行解码，解码出预测句子。同时，作为监督，把目标句子作为解码网络的输入。</p>
 <a id="more"></a>
+
 <p>本文主要讲使用循环神经网络构建encoder-decoder模型。</p>
-<p>源句子的最大序列长度为 <span class="math inline">\(\large T\)</span>, 目标句子的最大序列长度为 <span class="math inline">\(\large T&#39;\)</span>，批次大小为 <span class="math inline">\(\large B\)</span>，词向量大小为 <span class="math inline">\(\large E\)</span>，RNN的隐藏层大小为 <span class="math inline">\(\large H\)</span>, 源语言词汇数量为 <span class="math inline">\(\large V\)</span>，目标语言词汇数量为 <span class="math inline">\(\large V&#39;\)</span>。</p>
-<ol type="1">
-<li>一个batch即一个句子，把句子填充到长度为 <span class="math inline">\(\large T\)</span>， <strong>依次输入一个词</strong>，经过词向量 <span class="math inline">\(\large X \in \mathbb{R}^{T \times B \times E}\)</span>。</li>
-<li>encoder 一次性输入整个源句子 <span class="math inline">\(\large X\)</span> 和隐藏状态 <span class="math inline">\(\large h \in \mathbb{R}^{T \times B \times H}\)</span></li>
-<li>encoder 输出 <span class="math inline">\(\large X \in \mathbb{R}^{T \times B \times H}\)</span> 和 <span class="math inline">\(\large h \in \mathbb{R}^{T \times B \times H}\)</span></li>
-<li>decoder 把时间步拆开，每一时间步的输入为上一时间步的隐藏状态和预测词，除了预测词，也可以用目标句子中的词，一个时间步输入数据为 <span class="math inline">\(\large X_i \in \mathbb{R}^{1 \times B \times E}\)</span> 和上一时间步的隐藏状态 <span class="math inline">\(\large h \in \mathbb{R}^{1 \times B \times H}\)</span></li>
-<li>decoder 一个时间步的输出为 $O ^{1 B H} $ 和隐藏状态 <span class="math inline">\(\large h\)</span>。然后再下一个词向量 <span class="math inline">\(\large X\)</span> 和 <span class="math inline">\(\large h\)</span> 输入到下一时间步，执行第4步，直到句子末尾。</li>
-<li>我们把decoder每一时间步的输出收集起来 <span class="math inline">\(\large Y \in \mathbb{R}^{T&#39; \times B \times E}\)</span></li>
-<li>decoder的输出要用于softmax函数，所以每一时间步的输出通过一个线性层 $W ^{H V'} $，则最后的输出 $Y ^{T' B V'} $</li>
-<li>为了方便计算，把decoder的输出压缩成二维 $Y ^{(T' * B) V'} $ ，并使用softmax交叉熵计算损失值</li>
+<p>源句子的最大序列长度为 $\large T$, 目标句子的最大序列长度为 $\large T’$，批次大小为 $\large B$，词向量大小为 $\large E$，RNN的隐藏层大小为 $\large H$, 源语言词汇数量为 $\large V$，目标语言词汇数量为 $\large V’$。</p>
+<ol>
+<li>一个batch即一个句子，把句子填充到长度为 $\large T$， <strong>依次输入一个词</strong>，经过词向量 $\large X \in \mathbb{R}^{T \times B \times E}$。</li>
+<li>encoder 一次性输入整个源句子 $\large X$ 和隐藏状态 $\large h \in \mathbb{R}^{T \times B \times H}$</li>
+<li>encoder 输出 $\large X \in \mathbb{R}^{T \times B \times H}$ 和 $\large h \in \mathbb{R}^{T \times B \times H}$</li>
+<li>decoder 把时间步拆开，每一时间步的输入为上一时间步的隐藏状态和预测词，除了预测词，也可以用目标句子中的词，一个时间步输入数据为 $\large X_i  \in \mathbb{R}^{1 \times B \times E}$ 和上一时间步的隐藏状态 $\large h \in \mathbb{R}^{1 \times B \times H}$</li>
+<li>decoder 一个时间步的输出为 $\large O \in \mathbb{R}^{1 \times B \times H} $ 和隐藏状态 $\large h$。然后再下一个词向量 $\large X$ 和 $\large h$ 输入到下一时间步，执行第4步，直到句子末尾。</li>
+<li>我们把decoder每一时间步的输出收集起来 $\large Y \in \mathbb{R}^{T’ \times B \times E}$</li>
+<li>decoder的输出要用于softmax函数，所以每一时间步的输出通过一个线性层 $\large W  \in \mathbb{R}^{H \times V’} $，则最后的输出 $\large \hat Y \in \mathbb{R}^{T’ \times B \times V’} $</li>
+<li>为了方便计算，把decoder的输出压缩成二维 $\large \hat Y \in \mathbb{R}^{(T’ * B) \times V’} $ ，并使用softmax交叉熵计算损失值</li>
 <li>反向传播并梯度更新</li>
 </ol>
 <p>seq2seq网络结构如图所示：</p>
-<p><img src="https://i.loli.net/2018/12/31/5c29a8db94faa.png" width="500px"></p>
-<p>因为我们是按批次计算，一个批次中的句子有长有短，为了统一长度，会对所有句子填充 <span class="math inline">\(\large \langle pad \rangle\)</span>。而句子尾部会填充 <span class="math inline">\(\large \langle eos \rangle\)</span> 表示结束，目标句子会在句首加一个<span class="math inline">\(\large \langle sos \rangle\)</span>，通过这个起始标志输出第一个词汇。</p>
-<p>目标句子包含 <span class="math inline">\(\large \langle eos \rangle\)</span> , <span class="math inline">\(\large \langle sos \rangle\)</span> 和 <span class="math inline">\(\large \langle pad \rangle\)</span> 的序列长度是 <span class="math inline">\(\large T&#39;\)</span>，</p>
-<p><span class="math display">\[
-\large \langle sos \rangle, I, love, you,\large \langle eos \rangle, \large \langle pad \rangle, \dots, \large \langle pad \rangle
-\]</span></p>
-<p>但因为decoder以 <span class="math inline">\(\large \langle sos \rangle\)</span> 为起点，预测输出的是不包含 <span class="math inline">\(\large \langle sos \rangle\)</span> 的，所以计算交叉熵时目标句子应该去掉 <span class="math inline">\(\large \langle sos \rangle\)</span> ，长度变为 <span class="math inline">\(\large T&#39;-1\)</span>， 但是decoder输出长度为 <span class="math inline">\(\large T&#39;\)</span>，长度不一致。这时注意到，句子末尾是一堆无意义的 <span class="math inline">\(\large \langle pad \rangle\)</span> ，预测出来的同样是无意义的，所以我们可以把decoder输入的最后一个去掉，这样序列长度就一致了。</p>
-<h2 id="注意力机制attention-mechanism">注意力机制（Attention Mechanism）</h2>
-<p>注意力机制有两个作用：</p>
+<img src="https://i.loli.net/2018/12/31/5c29a8db94faa.png" width="500px">
+
+
+
+<p>因为我们是按批次计算，一个批次中的句子有长有短，为了统一长度，会对所有句子填充 $\large \langle pad \rangle$。而句子尾部会填充 $\large \langle eos \rangle$ 表示结束，目标句子会在句首加一个$\large \langle sos \rangle$，通过这个起始标志输出第一个词汇。</p>
+<p>目标句子包含 $\large \langle eos \rangle$ , $\large \langle sos \rangle$ 和  $\large \langle pad \rangle$ 的序列长度是 $\large T’$，</p>
+<p>$$<br>\large \langle sos \rangle, I, love, you,\large \langle eos \rangle, \large \langle pad \rangle, \dots, \large \langle pad \rangle<br>$$</p>
+<p>但因为decoder以 $\large \langle sos \rangle$ 为起点，预测输出的是不包含 $\large \langle sos \rangle$ 的，所以计算交叉熵时目标句子应该去掉 $\large \langle sos \rangle$ ，长度变为 $\large T’-1$， 但是decoder输出长度为 $\large T’$，长度不一致。这时注意到，句子末尾是一堆无意义的 $\large \langle pad \rangle$ ，预测出来的同样是无意义的，所以我们可以把decoder输入的最后一个去掉，这样序列长度就一致了。</p>
+<h2 id="注意力机制（Attention-Mechanism）"><a href="#注意力机制（Attention-Mechanism）" class="headerlink" title="注意力机制（Attention Mechanism）"></a>注意力机制（Attention Mechanism）</h2><p>注意力机制有两个作用：</p>
 <p>其一，是区分哪部分是重要的。当你听到句子“the ball is on the ﬁeld”，你不会认为这 6 个单词都一样重要。你首先会注意到单词“ball”，“on” 和 “ﬁeld”，因为这些单词你是觉得最“重要”的。类似，Bahdanau 等人注意到使用 RNN 的最终状态作为 Seq2Seq 模型的单个“上下文向量”的缺点：一般对于输入的不同部分具有不同的重要程度。再者，此外，输出的不同部分甚至可以考虑输入的不同部分“重要”。</p>
 <p>其二，是具有更长时间的记忆力。你会注意到，当你通过编码网络输出特征向量后，解码阶段就只是根据这个向量来解码，而不再有其他信息。如果我们可以持续从编码网络获取信息，那么我们的预测不是更准确一些吗？就好像人类翻译员，他们肯定也不是只看一眼原句，就能翻译出来，而是对照着原句一个一个翻译。</p>
 <p>注意力机制的基本方法就是在解码阶段获取编码阶段的信息。</p>
-<p><img src="https://i.loli.net/2018/12/31/5c29a948f34fd.png" width="450px"></p>
-<h3 id="全局注意力global-attention">全局注意力（Global Attention）</h3>
-<p>所谓全局注意力，即把encoder的所有输出的信息参加到decoder每一时间步的输出的计算中。简单的说就是，当我们预测每一个词时，我们会参考源句子中每一个词，每个源词汇都会得到一个注意力得分（score）。</p>
+<img src="https://i.loli.net/2018/12/31/5c29a948f34fd.png" width="450px">
+
+<h3 id="全局注意力（Global-Attention）"><a href="#全局注意力（Global-Attention）" class="headerlink" title="全局注意力（Global Attention）"></a>全局注意力（Global Attention）</h3><p>所谓全局注意力，即把encoder的所有输出的信息参加到decoder每一时间步的输出的计算中。简单的说就是，当我们预测每一个词时，我们会参考源句子中每一个词，每个源词汇都会得到一个注意力得分（score）。</p>
 <p>为了计算注意力，我们把decoder的每一时间步拆开计算。</p>
-<p>假设当前时间步的输出为 <span class="math inline">\(\large y \in \mathbb{R}^{1 \times B \times H}\)</span>，而encoder的输出为 $O ^{T B H} $。则得分函数可以有以下三种，</p>
-<p><span class="math display">\[
-score(y, O) = 
-\begin{cases}
-y^TO \\
-(y^TW)^TO \\
-v^T tanh(W[y;O])
-\end{cases}
-\]</span></p>
+<p>假设当前时间步的输出为 $\large y \in \mathbb{R}^{1 \times B \times H}$，而encoder的输出为 $\large O \in \mathbb{R}^{T \times B \times H} $。则得分函数可以有以下三种，</p>
+<p>$$<br>score(y, O) =<br>\begin{cases}<br>y^TO \<br>(y^TW)^TO \<br>v^T tanh(W[y;O])<br>\end{cases}<br>$$</p>
 <p>（一般用第二种）</p>
-<p>为了得到得分矩阵，我们计算时会进行转置，<span class="math inline">\(\large y \in \mathbb{R}^{B \times 1 \times H}\)</span>， $O ^{B H T} $，矩阵相乘后得到注意力得分 <span class="math inline">\(\large a \in \mathbb{R}^{B \times 1 \times T}\)</span>，一般我们还会对它用softmax计算。</p>
-<ol type="1">
-<li>我们需要得到一个上下文向量 <span class="math inline">\(\large a \times O \rightarrow context \in \mathbb{R}^{B \times 1 \times H}\)</span></li>
-<li>把上下文向量与decoder时间步的输出相连，并经过线性层输出注意力向量 <span class="math inline">\(\large concat(context, y)^T W \rightarrow attn \in \mathbb{R}^{B \times 1 \times H}\)</span></li>
-<li>把中间维度去掉后，经过线性层输出 $y ^{B V'} $</li>
-<li>当decoder的 <span class="math inline">\(\large T&#39;\)</span> 个时间步算完后，我们就能完整的输出序列 <span class="math inline">\(\large Y \in \mathbb{R}^{T&#39; \times B \times V&#39;}\)</span> ，以及所有的注意力得分 <span class="math inline">\(\large a\)</span> 组成了<strong>对齐矩阵</strong>（alignment matrix）<span class="math inline">\(\large align \in \mathbb{R}^{B \times T&#39; \times T}\)</span></li>
+<p>为了得到得分矩阵，我们计算时会进行转置，$\large y \in \mathbb{R}^{B \times 1 \times H}$， $\large O \in \mathbb{R}^{B \times H \times T} $，矩阵相乘后得到注意力得分 $\large a \in  \mathbb{R}^{B \times 1 \times T}$，一般我们还会对它用softmax计算。</p>
+<ol>
+<li>我们需要得到一个上下文向量 $\large a \times O \rightarrow context \in \mathbb{R}^{B \times 1 \times H}$</li>
+<li>把上下文向量与decoder时间步的输出相连，并经过线性层输出注意力向量 $\large concat(context, y)^T W \rightarrow  attn \in \mathbb{R}^{B \times 1 \times H}$</li>
+<li>把中间维度去掉后，经过线性层输出 $\large \hat y \in \mathbb{R}^{B \times V’} $</li>
+<li>当decoder的 $\large T’$ 个时间步算完后，我们就能完整的输出序列 $\large Y \in \mathbb{R}^{T’ \times B \times V’}$ ，以及所有的注意力得分 $\large a$ 组成了<strong>对齐矩阵</strong>（alignment matrix）$\large align \in  \mathbb{R}^{B \times T’ \times T}$</li>
 </ol>
 <p>对齐矩阵如图所示：</p>
-<p><img src="https://i.loli.net/2018/12/31/5c29a96489120.png" width="600px"></p>
+<img src="https://i.loli.net/2018/12/31/5c29a96489120.png" width="600px">
+
 <p>这个表是将源句子中的单词映射到目标句子中的相应单词，越深色表示相关性越大。</p>
 <p>全局注意力网络结构：</p>
-<p><img src="https://i.loli.net/2018/12/31/5c29a8dcd5528.png" width="500px"></p>
-<h2 id="input-feeding">Input-Feeding</h2>
-<p><a href="https://arxiv.org/abs/1508.04025" target="_blank" rel="noopener">Luong et al. (2015)</a> 中提出了Input-Feeding模型 <a href="https://arxiv.org/abs/1508.04025" target="_blank" rel="noopener">[1]</a>，将注意力向量 <span class="math inline">\(\large attn\)</span> 和目标词向量连接后作为decoder RNN的输入，即每一时间步的输入为 <span class="math inline">\(\large y \in \mathbb{R}^{B \times 1 \times (E+H)}\)</span>。</p>
-<p><img src="https://i.loli.net/2018/12/31/5c29a8dddee60.png" width="500px"></p>
-<h2 id="teacher-forcing">Teacher Forcing</h2>
-<p>所谓Teacher Forcing就是对每一时间步的输入使用目标句子中正确的词汇，而不是上一时间步输出的预测词。</p>
-<h2 id="scheduled-sampling">Scheduled Sampling</h2>
-<p>Scheduled Sampling 直译“计划抽样” <a href="https://arxiv.org/abs/1506.03099" target="_blank" rel="noopener">[2]</a>，是介于Teacher Forcing和Without Teacher Forcing之间的方法。我们设置一个使用Teacher Forcing的概率分布，对于每一时间步，我们使用该概率分布来绝对是否使用Teacher Forcing。若使用，我们就输入目标句子中的词汇，否则输入上一时间步的预测词。</p>
+<img src="https://i.loli.net/2018/12/31/5c29a8dcd5528.png" width="500px">
+
+<h2 id="Input-Feeding"><a href="#Input-Feeding" class="headerlink" title="Input-Feeding"></a>Input-Feeding</h2><p><a href="https://arxiv.org/abs/1508.04025" target="_blank" rel="noopener">Luong et al. (2015)</a> 中提出了Input-Feeding模型 <a href="https://arxiv.org/abs/1508.04025" target="_blank" rel="noopener">[1]</a>，将注意力向量 $\large attn$ 和目标词向量连接后作为decoder RNN的输入，即每一时间步的输入为 $\large y \in \mathbb{R}^{B \times 1 \times (E+H)}$。</p>
+<img src="https://i.loli.net/2018/12/31/5c29a8dddee60.png" width="500px">
+
+<h2 id="Teacher-Forcing"><a href="#Teacher-Forcing" class="headerlink" title="Teacher Forcing"></a>Teacher Forcing</h2><p>所谓Teacher Forcing就是对每一时间步的输入使用目标句子中正确的词汇，而不是上一时间步输出的预测词。</p>
+<h2 id="Scheduled-Sampling"><a href="#Scheduled-Sampling" class="headerlink" title="Scheduled Sampling"></a>Scheduled Sampling</h2><p>Scheduled Sampling 直译“计划抽样” <a href="https://arxiv.org/abs/1506.03099" target="_blank" rel="noopener">[2]</a>，是介于Teacher Forcing和Without Teacher Forcing之间的方法。我们设置一个使用Teacher Forcing的概率分布，对于每一时间步，我们使用该概率分布来绝对是否使用Teacher Forcing。若使用，我们就输入目标句子中的词汇，否则输入上一时间步的预测词。</p>
 <p>论文中的方案是每一时间步就抛硬币选择一次，但实际训练中为了统一，一般是一个batch选择一次。</p>
-<p><img src="https://i.loli.net/2018/12/31/5c29a8dd793f3.png" width="550px"></p>
-<h2 id="评估">评估</h2>
-<p>我们对机器翻译的评估通常会用BLEU算法 <a href="https://www.aclweb.org/anthology/P02-1040.pdf" target="_blank" rel="noopener">[3]</a>。它是一种比较<strong>参考翻译</strong>（Reference），即人工翻译，与机器翻译的得分算法。</p>
-<p>我们对参考句子和预测句子取<strong>n元组（n-grams）</strong>, 机器翻译结果为 <span class="math inline">\(\large \hat y\)</span>, 得分为：</p>
-<p><span class="math display">\[
-P_n = \frac{\sum_{ngrams \in \hat y}Count_{ref}(ngrams)}{\sum_{ngrams \in \hat y}Count_{MT}(ngrams)}
-\]</span></p>
+<img src="https://i.loli.net/2018/12/31/5c29a8dd793f3.png" width="550px">
+
+
+
+<h2 id="评估"><a href="#评估" class="headerlink" title="评估"></a>评估</h2><p>我们对机器翻译的评估通常会用BLEU算法 <a href="https://www.aclweb.org/anthology/P02-1040.pdf" target="_blank" rel="noopener">[3]</a>。它是一种比较<strong>参考翻译</strong>（Reference），即人工翻译，与机器翻译的得分算法。</p>
+<p>我们对参考句子和预测句子取<strong>n元组（n-grams）</strong>, 机器翻译结果为 $\large \hat y$, 得分为：</p>
+<p>$$<br>P_n = \frac{\sum_{ngrams \in \hat y}Count_{ref}(ngrams)}{\sum_{ngrams \in \hat y}Count_{MT}(ngrams)}<br>$$</p>
 <p>而BLEU得分的定义为，我们将1至n元组的得分求和再求均值，然后用指数函数放大，</p>
-<p><span class="math display">\[
-BLEU = 
-\beta \;
-exp({\frac{1}{n}\sum_{i=1}^n P_i})
-\]</span></p>
-<p>其中 <span class="math inline">\(\large \beta\)</span> 是惩罚因子, 也叫<strong>简短惩罚</strong>（brevity penalty）。如果你输出了一个非常短的翻译，那么它会更容易得到一个高精确度。因为输出的大部分词可能都出现在参考之中，这时就要对得分进行惩罚。</p>
-<p>假设，参考翻译的长度为 <span class="math inline">\(\large r\)</span>, 若有多个句子就取平均值。机器翻译句子长度为 <span class="math inline">\(\large m\)</span>。</p>
-<p><span class="math display">\[
-\beta = 
-\begin{cases}
-1 &amp; if \, m &gt; r \\
-exp(1-\frac{r}{m}) &amp; otherwise
-\end{cases}
-\]</span></p>
-<p>如果机器翻译句子大于参考翻译句子长度，我们就不进行惩罚；若小于，<span class="math inline">\(\large 1-\frac{r}{m}\)</span> 为负数, 而指数函数会得到一个小数，使得bleu得分降低。</p>
-<h2 id="束搜索-beam-search">束搜索 （Beam Search）</h2>
-<p>你也许会直觉的认为，解码器就是直接将每个时间步的输出通过softmax找到最可能的那个词汇即可，这也叫<strong>贪心查找（Greedy Search）</strong>。但在这只是考虑到一个词的最优选择，而不是整体最优选择。</p>
+<p>$$<br>BLEU =<br>\beta ;<br>exp({\frac{1}{n}\sum_{i=1}^n P_i})<br>$$</p>
+<p>其中 $\large \beta$ 是惩罚因子, 也叫<strong>简短惩罚</strong>（brevity penalty）。如果你输出了一个非常短的翻译，那么它会更容易得到一个高精确度。因为输出的大部分词可能都出现在参考之中，这时就要对得分进行惩罚。</p>
+<p>假设，参考翻译的长度为 $\large r$, 若有多个句子就取平均值。机器翻译句子长度为 $\large m$。</p>
+<p>$$<br>\beta =<br>\begin{cases}<br>1 &amp; if , m &gt; r \<br>exp(1-\frac{r}{m}) &amp; otherwise<br>\end{cases}<br>$$</p>
+<p>如果机器翻译句子大于参考翻译句子长度，我们就不进行惩罚；若小于，$\large 1-\frac{r}{m}$ 为负数, 而指数函数会得到一个小数，使得bleu得分降低。</p>
+<h2 id="束搜索-（Beam-Search）"><a href="#束搜索-（Beam-Search）" class="headerlink" title="束搜索 （Beam Search）"></a>束搜索 （Beam Search）</h2><p>你也许会直觉的认为，解码器就是直接将每个时间步的输出通过softmax找到最可能的那个词汇即可，这也叫<strong>贪心查找（Greedy Search）</strong>。但在这只是考虑到一个词的最优选择，而不是整体最优选择。</p>
 <p>如图，一句话可能会有成多种翻译版本</p>
-<p><img src="https://i.loli.net/2018/12/31/5c29a949c434f.png" width="600px"></p>
+<img src="https://i.loli.net/2018/12/31/5c29a949c434f.png" width="600px">
+
 <p>如果按照局部最优的选择，那可能会输出第一句。如果按照整体最优，那可能是第三句。而实际上，我们应该考虑整体最优。</p>
-<p><span class="math display">\[
-\mathop{argmax}_{y_1,y_2,...,y_T}\,P(y_1,y_2,...,y_T|x)
-\]</span></p>
+<p>$$<br>\mathop{argmax}_{y_1,y_2,…,y_T},P(y_1,y_2,…,y_T|x)<br>$$</p>
 <p>目前比较好的方法是<strong>束搜索</strong>（Beam search）<a href="https://arxiv.org/abs/1606.02960" target="_blank" rel="noopener">[4]</a>。</p>
-<p>定义一个束宽 <span class="math inline">\(\large b\)</span>，每个序列得分函数为 <span class="math inline">\(\large F(w)\)</span>。</p>
-<ol type="1">
-<li><p>第一个时间步输出时，我们会从词汇表 <span class="math inline">\(\large V\)</span> 中找 <span class="math inline">\(\large b\)</span> 个得分 <span class="math inline">\(\large F(w)\)</span> 最大的词汇，加入到对应的序列当中。假设 <span class="math inline">\(\large b = 3\)</span>，那么就有3个候选序列 <span class="math inline">\(\large s_1(w_1), s_2(w_2), s_3(w_3)\)</span></p></li>
-<li><p>对于第一个时间步的每一个候选，依次输入到第二个时间步中，找得分最大的 <span class="math inline">\(\large b\)</span> 个词汇分别加入到该候选序列中，由一个候选序列变成 <span class="math inline">\(\large b​\)</span> 个候选序列</p></li>
-</ol>
-<p><span class="math display">\[ 
-s(w_1,w_4), s(w_1, w_5),  s(w_1, w_6)
-\]</span></p>
-<p>总共可以得到 <span class="math inline">\(\large b^2\)</span> 个候选序列 <span class="math inline">\(\large s_1^1, s_1^2, s_1^3, s_2^1, s_2^2, \dots\)</span> 。假设序列长度为 <span class="math inline">\(\large L\)</span> ，一个序列的总得分为每个词的得分之和 $F(s) = _i^ L F(w_i) $，则该序列的平均得分为 <span class="math inline">\(\large score = F(s) / L\)</span>。我们保留 <span class="math inline">\(\large b\)</span> 个平均得分最高的序列，进入下一时间步。</p>
-<ol start="3" type="1">
-<li><p>往后重复类似于第2步的操作，当其中一个序列的最后一个词为 <span class="math inline">\(\large \langle eos \rangle\)</span> 时，该序列就停止搜索，直到所有序列都停止或者到达指定的最大长度为止。</p></li>
-<li><p>最后从 <span class="math inline">\(\large b\)</span> 个序列选取平均得分最高的序列。</p></li>
-</ol>
+<p>定义一个束宽 $\large b$，每个序列得分函数为 $\large F(w)$。 </p>
+<p>(1) 第一个时间步输出时，我们会从词汇表 $\large V$ 中找 $\large b$ 个得分 $\large F(w)$ 最大的词汇，加入到对应的序列当中。假设 $\large b = 3$，那么就有3个候选序列 $\large s_1(w_1), s_2(w_2), s_3(w_3)$</p>
+<p>(2) 对于第一个时间步的每一个候选，依次输入到第二个时间步中，找得分最大的 $\large b$ 个词汇分别加入到该候选序列中，由一个候选序列变成 $\large b​$ 个候选序列 </p>
+<p>$$<br>s(w_1,w_4), s(w_1, w_5),  s(w_1, w_6)<br>$$</p>
+<p>总共可以得到 $\large b^2$ 个候选序列 $\large s_1^1, s_1^2, s_1^3, s_2^1, s_2^2, \dots$ 。假设序列长度为 $\large L$ ，一个序列的总得分为每个词的得分之和 $\large F(s) = \sum_i^ L F(w_i) $，则该序列的平均得分为  $\large score = F(s) / L$。我们保留 $\large b$ 个平均得分最高的序列，进入下一时间步。</p>
+<p>(3) 往后重复类似于第2步的操作，当其中一个序列的最后一个词为 $\large \langle eos \rangle$ 时，该序列就停止搜索，直到所有序列都停止或者到达指定的最大长度为止。</p>
+<p>(4) 最后从 $\large b$ 个序列选取平均得分最高的序列。</p>
 <p>对于得分函数，我们一般使用</p>
-<p><span class="math display">\[
-F=log(softmax(Y))
-\]</span></p>
+<p>$$<br>F=log(softmax(Y))<br>$$</p>
 <p>束搜索一般用在测试阶段。</p>
-<h2 id="卷积机器翻译">卷积机器翻译</h2>
-<p>使用循环神经网络训练的感觉就是慢。使用卷积网络进行机器翻译可以实现并行化，大大提高训练效率。这部分我打算放到另一篇文章中讲。</p>
-<h2 id="参考文献">参考文献</h2>
-<ul>
+<h2 id="卷积机器翻译"><a href="#卷积机器翻译" class="headerlink" title="卷积机器翻译"></a>卷积机器翻译</h2><p>使用循环神经网络训练的感觉就是慢。使用卷积网络进行机器翻译可以实现并行化，大大提高训练效率。这部分我打算放到另一篇文章中讲。</p>
+<h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><ul>
 <li><a href="https://arxiv.org/abs/1508.04025" target="_blank" rel="noopener">[1] Effective Approaches to Attention-based Neural Machine Translation. 2015</a></li>
 <li><a href="https://arxiv.org/abs/1506.03099" target="_blank" rel="noopener">[2] Scheduled Sampling for Sequence Prediction with Recurrent Neural Networks. 2015</a></li>
 <li><a href="https://www.aclweb.org/anthology/P02-1040.pdf" target="_blank" rel="noopener">[3] BLEU: a Method for Automatic Evaluation of Machine Translation. 2002</a></li>
@@ -323,21 +294,24 @@ F=log(softmax(Y))
 <div class="comments">
     <h3 class="title is-4">Comments</h3>
     
-<div id="comment-container"></div>
-<link rel="stylesheet" href="https://imsun.github.io/gitment/style/default.css">
-<script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+<div id="valine-thread"></div>
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script src='//unpkg.com/valine/dist/Valine.min.js'></script>
 <script>
-	var gitment = new Gitment({
-		id: '2018/12/31/rnn-nmt/',
-		owner: 'blackredscarf',
-		repo: 'blackredscarf.github.io',
-		oauth: {
-			client_id: '85da87b1664f169cc5ed',
-			client_secret: '548f07567e3c0ed01e7800f9690203bf8d53c615',
-		},
-	})
-	gitment.render('comment-container')
+    new Valine({
+        el: '#valine-thread',
+        appId: 'DEXiOMuMN86LKmdUtJYX4FRL-MdYXbMMI',
+        appKey: 'tPt6E0GhkwXKEBUacbugDcWb',
+        notify: false,
+        verify: false,
+        avatar: '',
+        placeholder: 'Say something...',
+        meta: ['nick', 'mail'],
+        visitor: true,
+        lang: ''
+    })
 </script>
+
 
 </div>
 

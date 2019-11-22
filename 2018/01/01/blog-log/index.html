@@ -156,9 +156,10 @@
     
         <p>hexo博客的一些坑和技巧写在这里。而对于常规操作可以看<a href="https://hexo.io/zh-cn/docs/" target="_blank" rel="noopener">官方文档</a>。</p>
 <a id="more"></a>
-<h2 id="使用pandoc作为markdown渲染引擎">使用pandoc作为markdown渲染引擎</h2>
-<p>默认的 hexo-renderer-marked 与 mathjax 和 katex 有很多冲突的问题，所以建议换用 <a href="https://github.com/wzpan/hexo-renderer-pandoc" target="_blank" rel="noopener">hexo-renderer-pandoc</a>。</p>
-<p>确保你已经安装了 <a href="http://johnmacfarlane.net/pandoc/installing.html" target="_blank" rel="noopener">pandoc</a> 。然后npm安装即可。 <figure class="highlight plain hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install hexo-renderer-pandoc --save</span><br></pre></td></tr></table></figure></p>
+
+
+<h2 id="使用pandoc作为markdown渲染引擎"><a href="#使用pandoc作为markdown渲染引擎" class="headerlink" title="使用pandoc作为markdown渲染引擎"></a>使用pandoc作为markdown渲染引擎</h2><p>默认的 hexo-renderer-marked 与 mathjax 和 katex 有很多冲突的问题，所以建议换用 <a href="https://github.com/wzpan/hexo-renderer-pandoc" target="_blank" rel="noopener">hexo-renderer-pandoc</a>。</p>
+<p>确保你已经安装了 <a href="http://johnmacfarlane.net/pandoc/installing.html" target="_blank" rel="noopener">pandoc</a> 。然后npm安装即可。<br><figure class="highlight plain hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install hexo-renderer-pandoc --save</span><br></pre></td></tr></table></figure></p>
 
     
     </div>
@@ -173,7 +174,7 @@
     <div class="go-next columns is-mobile is-multiline article-nav">
         <span class="column is-12-mobile is-half-desktop  article-nav-prev">
             
-            <a href="/2018/06/30/centos-upgrade-gcc/">CentOS6升级gcc4.9</a>
+            <a href="/2018/06/30/centos-upgrade-glibc/">CentOS6升级glibc2.17</a>
             
         </span>
         <span class="column is-12-mobile is-half-desktop is-hidden-mobile article-nav-next">
@@ -189,21 +190,24 @@
 <div class="comments">
     <h3 class="title is-4">Comments</h3>
     
-<div id="comment-container"></div>
-<link rel="stylesheet" href="https://imsun.github.io/gitment/style/default.css">
-<script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+<div id="valine-thread"></div>
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script src='//unpkg.com/valine/dist/Valine.min.js'></script>
 <script>
-	var gitment = new Gitment({
-		id: '2018/01/01/blog-log/',
-		owner: 'blackredscarf',
-		repo: 'blackredscarf.github.io',
-		oauth: {
-			client_id: '85da87b1664f169cc5ed',
-			client_secret: '548f07567e3c0ed01e7800f9690203bf8d53c615',
-		},
-	})
-	gitment.render('comment-container')
+    new Valine({
+        el: '#valine-thread',
+        appId: 'DEXiOMuMN86LKmdUtJYX4FRL-MdYXbMMI',
+        appKey: 'tPt6E0GhkwXKEBUacbugDcWb',
+        notify: false,
+        verify: false,
+        avatar: '',
+        placeholder: 'Say something...',
+        meta: ['nick', 'mail'],
+        visitor: true,
+        lang: ''
+    })
 </script>
+
 
 </div>
 
