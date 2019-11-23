@@ -16,13 +16,13 @@
 
 
 
-    <meta name="description" content="前段时间在CentOS6集群上跑TensorFlow的时候遇到了glibc和gcc版本过低的问题。本篇先讲升级glibc。 注意，glibc是linux的核心底层库，一旦升级失败，系统基本就完蛋了。虽然这个教程我有九成把握能升级成功，但是为了避免突发情况，建议你在实际环境上升级之前，先跑一台虚拟机去模拟升级。">
+    <meta name="description" content="前段时间在CentOS6集群上跑TensorFlow的时候遇到了glibc和gcc版本过低的问题。本篇先讲升级glibc。 注意，glibc是linux的核心底层库，一旦升级失败，系统基本就完蛋了。虽然这个教程我有九成把握能升级成功，但是为了避免突发情况，建议你在实际环境上升级之前，先跑一台虚拟机去模拟升级。">
 <meta name="keywords" content="操作系统,Linux">
 <meta property="og:type" content="article">
 <meta property="og:title" content="CentOS6升级glibc2.17">
 <meta property="og:url" content="http:&#x2F;&#x2F;yoursite.com&#x2F;2018&#x2F;06&#x2F;30&#x2F;centos-upgrade-glibc&#x2F;index.html">
 <meta property="og:site_name" content="绯色的魔法世界">
-<meta property="og:description" content="前段时间在CentOS6集群上跑TensorFlow的时候遇到了glibc和gcc版本过低的问题。本篇先讲升级glibc。 注意，glibc是linux的核心底层库，一旦升级失败，系统基本就完蛋了。虽然这个教程我有九成把握能升级成功，但是为了避免突发情况，建议你在实际环境上升级之前，先跑一台虚拟机去模拟升级。">
+<meta property="og:description" content="前段时间在CentOS6集群上跑TensorFlow的时候遇到了glibc和gcc版本过低的问题。本篇先讲升级glibc。 注意，glibc是linux的核心底层库，一旦升级失败，系统基本就完蛋了。虽然这个教程我有九成把握能升级成功，但是为了避免突发情况，建议你在实际环境上升级之前，先跑一台虚拟机去模拟升级。">
 <meta property="og:locale" content="en">
 <meta property="og:updated_time" content="2019-11-21T15:07:46.767Z">
 <meta name="twitter:card" content="summary">
@@ -161,28 +161,21 @@
         <p>前段时间在CentOS6集群上跑TensorFlow的时候遇到了glibc和gcc版本过低的问题。本篇先讲升级glibc。</p>
 <p>注意，glibc是linux的核心底层库，一旦升级失败，系统基本就完蛋了。虽然这个教程我有九成把握能升级成功，但是为了避免突发情况，建议你在实际环境上升级之前，先跑一台虚拟机去模拟升级。</p>
 <a id="more"></a>
-<h2 id="检测你的glibc版本">检测你的glibc版本</h2>
-<p><figure class="highlight plain hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">strings /lib64/libc.so.6 | grep GLIBC</span><br></pre></td></tr></table></figure></p>
-<p>或 <figure class="highlight plain hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ldd --version</span><br></pre></td></tr></table></figure></p>
-<h2 id="安装必要依赖">安装必要依赖</h2>
-<p><figure class="highlight plain hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">yum install -y wget gcc glibc kernel-devel</span><br></pre></td></tr></table></figure></p>
-<h2 id="方法一rpm无痛升级">方法一：rpm无痛升级</h2>
-<p>可以直接用社区制作好的rpm包来轻松升级。缺点是社区维护的版本不高，目前centos6最高维护到2.17，你想装2.18的话就没有了。</p>
-<h3 id="下载rpm包">下载rpm包</h3>
-<p><figure class="highlight plain hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">wget http://copr-be.cloud.fedoraproject.org/results/mosquito/myrepo-el6/epel-6-x86_64/glibc-2.17-55.fc20/glibc-2.17-55.el6.x86_64.rpm</span><br><span class="line">wget http://copr-be.cloud.fedoraproject.org/results/mosquito/myrepo-el6/epel-6-x86_64/glibc-2.17-55.fc20/glibc-common-2.17-55.el6.x86_64.rpm</span><br><span class="line">wget http://copr-be.cloud.fedoraproject.org/results/mosquito/myrepo-el6/epel-6-x86_64/glibc-2.17-55.fc20/glibc-devel-2.17-55.el6.x86_64.rpm</span><br><span class="line">wget http://copr-be.cloud.fedoraproject.org/results/mosquito/myrepo-el6/epel-6-x86_64/glibc-2.17-55.fc20/glibc-headers-2.17-55.el6.x86_64.rpm</span><br></pre></td></tr></table></figure> ### 安装rpm包 <figure class="highlight plain hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">rpm -Uvh glibc-2.17-55.el6.x86_64.rpm \</span><br><span class="line">glibc-common-2.17-55.el6.x86_64.rpm \</span><br><span class="line">glibc-devel-2.17-55.el6.x86_64.rpm \</span><br><span class="line">glibc-headers-2.17-55.el6.x86_64.rpm</span><br></pre></td></tr></table></figure></p>
+
+<h2 id="检测你的glibc版本"><a href="#检测你的glibc版本" class="headerlink" title="检测你的glibc版本"></a>检测你的glibc版本</h2><p><figure class="highlight plain hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">strings /lib64/libc.so.6 | grep GLIBC</span><br></pre></td></tr></table></figure></p>
+<p>或<br><figure class="highlight plain hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ldd --version</span><br></pre></td></tr></table></figure></p>
+<h2 id="安装必要依赖"><a href="#安装必要依赖" class="headerlink" title="安装必要依赖"></a>安装必要依赖</h2><p><figure class="highlight plain hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">yum install -y wget gcc glibc kernel-devel</span><br></pre></td></tr></table></figure></p>
+<h2 id="方法一：rpm无痛升级"><a href="#方法一：rpm无痛升级" class="headerlink" title="方法一：rpm无痛升级"></a>方法一：rpm无痛升级</h2><p>可以直接用社区制作好的rpm包来轻松升级。缺点是社区维护的版本不高，目前centos6最高维护到2.17，你想装2.18的话就没有了。</p>
+<h3 id="下载rpm包"><a href="#下载rpm包" class="headerlink" title="下载rpm包"></a>下载rpm包</h3><p><figure class="highlight plain hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">wget http://copr-be.cloud.fedoraproject.org/results/mosquito/myrepo-el6/epel-6-x86_64/glibc-2.17-55.fc20/glibc-2.17-55.el6.x86_64.rpm</span><br><span class="line">wget http://copr-be.cloud.fedoraproject.org/results/mosquito/myrepo-el6/epel-6-x86_64/glibc-2.17-55.fc20/glibc-common-2.17-55.el6.x86_64.rpm</span><br><span class="line">wget http://copr-be.cloud.fedoraproject.org/results/mosquito/myrepo-el6/epel-6-x86_64/glibc-2.17-55.fc20/glibc-devel-2.17-55.el6.x86_64.rpm</span><br><span class="line">wget http://copr-be.cloud.fedoraproject.org/results/mosquito/myrepo-el6/epel-6-x86_64/glibc-2.17-55.fc20/glibc-headers-2.17-55.el6.x86_64.rpm</span><br></pre></td></tr></table></figure></p>
+<h3 id="安装rpm包"><a href="#安装rpm包" class="headerlink" title="安装rpm包"></a>安装rpm包</h3><p><figure class="highlight plain hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">rpm -Uvh glibc-2.17-55.el6.x86_64.rpm \</span><br><span class="line">glibc-common-2.17-55.el6.x86_64.rpm \</span><br><span class="line">glibc-devel-2.17-55.el6.x86_64.rpm \</span><br><span class="line">glibc-headers-2.17-55.el6.x86_64.rpm</span><br></pre></td></tr></table></figure></p>
 <p>安装完后查看一下当前glibc的版本，如果最高到2.17的话，说明安装成功。</p>
-<h2 id="方法二源码安装glibc">方法二：源码安装glibc</h2>
-<p>源码安装的缺点就是有些麻烦，要花时间下载以及编译安装。优点就是你想要的所有版本都能安装上。</p>
-<h3 id="下载和解压">下载和解压</h3>
-<p><figure class="highlight plain hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">cd /usr/local/src</span><br><span class="line">wget https://mirrors.tuna.tsinghua.edu.cn/gnu/glibc/glibc-2.17.tar.gz</span><br><span class="line"></span><br><span class="line">tar -xf glibc-2.17.tar.gz</span><br></pre></td></tr></table></figure></p>
-<h3 id="配置编译参数">配置编译参数</h3>
-<p><figure class="highlight plain hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">mkdir glibc-build</span><br><span class="line">cd glibc-build</span><br><span class="line"></span><br><span class="line">../glibc-2.17/configure  --prefix=/usr --disable-profile --enable-add-ons --with-headers=/usr/include --with-binutils=/usr/bin</span><br></pre></td></tr></table></figure></p>
-<h3 id="编译与安装">编译与安装</h3>
-<p><figure class="highlight plain hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">make</span><br><span class="line">make install</span><br></pre></td></tr></table></figure></p>
+<h2 id="方法二：源码安装glibc"><a href="#方法二：源码安装glibc" class="headerlink" title="方法二：源码安装glibc"></a>方法二：源码安装glibc</h2><p>源码安装的缺点就是有些麻烦，要花时间下载以及编译安装。优点就是你想要的所有版本都能安装上。</p>
+<h3 id="下载和解压"><a href="#下载和解压" class="headerlink" title="下载和解压"></a>下载和解压</h3><p><figure class="highlight plain hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">cd /usr/local/src</span><br><span class="line">wget https://mirrors.tuna.tsinghua.edu.cn/gnu/glibc/glibc-2.17.tar.gz</span><br><span class="line"></span><br><span class="line">tar -xf glibc-2.17.tar.gz</span><br></pre></td></tr></table></figure></p>
+<h3 id="配置编译参数"><a href="#配置编译参数" class="headerlink" title="配置编译参数"></a>配置编译参数</h3><p><figure class="highlight plain hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">mkdir glibc-build</span><br><span class="line">cd glibc-build</span><br><span class="line"></span><br><span class="line">../glibc-2.17/configure  --prefix=/usr --disable-profile --enable-add-ons --with-headers=/usr/include --with-binutils=/usr/bin</span><br></pre></td></tr></table></figure></p>
+<h3 id="编译与安装"><a href="#编译与安装" class="headerlink" title="编译与安装"></a>编译与安装</h3><p><figure class="highlight plain hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">make</span><br><span class="line">make install</span><br></pre></td></tr></table></figure></p>
 <p>安装完后查看一下当前glibc的版本，如果最高到2.17的话，说明安装成功。</p>
-<h2 id="问题">问题</h2>
-<p>你会注意到，配置安装目录的路径是<code>/usr</code>，这么做的目的是在安装的时候直接覆盖旧版的glibc。</p>
-<p>网上的一些博客的教程会在配置安装目录的时候，把路径配置到<code>/usr</code>之外的地方，比如 <figure class="highlight plain hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">../configure --prefix=/opt/glibc-2.17</span><br></pre></td></tr></table></figure></p>
+<h2 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h2><p>你会注意到，配置安装目录的路径是<code>/usr</code>，这么做的目的是在安装的时候直接覆盖旧版的glibc。</p>
+<p>网上的一些博客的教程会在配置安装目录的时候，把路径配置到<code>/usr</code>之外的地方，比如<br><figure class="highlight plain hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">../configure --prefix=/opt/glibc-2.17</span><br></pre></td></tr></table></figure></p>
 <p>然后把旧的软连接<code>/lib64/libc.so.6</code>删掉，再创建新的软连接。</p>
 <p>事实上，这种做法是有风险的，一旦你把软连接删掉，系统在那一瞬间，一些核心的命令和功能就暂时废掉了。一开始我也这么做的，当我马上再创建新的软连接时就报了各种错。为了实验可行性，还导致我重装了好几次系统。</p>
 
@@ -201,12 +194,12 @@
     <div class="go-next columns is-mobile is-multiline article-nav">
         <span class="column is-12-mobile is-half-desktop  article-nav-prev">
             
-            <a href="/2018/08/30/ddqn/">双深度Q网络</a>
+            <a href="/2018/06/30/centos-upgrade-gcc/">CentOS6升级gcc4.9</a>
             
         </span>
         <span class="column is-12-mobile is-half-desktop  article-nav-next">
             
-            <a href="/2018/06/30/centos-upgrade-gcc/">CentOS6升级gcc4.9</a>
+            <a href="/2018/01/01/blog-log/">博客折腾记录</a>
             
         </span>
     </div>

@@ -16,13 +16,13 @@
 
 
 
-    <meta name="description" content="BERT，完整描述是使用双向编码器的Transformer (Bidirectional Encoder Representations from Transformers)， 是Google在2018年发布的一个神经网络模型 [1]。该模型与以往大多数NLP模型不同，它本身便是一个用于迁移训练的模型。 对于迁移训练，在计算机视觉中迁移训练已经是个常态了，一般都是在经过ImageNet数据训练的">
+    <meta name="description" content="BERT，完整描述是使用双向编码器的Transformer (Bidirectional Encoder Representations fromTransformers)， 是Google在2018年发布的一个神经网络模型 [1]。该模型与以往大多数NLP模型不同，它本身便是一个用于迁移训练的模型。 对于迁移训练，在计算机视觉中迁移训练已经是个常态了，一般都是在经过ImageNet数据训练的预训">
 <meta name="keywords" content="NLP,深度学习">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Transformer双向编码器">
 <meta property="og:url" content="http:&#x2F;&#x2F;yoursite.com&#x2F;2019&#x2F;03&#x2F;28&#x2F;bi-transformer&#x2F;index.html">
 <meta property="og:site_name" content="绯色的魔法世界">
-<meta property="og:description" content="BERT，完整描述是使用双向编码器的Transformer (Bidirectional Encoder Representations from Transformers)， 是Google在2018年发布的一个神经网络模型 [1]。该模型与以往大多数NLP模型不同，它本身便是一个用于迁移训练的模型。 对于迁移训练，在计算机视觉中迁移训练已经是个常态了，一般都是在经过ImageNet数据训练的">
+<meta property="og:description" content="BERT，完整描述是使用双向编码器的Transformer (Bidirectional Encoder Representations fromTransformers)， 是Google在2018年发布的一个神经网络模型 [1]。该模型与以往大多数NLP模型不同，它本身便是一个用于迁移训练的模型。 对于迁移训练，在计算机视觉中迁移训练已经是个常态了，一般都是在经过ImageNet数据训练的预训">
 <meta property="og:locale" content="en">
 <meta property="og:image" content="https:&#x2F;&#x2F;i.loli.net&#x2F;2019&#x2F;03&#x2F;28&#x2F;5c9cb9bd5ce39.png">
 <meta property="og:image" content="https:&#x2F;&#x2F;i.loli.net&#x2F;2019&#x2F;03&#x2F;28&#x2F;5c9cb9c9cccb2.png">
@@ -164,29 +164,30 @@
     </div>
     <div class="article-entry is-size-6-mobile" itemprop="articleBody">
     
-        <p>BERT，完整描述是使用双向编码器的Transformer (Bidirectional Encoder Representations from Transformers)， 是Google在2018年发布的一个神经网络模型 <a href="https://arxiv.org/abs/1810.04805" target="_blank" rel="noopener">[1]</a>。该模型与以往大多数NLP模型不同，它本身便是一个用于迁移训练的模型。</p>
+        <p>BERT，完整描述是使用双向编码器的Transformer (Bidirectional Encoder Representations from<br>Transformers)， 是Google在2018年发布的一个神经网络模型 <a href="https://arxiv.org/abs/1810.04805" target="_blank" rel="noopener">[1]</a>。该模型与以往大多数NLP模型不同，它本身便是一个用于迁移训练的模型。</p>
 <p>对于迁移训练，在计算机视觉中迁移训练已经是个常态了，一般都是在经过ImageNet数据训练的预训练模型上进行微调。如今，研究人员在处理NLP问题上也希望能够通过预训练来提高模型能力。而BERT的该论文主要阐述如何在BERT模型上进行预训练，然后基于预训练模型，对于不同任务(task)进行微调。</p>
 <a id="more"></a>
-<h2 id="预训练与微调方法">预训练与微调方法</h2>
-<p>早于BERT，OpenAI GPT提出了在transformer上进行预训练和微调的方法 <a href="https://s3-us-west-2.amazonaws.com/openai-assets/research-covers/language-unsupervised/language_understanding_paper.pdf" target="_blank" rel="noopener">[2]</a>，不过与BERT不同的是，GPT采用的是单向transformer以及使用无监督数据来学习语言模型。BERT采用的方法是基于无监督数据采用有监督方法进行预训练，详细方法后面会讲到。</p>
-<h2 id="模型结构">模型结构</h2>
-<figure>
-<img src="https://i.loli.net/2019/03/28/5c9cb9bd5ce39.png" alt="bert-1.png"><figcaption>bert-1.png</figcaption>
-</figure>
+
+<h2 id="预训练与微调方法"><a href="#预训练与微调方法" class="headerlink" title="预训练与微调方法"></a>预训练与微调方法</h2><p>早于BERT，OpenAI GPT提出了在transformer上进行预训练和微调的方法 <a href="https://s3-us-west-2.amazonaws.com/openai-assets/research-covers/language-unsupervised/language_understanding_paper.pdf" target="_blank" rel="noopener">[2]</a>，不过与BERT不同的是，GPT采用的是单向transformer以及使用无监督数据来学习语言模型。BERT采用的方法是基于无监督数据采用有监督方法进行预训练，详细方法后面会讲到。</p>
+<h2 id="模型结构"><a href="#模型结构" class="headerlink" title="模型结构"></a>模型结构</h2><p><img src="https://i.loli.net/2019/03/28/5c9cb9bd5ce39.png" alt="bert-1.png"></p>
 <p>上图是BERT与几个相似模型的对比，只有BERT在所有层级上都加入了左右上下文的信息。</p>
-<h2 id="输入表示">输入表示</h2>
-<figure>
-<img src="https://i.loli.net/2019/03/28/5c9cb9c9cccb2.png" alt="bert-2.png"><figcaption>bert-2.png</figcaption>
-</figure>
-<p>输入向量由三层组合 1. Token Embeddings 即词向量。[CLS] 表示开始标志，[SEP] 用于分割多个句子的标志 2. Segment Embeddings 段落向量。上图中的<span class="math inline">\(\large E_A, E_B\)</span> 表示两个学习过的句子A和B。为什么这么做后面会讲到。 3. Position Embeddings 位置向量。这里的位置向量不使用余弦函数，而是需要进行训练。</p>
-<h2 id="预训练任务">预训练任务</h2>
-<p>下面会介绍几个用于预训练的任务。</p>
-<h3 id="masked-lm">Masked LM</h3>
-<p>BERT 最重要的特点就是双向，能够同时掌握上下文的信息。但是这里就出现了一个问题，convS2S和transformer都在致力于使用masked去清除“过去”的影响，BERT论文中提到这么做是因为在双向多层结构中词汇会在第二层以后看到“自己”，所以要清除这种干扰。</p>
+<h2 id="输入表示"><a href="#输入表示" class="headerlink" title="输入表示"></a>输入表示</h2><p><img src="https://i.loli.net/2019/03/28/5c9cb9c9cccb2.png" alt="bert-2.png"></p>
+<p>输入向量由三层组合</p>
+<ol>
+<li>Token Embeddings 即词向量。[CLS] 表示开始标志，[SEP] 用于分割多个句子的标志</li>
+<li>Segment Embeddings 段落向量。上图中的$\large E_A, E_B$ 表示两个学习过的句子A和B。为什么这么做后面会讲到。</li>
+<li>Position Embeddings 位置向量。这里的位置向量不使用余弦函数，而是需要进行训练。</li>
+</ol>
+<h2 id="预训练任务"><a href="#预训练任务" class="headerlink" title="预训练任务"></a>预训练任务</h2><p>下面会介绍几个用于预训练的任务。</p>
+<h3 id="Masked-LM"><a href="#Masked-LM" class="headerlink" title="Masked LM"></a>Masked LM</h3><p>BERT 最重要的特点就是双向，能够同时掌握上下文的信息。但是这里就出现了一个问题，convS2S和transformer都在致力于使用masked去清除“过去”的影响，BERT论文中提到这么做是因为在双向多层结构中词汇会在第二层以后看到“自己”，所以要清除这种干扰。</p>
 <p>而为了使得BERT这样的双向结构能够进行良好的训练，作者提出了使用Masked LM方法 <a href="https://journals.sagepub.com/doi/abs/10.1177/107769905303000401" target="_blank" rel="noopener">[3]</a>，该方法就是对于输入的句子，随机遮住(mask)掉一些词汇(token)，然后让模型去预测这个词汇。明显，token被mask掉以后就不会出现自己干扰自己的情况。mask的时候使用[MASK]标记即可。</p>
-<p>但是这么做会产生一个弊端，这个[MASK]标记在微调(fine-tuning)中是不会出现的，为了减轻该影响，作者提供了方案： 1. 80% 的情况下，替换为[MASK]，比如 my dog is hairy -&gt; my dog is [MASK] 2. 10% 的情况下，替换为随机词，比如 my dog is hairy -&gt; my dog is apple 3. 10% 的情况下，不替换</p>
-<h3 id="下一句预测">下一句预测</h3>
-<p>就是将句子A和句子B通过[SEP]拼接起来，问你句子B是不是句子A的下一句。</p>
+<p>但是这么做会产生一个弊端，这个[MASK]标记在微调(fine-tuning)中是不会出现的，为了减轻该影响，作者提供了方案：</p>
+<ol>
+<li>80% 的情况下，替换为[MASK]，比如 my dog is hairy -&gt; my dog is [MASK]</li>
+<li>10% 的情况下，替换为随机词，比如 my dog is hairy -&gt; my dog is apple</li>
+<li>10% 的情况下，不替换</li>
+</ol>
+<h3 id="下一句预测"><a href="#下一句预测" class="headerlink" title="下一句预测"></a>下一句预测</h3><p>就是将句子A和句子B通过[SEP]拼接起来，问你句子B是不是句子A的下一句。</p>
 <p>举两个例子：</p>
 <blockquote>
 <p>Input = [CLS] the man went to [MASK] store [SEP] he bought a gallon [MASK] milk [SEP]</p>
@@ -196,12 +197,8 @@
 <p>Input = [CLS] the man [MASK] to the store [SEP] penguin [MASK] are flight ##less birds [SEP]</p>
 <p>Label = NotNext</p>
 </blockquote>
-<h2 id="微调">微调</h2>
-<p>提取最后一层中 [CLS]标记所在隐藏状态 <span class="math inline">\(\large C \in \mathbb{R}^H\)</span>，以及你自己加上去的权重 <span class="math inline">\(\large W \in \mathbb{R}^{K \times H}\)</span>，<span class="math inline">\(\large K\)</span> 即你的分类数。通过Softmax进行预测：</p>
-<p><span class="math display">\[
-\large 
-P = softmax(CW^T)
-\]</span></p>
+<h2 id="微调"><a href="#微调" class="headerlink" title="微调"></a>微调</h2><p>提取最后一层中 [CLS]标记所在隐藏状态 $\large C \in \mathbb{R}^H$，以及你自己加上去的权重 $\large W \in \mathbb{R}^{K \times H}$，$\large K$ 即你的分类数。通过Softmax进行预测：</p>
+<p>$$<br>\large<br>P = softmax(CW^T)<br>$$</p>
 <p>对于超参数的调节，视不同任务而定，作者建议的参数有：</p>
 <ul>
 <li>Batch size: 16, 32</li>
@@ -209,22 +206,13 @@ P = softmax(CW^T)
 <li>Number of epochs: 3, 4</li>
 </ul>
 <p>为了方便理解，作者提供对于不同任务的微调的图示：</p>
-<figure>
-<img src="https://i.loli.net/2019/03/28/5c9cb9d54ed3e.png" alt="bert-3.png"><figcaption>bert-3.png</figcaption>
-</figure>
-<figure>
-<img src="https://i.loli.net/2019/03/28/5c9cb9dcb8123.png" alt="bert-4.png"><figcaption>bert-4.png</figcaption>
-</figure>
-<h2 id="实验结果">实验结果</h2>
-<figure>
-<img src="https://i.loli.net/2019/03/28/5c9cb9e51ade5.png" alt="bert-5.png"><figcaption>bert-5.png</figcaption>
-</figure>
+<p><img src="https://i.loli.net/2019/03/28/5c9cb9d54ed3e.png" alt="bert-3.png"></p>
+<p><img src="https://i.loli.net/2019/03/28/5c9cb9dcb8123.png" alt="bert-4.png"></p>
+<h2 id="实验结果"><a href="#实验结果" class="headerlink" title="实验结果"></a>实验结果</h2><p><img src="https://i.loli.net/2019/03/28/5c9cb9e51ade5.png" alt="bert-5.png"></p>
 <p>从上图可以看出，BERT在各项任务上的表现基本是毫无敌手。(以上指标均为GLUE <a href="https://arxiv.org/abs/1804.07461" target="_blank" rel="noopener">[4]</a>)</p>
-<h2 id="总结">总结</h2>
-<p>BERT的实验结果表明预训练模型的优越性，尽管BERT本身有些瑕疵，但论文本身阐述了诸多预训练的方法和理论，并且表现出强劲的实力，可以说是NLP史上的一座重要的里程碑了。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>BERT的实验结果表明预训练模型的优越性，尽管BERT本身有些瑕疵，但论文本身阐述了诸多预训练的方法和理论，并且表现出强劲的实力，可以说是NLP史上的一座重要的里程碑了。</p>
 <p>尽管BERT能够适用于诸多任务，但也有一些任务无法胜任，比如机器翻译……</p>
-<h2 id="参考文献">参考文献</h2>
-<ul>
+<h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><ul>
 <li><a href="https://arxiv.org/abs/1810.04805" target="_blank" rel="noopener">[1] BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding. 2018</a></li>
 <li><a href="https://s3-us-west-2.amazonaws.com/openai-assets/research-covers/language-unsupervised/language_understanding_paper.pdf" target="_blank" rel="noopener">[2] Improving Language Understandingby Generative Pre-Training. 2018</a></li>
 <li><a href="https://journals.sagepub.com/doi/abs/10.1177/107769905303000401" target="_blank" rel="noopener">[3] “Cloze Procedure”: A New Tool for Measuring Readability. 1953</a></li>

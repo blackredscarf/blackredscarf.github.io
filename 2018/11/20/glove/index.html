@@ -165,79 +165,57 @@
     
         <p>GloVe（Global Vector），是一种结合全局矩阵分解和本地上下文窗口的方法。LSA（latent semantic analysis）虽然能够有效的统计信息，但在词汇类比任务中表现很差。而Skip-gram虽然在词汇类比任务中表现很好，但依赖于窗口的移动，而不能有效统计全局的计数。论文作者认为，全局计数的对数加上双线性回归方法会非常合适。</p>
 <a id="more"></a>
-<h2 id="算法">算法</h2>
-<p>首先，我们需要对整个语料库建立一个统计全局词频的矩阵，一般称为<strong>共现矩阵（Co-ocurrence Matrix）</strong>。</p>
+
+<h2 id="算法"><a href="#算法" class="headerlink" title="算法"></a>算法</h2><p>首先，我们需要对整个语料库建立一个统计全局词频的矩阵，一般称为<strong>共现矩阵（Co-ocurrence Matrix）</strong>。</p>
 <p>假设，语料库有三句话：</p>
-<ol type="1">
-<li><span class="math inline">\(I \hspace{0.15cm} enjoy \hspace{0.15cm} flying\)</span></li>
-<li><span class="math inline">\(I \hspace{0.15cm} like \hspace{0.15cm} NLP\)</span></li>
-<li><span class="math inline">\(I \hspace{0.15cm} like \hspace{0.15cm} deep \hspace{0.15cm} learning\)</span></li>
+<ol>
+<li>$I \hspace{0.15cm} enjoy \hspace{0.15cm} flying$</li>
+<li>$I \hspace{0.15cm} like \hspace{0.15cm} NLP$</li>
+<li>$I \hspace{0.15cm} like \hspace{0.15cm} deep \hspace{0.15cm} learning$</li>
 </ol>
 <p>那他们的共现矩阵就是：</p>
-<p><img src="https://i.loli.net/2018/11/20/5bf4190149fff.png" width="600px"></p>
-<p><span class="math inline">\(\large X_{ij}\)</span> 表示单词 <span class="math inline">\(\large i\)</span> 在单词 <span class="math inline">\(\large j\)</span> 上下文出现的次数。你会发现，共现矩阵是<strong>对称的</strong>（symmetric），因为他同时取左右两边的单词，若只选取左边或右边的任一边，则是<strong>非对称的</strong>（asymmetric）。</p>
+<img src="https://i.loli.net/2018/11/20/5bf4190149fff.png" width="600px">
+
+<p>$\large X_{ij}$ 表示单词 $\large i$ 在单词 $\large j$ 上下文出现的次数。你会发现，共现矩阵是<strong>对称的</strong>（symmetric），因为他同时取左右两边的单词，若只选取左边或右边的任一边，则是<strong>非对称的</strong>（asymmetric）。</p>
 <p>构建词向量（Word Vector）和共现矩阵（Co-ocurrence Matrix）之间的近似关系，论文的作者提出以下的公式可以近似地表达两者之间的关系：</p>
-<p><span class="math display">\[
-u_i^Tv_j + b_i + \widetilde b_j \approx log(X_{ij}) \tag{1}
-\]</span></p>
-<p>这里的 <span class="math inline">\(\large u_i, v_j\)</span> 与Skip-Grams模型中的意义不同，它仅表示的是单词 <span class="math inline">\(\large i,j\)</span> 之间的联系，没有中心与周围的区分。（对于公式(1)，论文中做了相关推导，因为推导过程有些复杂，我把这部分放到文章后面。）</p>
+<p>$$<br>u_i^Tv_j + b_i + \widetilde b_j \approx log(X_{ij}) \tag{1}<br>$$</p>
+<p>这里的 $\large u_i, v_j$ 与Skip-Grams模型中的意义不同，它仅表示的是单词 $\large i,j$ 之间的联系，没有中心与周围的区分。（对于公式(1)，论文中做了相关推导，因为推导过程有些复杂，我把这部分放到文章后面。）</p>
 <p>他的代价函数是：</p>
-<p><span class="math display">\[
-J = \sum_{i,j=1}^V f(X_{ij})(u_i^Tv_j + b_i + \widetilde b_j - log(X_{ij}))
-\]</span></p>
-<p>其中 <span class="math inline">\(\large log(X_{ij}) \rightarrow log(1 + X_{ij})\)</span>，这么做的目的是防止出现 <span class="math inline">\(\large log0\)</span> 的情况。 <span class="math inline">\(\large f(X_{ij})\)</span> 是一个加权函数（weighting function），有些单词对经常同时出现，那么会导致 <span class="math inline">\(\large X_{ij}\)</span> 会很大，应该衰减它们；而有些单词对从不一起出现，这些单词对就不应该对代价函数产生任何贡献，它们没必要去计算损失值，这时使用 <span class="math inline">\(\large f(0) = 0\)</span> 来避免计算。</p>
+<p>$$<br>J = \sum_{i,j=1}^V f(X_{ij})(u_i^Tv_j + b_i + \widetilde b_j - log(X_{ij}))<br>$$</p>
+<p>其中 $\large log(X_{ij}) \rightarrow log(1 + X_{ij})$，这么做的目的是防止出现 $\large log0$ 的情况。<br>$\large f(X_{ij})$ 是一个加权函数（weighting function），有些单词对经常同时出现，那么会导致 $\large X_{ij}$ 会很大，应该衰减它们；而有些单词对从不一起出现，这些单词对就不应该对代价函数产生任何贡献，它们没必要去计算损失值，这时使用 $\large f(0) = 0$ 来避免计算。</p>
 <p>我们可以采用分段函数：</p>
-<p><span class="math display">\[
-f(x) =
-\begin{cases}
-(\frac{x}{x_{max}})^\alpha &amp; if \; x &lt; x_{max} \\
-1 &amp; otherwise
-\end{cases}
-\]</span></p>
+<p>$$<br>f(x) =<br>\begin{cases}<br>(\frac{x}{x_{max}})^\alpha &amp; if ; x &lt; x_{max} \<br>1 &amp; otherwise<br>\end{cases}<br>$$</p>
 <p>函数图像如下：</p>
-<p><img src="https://i.loli.net/2018/11/20/5bf416e498722.jpg" width="400px"></p>
-<p>作者实验 <span class="math inline">\(\large \alpha\)</span> 取值 0.75，<span class="math inline">\(\large x_{max}\)</span> 取值 100。</p>
-<p><span class="math inline">\(\large u_i, v_j\)</span> 的初始化可以不同，也可以相同。当训练得足够之后，<span class="math inline">\(\large u_i, v_j\)</span> 与 <span class="math inline">\(\large X_{ij}\)</span> 相似，而 <span class="math inline">\(\large X_{ij}\)</span> 是对称的，所以 <span class="math inline">\(\large u_i, v_j\)</span> 也是对称或接近对称。因为都是学习得到的参数，在我们看来没有本质区别。当初始化不同时，相当于加入了噪音，你可以选择把 <span class="math inline">\(\large e = u + v\)</span> 作为最终向量，这样有助于提高鲁棒性。</p>
-<h2 id="实验结果">实验结果</h2>
-<p>论文中展示了glove与word2vec等方法的对比，但其实大家都旗鼓相当。</p>
+<img src="https://i.loli.net/2018/11/20/5bf416e498722.jpg" width="400px">
+
+<p>作者实验 $\large \alpha$ 取值 0.75，$\large x_{max}$ 取值 100。</p>
+<p>$\large u_i, v_j$ 的初始化可以不同，也可以相同。当训练得足够之后，$\large u_i, v_j$ 与 $\large X_{ij}$ 相似，而 $\large X_{ij}$ 是对称的，所以 $\large u_i, v_j$ 也是对称或接近对称。因为都是学习得到的参数，在我们看来没有本质区别。当初始化不同时，相当于加入了噪音，你可以选择把 $\large e = u + v$ 作为最终向量，这样有助于提高鲁棒性。</p>
+<h2 id="实验结果"><a href="#实验结果" class="headerlink" title="实验结果"></a>实验结果</h2><p>论文中展示了glove与word2vec等方法的对比，但其实大家都旗鼓相当。</p>
 <p>下图是glove在不同参数的情况下的表现：</p>
-<p><img src="https://i.loli.net/2018/11/20/5bf416f278a77.png" width="800px"></p>
+<img src="https://i.loli.net/2018/11/20/5bf416f278a77.png" width="800px">
+
 <p>（图a 展示了向量维度对准确度的影响。图b和图c分别使用对称上下文和非对称上下文在不同窗口大小下的表现。以上所有测试都使用6B (billion) 的语料库）</p>
 <p>可以发现最好的参数是300维度，窗口大小为5。再往上增加虽然能提高准确度，但也提高了计算代价，没有必要为了提升一点准确度而产生巨大的计算代价。</p>
-<h2 id="公式推导">公式推导</h2>
-<p>这里对上面公式(1)进行推导。</p>
+<h2 id="公式推导"><a href="#公式推导" class="headerlink" title="公式推导"></a>公式推导</h2><p>这里对上面公式(1)进行推导。</p>
 <p>论文中举了一个简单的例子：</p>
-<p><img src="https://i.loli.net/2018/11/20/5bf41703f00eb.png" width="600px"></p>
-<p>试问单词 <span class="math inline">\(\large k\)</span> 应该是哪个单词？我们可以通过 <span class="math inline">\(\large P(k \vert ice)/P(k \vert stream)\)</span> 来判断。当 <span class="math inline">\(\large P_{ik}/P_{jk}\)</span> 很大的时候，说明 <span class="math inline">\(\large i\)</span> 与 <span class="math inline">\(\large k\)</span> 更接近一些。</p>
+<img src="https://i.loli.net/2018/11/20/5bf41703f00eb.png" width="600px">
+
+<p>试问单词 $\large k$ 应该是哪个单词？我们可以通过 $\large P(k \vert ice)/P(k \vert stream)$ 来判断。当 $\large P_{ik}/P_{jk}$ 很大的时候，说明 $\large i$ 与 $\large k$ 更接近一些。</p>
 <p>然后，作者就想到，我们可以用参数去近似这个比值。</p>
-<p><span class="math display">\[
-F(w_i, w_j, w_k) = \frac{P_{ik}}{P_{jk}}
-\]</span></p>
-<p><span class="math inline">\(\large F\)</span> 这里暂且设为未知函数，因为它包含了三个参数，所以我们需要削减一下参数，因为参数是线性的，所以自然可以构造成相减的形式。</p>
-<p><span class="math display">\[
-F(w_i - w_j, w_k) = \frac{P_{ik}}{P_{jk}}
-\]</span></p>
+<p>$$<br>F(w_i, w_j, w_k) = \frac{P_{ik}}{P_{jk}}<br>$$</p>
+<p>$\large F$ 这里暂且设为未知函数，因为它包含了三个参数，所以我们需要削减一下参数，因为参数是线性的，所以自然可以构造成相减的形式。</p>
+<p>$$<br>F(w_i - w_j, w_k) = \frac{P_{ik}}{P_{jk}}<br>$$</p>
 <p>然后我们用内积来表现两个单词向量的近似程度，</p>
-<p><span class="math display">\[
-F((w_i - w_j)^Tw_k) = \frac{F(w_i^Tw_k)}{F(w_j^Tw_k)}
-\]</span></p>
-<p>提取其中一个单词的 <span class="math inline">\(\large F\)</span>，</p>
-<p><span class="math display">\[
-F(w_i^Tw_k) = P_{ik} = \frac{X_{ik}}{X_i}
-\]</span></p>
-<p>我们设 <span class="math inline">\(\large F\)</span> 为指数函数，则，</p>
-<p><span class="math display">\[
-w_i^Tw_k = log(P_{ik}) = log(X_{ik}) - log({X_i})
-\]</span></p>
-<p>然后，我们用偏置项来替代 <span class="math inline">\(\large log(X_i)\)</span>，即</p>
-<p><span class="math display">\[
-w_i^Tw_k + b_i + b_k = log(X_{ik})
-\]</span></p>
+<p>$$<br>F((w_i - w_j)^Tw_k) = \frac{F(w_i^Tw_k)}{F(w_j^Tw_k)}<br>$$</p>
+<p>提取其中一个单词的 $\large F$，</p>
+<p>$$<br>F(w_i^Tw_k) = P_{ik} = \frac{X_{ik}}{X_i}<br>$$</p>
+<p>我们设 $\large F$ 为指数函数，则，</p>
+<p>$$<br>w_i^Tw_k = log(P_{ik}) = log(X_{ik}) - log({X_i})<br>$$</p>
+<p>然后，我们用偏置项来替代 $\large log(X_i)$，即</p>
+<p>$$<br>w_i^Tw_k + b_i + b_k = log(X_{ik})<br>$$</p>
 <p>就这样，这个公式就被奇异地构造出来了。</p>
-<h2 id="代码实现">代码实现</h2>
-<p>我自己用python实现了一下，但跑起来后发现这没什么意义。GloVe与Skip-gram不同，他构造共现矩阵需要花费大量时间和内存，这部分极度需要计算性能，用python跑半天都跑不完。 论文作者是使用纯C语言实现的，提供了不少预训练的模型，以及词向量的评估脚本，详见<a href="https://github.com/stanfordnlp/GloVe" target="_blank" rel="noopener">Github</a>。</p>
-<h2 id="参考文献">参考文献</h2>
-<ul>
+<h2 id="代码实现"><a href="#代码实现" class="headerlink" title="代码实现"></a>代码实现</h2><p>我自己用python实现了一下，但跑起来后发现这没什么意义。GloVe与Skip-gram不同，他构造共现矩阵需要花费大量时间和内存，这部分极度需要计算性能，用python跑半天都跑不完。<br>论文作者是使用纯C语言实现的，提供了不少预训练的模型，以及词向量的评估脚本，详见<a href="https://github.com/stanfordnlp/GloVe" target="_blank" rel="noopener">Github</a>。</p>
+<h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><ul>
 <li><a href="https://nlp.stanford.edu/pubs/glove.pdf" target="_blank" rel="noopener">GloVe: Global Vectors for Word Representation - Stanford NLP</a></li>
 </ul>
 

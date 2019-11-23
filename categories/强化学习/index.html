@@ -162,7 +162,7 @@
     </div>
     <div class="article-entry is-size-6-mobile" itemprop="articleBody">
     
-        <p>虽然DQN的表现很好，但它有一个致命的缺点是无法学习连续动作空间。回想一下，DQN 是根据greddy策略找到最大Q值对应的行为，即 <span class="math inline">\(\large a = \mathop{argmax}\limits_{a \in \mathcal{A}} Q(s)\)</span>，也就说每一个行为对应一个Q值，当动作是高维度的或者是连续的，那么DQN的计算代价就很大，甚至无法进行学习。这时使用策略梯度就能很好解决这个问题。我们把环境动作设计成连续的，用动作特征表示一个动作，使用策略梯度，我们不需要计算每一个动作的Q值，而是可以通过参数化近似的办法直接输出一个动作特征，而不是从某个值映射到某个动作。DDPG (Deep Deterministic Policy Gradient)算法很好的弥补了DQN的缺陷。当然，并不是DDPG只能解决连续动作问题，只要把动作特征映射到某一个动作上就能应对非连续动作空间问题了。</p>
+        <p>虽然DQN的表现很好，但它有一个致命的缺点是无法学习连续动作空间。回想一下，DQN 是根据greddy策略找到最大Q值对应的行为，即 $\large a = \mathop{argmax}\limits_{a \in \mathcal{A}} Q(s)$，也就说每一个行为对应一个Q值，当动作是高维度的或者是连续的，那么DQN的计算代价就很大，甚至无法进行学习。这时使用策略梯度就能很好解决这个问题。我们把环境动作设计成连续的，用动作特征表示一个动作，使用策略梯度，我们不需要计算每一个动作的Q值，而是可以通过参数化近似的办法直接输出一个动作特征，而不是从某个值映射到某个动作。DDPG (Deep Deterministic Policy Gradient)算法很好的弥补了DQN的缺陷。当然，并不是DDPG只能解决连续动作问题，只要把动作特征映射到某一个动作上就能应对非连续动作空间问题了。</p>
         <p class="article-more-link">
             <a href="/2018/09/18/ddpg/#more">Read More</a>
         </p>

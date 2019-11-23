@@ -156,21 +156,21 @@
     
         <p>hexo博客的一些坑和技巧写在这里。而对于常规操作可以看<a href="https://hexo.io/zh-cn/docs/" target="_blank" rel="noopener">官方文档</a>。</p>
 <a id="more"></a>
-<h2 id="使用pandoc作为markdown渲染引擎">使用pandoc作为markdown渲染引擎</h2>
-<p>默认的 hexo-renderer-marked 与 mathjax 和 katex 有很多冲突的问题，所以建议换用 <a href="https://github.com/wzpan/hexo-renderer-pandoc" target="_blank" rel="noopener">hexo-renderer-pandoc</a>。</p>
-<p>确保你已经安装了 <a href="http://johnmacfarlane.net/pandoc/installing.html" target="_blank" rel="noopener">pandoc</a> 。然后npm安装即可。 <figure class="highlight plain hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install hexo-renderer-pandoc --save</span><br></pre></td></tr></table></figure></p>
-<h2 id="使用自定义域名">使用自定义域名</h2>
-<ol type="1">
+
+
+<h2 id="使用pandoc作为markdown渲染引擎"><a href="#使用pandoc作为markdown渲染引擎" class="headerlink" title="使用pandoc作为markdown渲染引擎"></a>使用pandoc作为markdown渲染引擎</h2><p>默认的 hexo-renderer-marked 与 mathjax 和 katex 有很多冲突的问题，所以建议换用 <a href="https://github.com/wzpan/hexo-renderer-pandoc" target="_blank" rel="noopener">hexo-renderer-pandoc</a>。</p>
+<p>确保你已经安装了 <a href="http://johnmacfarlane.net/pandoc/installing.html" target="_blank" rel="noopener">pandoc</a> 。然后npm安装即可。<br><figure class="highlight plain hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install hexo-renderer-pandoc --save</span><br></pre></td></tr></table></figure></p>
+<h2 id="使用自定义域名"><a href="#使用自定义域名" class="headerlink" title="使用自定义域名"></a>使用自定义域名</h2><ol>
 <li>在github项目的 settings 中设置 custom domain</li>
-<li>为域名设置DNS，设置以下A记录：
-<ol type="1">
+<li>为域名设置DNS，设置以下A记录：<ol>
 <li>185.199.108.153</li>
 <li>185.199.109.153</li>
 <li>185.199.110.153</li>
 <li>185.199.111.153</li>
-</ol></li>
-<li>设置CNAME记录，www.YOURDOMAIN.com 指向 xxx.github.io</li>
-<li>在source目录下添加文件CNAME，一行一个写下 www.YOURDOMAIN.com 和 YOURDOMAIN.com</li>
+</ol>
+</li>
+<li>设置CNAME记录，<a href="http://www.YOURDOMAIN.com" target="_blank" rel="noopener">www.YOURDOMAIN.com</a> 指向 xxx.github.io</li>
+<li>在source目录下添加文件CNAME，一行一个写下 <a href="http://www.YOURDOMAIN.com" target="_blank" rel="noopener">www.YOURDOMAIN.com</a> 和 YOURDOMAIN.com</li>
 </ol>
 
     
@@ -186,7 +186,7 @@
     <div class="go-next columns is-mobile is-multiline article-nav">
         <span class="column is-12-mobile is-half-desktop  article-nav-prev">
             
-            <a href="/2018/06/30/centos-upgrade-gcc/">CentOS6升级gcc4.9</a>
+            <a href="/2018/06/30/centos-upgrade-glibc/">CentOS6升级glibc2.17</a>
             
         </span>
         <span class="column is-12-mobile is-half-desktop is-hidden-mobile article-nav-next">
