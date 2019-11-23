@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html class="has-navbar-fixed-top">
 <head>
-    <meta charset="utf-8">
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="utf-8">
 <title>Category: NLP - 绯色的魔法世界</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
@@ -42,7 +42,7 @@
 
 <link rel="stylesheet" href="/css/style.css">
 
-<script defer src="//use.fontawesome.com/releases/v5.0.8/js/all.js"></script>
+<script defer src="//use.fontawesome.com/releases/v5.0.8/js/all.js"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
 
 
     
@@ -63,7 +63,7 @@
 <body>
     
 
-<nav class="navbar is-transparent is-fixed-top navbar-main" role="navigation" aria-label="main navigation">
+<!-- hexo-inject:begin --><!-- hexo-inject:end --><nav class="navbar is-transparent is-fixed-top navbar-main" role="navigation" aria-label="main navigation">
     <div class="top-title-line">
         <div class="top-title">
             <a href="/"><span>绯色的魔法世界</span></a>
@@ -202,7 +202,7 @@
     </div>
     <div class="article-entry is-size-6-mobile" itemprop="articleBody">
     
-        <p>BERT，完整描述是使用双向编码器的Transformer (Bidirectional Encoder Representations from<br>Transformers)， 是Google在2018年发布的一个神经网络模型 <a href="https://arxiv.org/abs/1810.04805" target="_blank" rel="noopener">[1]</a>。该模型与以往大多数NLP模型不同，它本身便是一个用于迁移训练的模型。</p>
+        <p>BERT，完整描述是使用双向编码器的Transformer (Bidirectional Encoder Representations from Transformers)， 是Google在2018年发布的一个神经网络模型 <a href="https://arxiv.org/abs/1810.04805" target="_blank" rel="noopener">[1]</a>。该模型与以往大多数NLP模型不同，它本身便是一个用于迁移训练的模型。</p>
 <p>对于迁移训练，在计算机视觉中迁移训练已经是个常态了，一般都是在经过ImageNet数据训练的预训练模型上进行微调。如今，研究人员在处理NLP问题上也希望能够通过预训练来提高模型能力。而BERT的该论文主要阐述如何在BERT模型上进行预训练，然后基于预训练模型，对于不同任务(task)进行微调。</p>
         <p class="article-more-link">
             <a href="/2019/03/28/bi-transformer/#more">Read More</a>
@@ -243,7 +243,7 @@
     </div>
     <div class="article-entry is-size-6-mobile" itemprop="articleBody">
     
-        <p>Facebook激进地使用卷积网络处理NLP问题，意外地取得了很不错的效果。而 Google 一不做二不休，发布了一种新型的网络结构，transformer模型  <a href="https://arxiv.org/abs/1706.03762" target="_blank" rel="noopener">[1]</a>，该网络结构既不使用RNN，也不使用CNN，而且也获得不错的效果。</p>
+        <p>Facebook激进地使用卷积网络处理NLP问题，意外地取得了很不错的效果。而 Google 一不做二不休，发布了一种新型的网络结构，transformer模型 <a href="https://arxiv.org/abs/1706.03762" target="_blank" rel="noopener">[1]</a>，该网络结构既不使用RNN，也不使用CNN，而且也获得不错的效果。</p>
         <p class="article-more-link">
             <a href="/2019/02/27/transformer/#more">Read More</a>
         </p>
@@ -283,7 +283,7 @@
     </div>
     <div class="article-entry is-size-6-mobile" itemprop="articleBody">
     
-        <p>使用长短时期记忆（LSTM）用于序列模型取得了很好的效果，在2017年由Facebook提出了使用卷积神经网络构建Seq2Seq模型 <a href="https://arxiv.org/abs/1705.03122" target="_blank" rel="noopener">[1]</a>。循环神经网络通过窗口移动方式输入数据进行训练，当句子有 $\large n$ 个窗口时，获得对应的特征表示的时间复杂度为 $\large \mathcal{O}(n)$。而使用卷积神经网络进行并行化计算，当卷积核宽度为 $\large k$ ，其时间复杂度为 $\large \mathcal{O}(\frac{n}{k})$。</p>
+        <p>使用长短时期记忆（LSTM）用于序列模型取得了很好的效果，在2017年由Facebook提出了使用卷积神经网络构建Seq2Seq模型 <a href="https://arxiv.org/abs/1705.03122" target="_blank" rel="noopener">[1]</a>。循环神经网络通过窗口移动方式输入数据进行训练，当句子有 <span class="math inline">\(\large n\)</span> 个窗口时，获得对应的特征表示的时间复杂度为 <span class="math inline">\(\large \mathcal{O}(n)\)</span>。而使用卷积神经网络进行并行化计算，当卷积核宽度为 <span class="math inline">\(\large k\)</span> ，其时间复杂度为 <span class="math inline">\(\large \mathcal{O}(\frac{n}{k})\)</span>。</p>
         <p class="article-more-link">
             <a href="/2019/01/27/cnn-seq/#more">Read More</a>
         </p>
@@ -323,7 +323,8 @@
     </div>
     <div class="article-entry is-size-6-mobile" itemprop="articleBody">
     
-        <h2 id="编码和解码"><a href="#编码和解码" class="headerlink" title="编码和解码"></a>编码和解码</h2><p>我们把源句子（source sentence）表示为 $\large (x_1, x_2, \dots, x_n) \in x$, 目标句子（target sentence）表示为 $\large (y_1, y_2, \dots, y_n) \in y$。</p>
+        <h2 id="编码和解码">编码和解码</h2>
+<p>我们把源句子（source sentence）表示为 <span class="math inline">\(\large (x_1, x_2, \dots, x_n) \in x\)</span>, 目标句子（target sentence）表示为 <span class="math inline">\(\large (y_1, y_2, \dots, y_n) \in y\)</span>。</p>
 <p>使用编码网路（encoder）对源句子进行编码，使用解码网络（decoder）对源句子的编码进行解码，解码出预测句子。同时，作为监督，把目标句子作为解码网络的输入。</p>
         <p class="article-more-link">
             <a href="/2018/12/31/rnn-nmt/#more">Read More</a>
@@ -633,7 +634,24 @@ document.addEventListener("DOMContentLoaded", function() {
         window.INSIGHT_CONFIG = INSIGHT_CONFIG;
     })(window);
 </script>
-<script src="/js/insight.js"></script>
+<script src="/js/insight.js"></script><!-- hexo-inject:begin --><!-- Begin: Injected MathJax -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({"tex2jax":{"inlineMath":[["$","$"],["\\(","\\)"]],"skipTags":["script","noscript","style","textarea","pre","code"],"processEscapes":true},"TeX":{"equationNumbers":{"autoNumber":"AMS"}}});
+</script>
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for(i=0; i < all.length; i += 1) {
+      all[i].SourceElement().parentNode.className += ' has-jax';
+    }
+  });
+</script>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js">
+</script>
+<!-- End: Injected MathJax -->
+<!-- hexo-inject:end -->
     
 </body>
 </html>
