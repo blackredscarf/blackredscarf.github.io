@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html class="has-navbar-fixed-top">
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="utf-8">
+<title>绯色的魔法世界</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/outdated-browser/1.1.5/outdatedbrowser.min.css">
+
+
+
+
+<meta name="description" content="">
+
+
+
+
+
+    <meta property="og:type" content="website">
+<meta property="og:title" content="绯色的魔法世界">
+<meta property="og:url" content="http:&#x2F;&#x2F;yoursite.com&#x2F;index.html">
+<meta property="og:site_name" content="绯色的魔法世界">
+<meta property="og:locale" content="en">
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+<link rel="icon" href="/favicon.png">
+
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Ovo|Source+Code+Pro">
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/bulma/0.6.2/css/bulma.min.css">
+
+
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/lightgallery/1.6.8/css/lightgallery.min.css">
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/justifiedGallery/3.6.5/css/justifiedGallery.min.css">
+
+
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/atom-one-light.min.css">
+
+<link rel="stylesheet" href="/css/style.css">
+
+<script defer src="//use.fontawesome.com/releases/v5.0.8/js/all.js"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+    
+
+
+</head>
+<body>
+    
+
+<!-- hexo-inject:begin --><!-- hexo-inject:end --><nav class="navbar is-transparent is-fixed-top navbar-main" role="navigation" aria-label="main navigation">
+    <div class="top-title-line">
+        <div class="top-title">
+            <a href="/"><span>绯色的魔法世界</span></a>
+        </div>
+    </div>
+    <div class="nav-tool-line">
+        <div class="nav-tool">
+            
+            <a class="navbar-item search" title="Search" href="javascript:;" target="_blank" rel="noopener">
+                <i class="fas fa-search"></i>
+            </a>
+            
+            
+            <a class="navbar-item" title="GitHub" href="https://github.com/blackredscarf/blackredscarf.github.io" target="_blank" rel="noopener">
+                
+                <i class="fab fa-github"></i>
+                
+            </a>
+               
+            
+        </div>    
+    </div>
+    <div class="container">
+        <div class="navbar-brand">
+            <!-- <a class="navbar-item navbar-logo" href="/">
+                
+                <img src="/images/logo.png" alt="" height="28">
+                
+            </a> -->
+            <div class="navbar-burger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+        
+        <div class="navbar-menu navbar-start">
+            
+            <a class="navbar-item "
+               href="/">Home</a>
+            
+            <a class="navbar-item "
+               href="/archives">归档</a>
+            
+            <a class="navbar-item "
+               href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F">操作系统</a>
+            
+            <a class="navbar-item "
+               href="/categories/NLP">NLP</a>
+            
+            <a class="navbar-item "
+               href="/categories/%E5%BC%BA%E5%8C%96%E5%AD%A6%E4%B9%A0">强化学习</a>
+            
+            <a class="navbar-item "
+               href="/categories/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0">深度学习</a>
+            
+        </div>
+        
+        
+    </div>
+</nav>
+
+    <section class="section">
+    <div class="container">
+    
+        
+<div class="article-cover">
+   <img class="article-cover-img" src="https://s2.ax1x.com/2019/11/23/MHq7tK.jpg"> 
+</div>
+
+<article class="article content gallery" itemscope itemprop="blogPost">
+    <h1 class="article-title is-size-3 is-size-4-mobile" itemprop="name">
+        
+            <a href="/2019/11/23/pos-review/" itemprop="url">词性标注 综述</a>
+        
+    </h1>
+    <div class="article-meta columns is-variable is-1 is-multiline is-mobile is-size-7-mobile">
+        <span class="column is-narrow">
+            2019-11-23
+            <!-- <time datetime="2019-11-22T16:00:00.000Z" itemprop="datePublished">Nov 23 2019</time> -->
+        </span>
+        
+        <span class="column is-narrow article-category">
+            <i class="far fa-folder"></i>
+            <a class="article-category-link" href="/categories/NLP/">NLP</a><span>,</span><a class="article-category-link" href="/categories/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/">深度学习</a><span>,</span><a class="article-category-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a>
+        </span>
+        
+        <!--  -->
+    </div>
+    <div class="article-entry is-size-6-mobile" itemprop="articleBody">
+    
+        <p>词性标注(Part-of-Speech Tagging, 简称POS tagging)是将句子中的每个词做一些标记，如动词，名词，副词，形容词等。词性很有用，因为它们揭示了一个单词及其相邻词的很多信息。知道一个单词是名词还是动词可以告诉我们可能的相邻单词(名词前面有限定词和形容词，动词前面有名词)和句法结构单词(名词通常是名词短语的一部分)。一个单词的词性甚至可以在语音识别或合成中发挥作用，因为有些单词不同词性时的读音是不同的。在本综述中，将讨论词性标注的相关算法，比如早期的隐马尔可夫模型 (Hidden Markov Model, HMM)和随机条件域 (Conditional Random Fields, CRF)，以及近几年的神经网络。</p>
+        <p class="article-more-link">
+            <a href="/2019/11/23/pos-review/#more">Read More</a>
+        </p>
+    
+    </div>
+    
+    
+    
+</article>
+
+
+
+    
+        
+<div class="article-cover">
+   <img class="article-cover-img" src="https://s2.ax1x.com/2019/11/21/MoKh9g.jpg"> 
+</div>
+
+<article class="article content gallery" itemscope itemprop="blogPost">
+    <h1 class="article-title is-size-3 is-size-4-mobile" itemprop="name">
+        
+            <a href="/2019/09/25/linux-select/" itemprop="url">Linux Select 源码分析</a>
+        
+    </h1>
+    <div class="article-meta columns is-variable is-1 is-multiline is-mobile is-size-7-mobile">
+        <span class="column is-narrow">
+            2019-09-25
+            <!-- <time datetime="2019-09-24T16:00:00.000Z" itemprop="datePublished">Sep 25 2019</time> -->
+        </span>
+        
+        <span class="column is-narrow article-category">
+            <i class="far fa-folder"></i>
+            <a class="article-category-link" href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/">操作系统</a>
+        </span>
+        
+        <!--  -->
+    </div>
+    <div class="article-entry is-size-6-mobile" itemprop="articleBody">
+    
+        <p>先说明一些关于Linux进程间通信的基本知识：Linux的进程间通信是基于文件的，也可以称之为设备，因为所有设备其实都是文件。描述符其实指的是文件描述符，与文件系统中的一个文件对应，每当你创建出一个描述符，就创建出一个设备驱动进程，该进程一直监听着该文件的变化。</p>
+        <p class="article-more-link">
+            <a href="/2019/09/25/linux-select/#more">Read More</a>
+        </p>
+    
+    </div>
+    
+    
+    
+</article>
+
+
+
+    
+        
+<div class="article-cover">
+   <img class="article-cover-img" src="https://s2.ax1x.com/2019/11/21/MoMECD.jpg"> 
+</div>
+
+<article class="article content gallery" itemscope itemprop="blogPost">
+    <h1 class="article-title is-size-3 is-size-4-mobile" itemprop="name">
+        
+            <a href="/2019/03/28/bi-transformer/" itemprop="url">Transformer双向编码器</a>
+        
+    </h1>
+    <div class="article-meta columns is-variable is-1 is-multiline is-mobile is-size-7-mobile">
+        <span class="column is-narrow">
+            2019-03-28
+            <!-- <time datetime="2019-03-27T16:00:00.000Z" itemprop="datePublished">Mar 28 2019</time> -->
+        </span>
+        
+        <span class="column is-narrow article-category">
+            <i class="far fa-folder"></i>
+            <a class="article-category-link" href="/categories/NLP/">NLP</a><span>,</span><a class="article-category-link" href="/categories/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/">深度学习</a>
+        </span>
+        
+        <!--  -->
+    </div>
+    <div class="article-entry is-size-6-mobile" itemprop="articleBody">
+    
+        <p>BERT，完整描述是使用双向编码器的Transformer (Bidirectional Encoder Representations from Transformers)， 是Google在2018年发布的一个神经网络模型 <a href="https://arxiv.org/abs/1810.04805" target="_blank" rel="noopener">[1]</a>。该模型与以往大多数NLP模型不同，它本身便是一个用于迁移训练的模型。</p>
+<p>对于迁移训练，在计算机视觉中迁移训练已经是个常态了，一般都是在经过ImageNet数据训练的预训练模型上进行微调。如今，研究人员在处理NLP问题上也希望能够通过预训练来提高模型能力。而BERT的该论文主要阐述如何在BERT模型上进行预训练，然后基于预训练模型，对于不同任务(task)进行微调。</p>
+        <p class="article-more-link">
+            <a href="/2019/03/28/bi-transformer/#more">Read More</a>
+        </p>
+    
+    </div>
+    
+    
+    
+</article>
+
+
+
+    
+        
+<div class="article-cover">
+   <img class="article-cover-img" src="https://s2.ax1x.com/2019/11/21/MoKjCF.jpg"> 
+</div>
+
+<article class="article content gallery" itemscope itemprop="blogPost">
+    <h1 class="article-title is-size-3 is-size-4-mobile" itemprop="name">
+        
+            <a href="/2019/02/27/transformer/" itemprop="url">Transformer模型与自注意力</a>
+        
+    </h1>
+    <div class="article-meta columns is-variable is-1 is-multiline is-mobile is-size-7-mobile">
+        <span class="column is-narrow">
+            2019-02-27
+            <!-- <time datetime="2019-02-26T16:00:00.000Z" itemprop="datePublished">Feb 27 2019</time> -->
+        </span>
+        
+        <span class="column is-narrow article-category">
+            <i class="far fa-folder"></i>
+            <a class="article-category-link" href="/categories/NLP/">NLP</a><span>,</span><a class="article-category-link" href="/categories/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/">深度学习</a>
+        </span>
+        
+        <!--  -->
+    </div>
+    <div class="article-entry is-size-6-mobile" itemprop="articleBody">
+    
+        <p>Facebook激进地使用卷积网络处理NLP问题，意外地取得了很不错的效果。而 Google 一不做二不休，发布了一种新型的网络结构，transformer模型 <a href="https://arxiv.org/abs/1706.03762" target="_blank" rel="noopener">[1]</a>，该网络结构既不使用RNN，也不使用CNN，而且也获得不错的效果。</p>
+        <p class="article-more-link">
+            <a href="/2019/02/27/transformer/#more">Read More</a>
+        </p>
+    
+    </div>
+    
+    
+    
+</article>
+
+
+
+    
+        
+<div class="article-cover">
+   <img class="article-cover-img" src="https://s2.ax1x.com/2019/11/21/MoKxgJ.jpg"> 
+</div>
+
+<article class="article content gallery" itemscope itemprop="blogPost">
+    <h1 class="article-title is-size-3 is-size-4-mobile" itemprop="name">
+        
+            <a href="/2019/01/27/cnn-seq/" itemprop="url">卷积序列模型</a>
+        
+    </h1>
+    <div class="article-meta columns is-variable is-1 is-multiline is-mobile is-size-7-mobile">
+        <span class="column is-narrow">
+            2019-01-27
+            <!-- <time datetime="2019-01-26T16:00:00.000Z" itemprop="datePublished">Jan 27 2019</time> -->
+        </span>
+        
+        <span class="column is-narrow article-category">
+            <i class="far fa-folder"></i>
+            <a class="article-category-link" href="/categories/NLP/">NLP</a><span>,</span><a class="article-category-link" href="/categories/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/">深度学习</a>
+        </span>
+        
+        <!--  -->
+    </div>
+    <div class="article-entry is-size-6-mobile" itemprop="articleBody">
+    
+        <p>使用长短时期记忆（LSTM）用于序列模型取得了很好的效果，在2017年由Facebook提出了使用卷积神经网络构建Seq2Seq模型 <a href="https://arxiv.org/abs/1705.03122" target="_blank" rel="noopener">[1]</a>。循环神经网络通过窗口移动方式输入数据进行训练，当句子有 <span class="math inline">\(\large n\)</span> 个窗口时，获得对应的特征表示的时间复杂度为 <span class="math inline">\(\large \mathcal{O}(n)\)</span>。而使用卷积神经网络进行并行化计算，当卷积核宽度为 <span class="math inline">\(\large k\)</span> ，其时间复杂度为 <span class="math inline">\(\large \mathcal{O}(\frac{n}{k})\)</span>。</p>
+        <p class="article-more-link">
+            <a href="/2019/01/27/cnn-seq/#more">Read More</a>
+        </p>
+    
+    </div>
+    
+    
+    
+</article>
+
+
+
+    
+        
+<div class="article-cover">
+   <img class="article-cover-img" src="https://s2.ax1x.com/2019/11/21/MoKukT.jpg"> 
+</div>
+
+<article class="article content gallery" itemscope itemprop="blogPost">
+    <h1 class="article-title is-size-3 is-size-4-mobile" itemprop="name">
+        
+            <a href="/2018/12/31/rnn-nmt/" itemprop="url">循环神经机器翻译</a>
+        
+    </h1>
+    <div class="article-meta columns is-variable is-1 is-multiline is-mobile is-size-7-mobile">
+        <span class="column is-narrow">
+            2018-12-31
+            <!-- <time datetime="2018-12-30T16:00:00.000Z" itemprop="datePublished">Dec 31 2018</time> -->
+        </span>
+        
+        <span class="column is-narrow article-category">
+            <i class="far fa-folder"></i>
+            <a class="article-category-link" href="/categories/NLP/">NLP</a><span>,</span><a class="article-category-link" href="/categories/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/">深度学习</a>
+        </span>
+        
+        <!--  -->
+    </div>
+    <div class="article-entry is-size-6-mobile" itemprop="articleBody">
+    
+        <h2 id="编码和解码">编码和解码</h2>
+<p>我们把源句子（source sentence）表示为 <span class="math inline">\(\large (x_1, x_2, \dots, x_n) \in x\)</span>, 目标句子（target sentence）表示为 <span class="math inline">\(\large (y_1, y_2, \dots, y_n) \in y\)</span>。</p>
+<p>使用编码网路（encoder）对源句子进行编码，使用解码网络（decoder）对源句子的编码进行解码，解码出预测句子。同时，作为监督，把目标句子作为解码网络的输入。</p>
+        <p class="article-more-link">
+            <a href="/2018/12/31/rnn-nmt/#more">Read More</a>
+        </p>
+    
+    </div>
+    
+    
+    
+</article>
+
+
+
+    
+        
+<div class="article-cover">
+   <img class="article-cover-img" src="https://s2.ax1x.com/2019/11/21/MoKrjA.jpg"> 
+</div>
+
+<article class="article content gallery" itemscope itemprop="blogPost">
+    <h1 class="article-title is-size-3 is-size-4-mobile" itemprop="name">
+        
+            <a href="/2018/11/20/glove/" itemprop="url">GloVe</a>
+        
+    </h1>
+    <div class="article-meta columns is-variable is-1 is-multiline is-mobile is-size-7-mobile">
+        <span class="column is-narrow">
+            2018-11-20
+            <!-- <time datetime="2018-11-19T16:00:00.000Z" itemprop="datePublished">Nov 20 2018</time> -->
+        </span>
+        
+        <span class="column is-narrow article-category">
+            <i class="far fa-folder"></i>
+            <a class="article-category-link" href="/categories/NLP/">NLP</a>
+        </span>
+        
+        <!--  -->
+    </div>
+    <div class="article-entry is-size-6-mobile" itemprop="articleBody">
+    
+        <p>GloVe（Global Vector），是一种结合全局矩阵分解和本地上下文窗口的方法。LSA（latent semantic analysis）虽然能够有效的统计信息，但在词汇类比任务中表现很差。而Skip-gram虽然在词汇类比任务中表现很好，但依赖于窗口的移动，而不能有效统计全局的计数。论文作者认为，全局计数的对数加上双线性回归方法会非常合适。</p>
+        <p class="article-more-link">
+            <a href="/2018/11/20/glove/#more">Read More</a>
+        </p>
+    
+    </div>
+    
+    
+    
+</article>
+
+
+
+    
+        
+<div class="article-cover">
+   <img class="article-cover-img" src="https://s2.ax1x.com/2019/11/21/MoMZgH.jpg"> 
+</div>
+
+<article class="article content gallery" itemscope itemprop="blogPost">
+    <h1 class="article-title is-size-3 is-size-4-mobile" itemprop="name">
+        
+            <a href="/2018/10/08/skip-gram/" itemprop="url">负采样的Skip-Gram模型</a>
+        
+    </h1>
+    <div class="article-meta columns is-variable is-1 is-multiline is-mobile is-size-7-mobile">
+        <span class="column is-narrow">
+            2018-10-08
+            <!-- <time datetime="2018-10-07T16:00:00.000Z" itemprop="datePublished">Oct 8 2018</time> -->
+        </span>
+        
+        <span class="column is-narrow article-category">
+            <i class="far fa-folder"></i>
+            <a class="article-category-link" href="/categories/NLP/">NLP</a>
+        </span>
+        
+        <!--  -->
+    </div>
+    <div class="article-entry is-size-6-mobile" itemprop="articleBody">
+    
+        <p>Word2Vec模型中，主要有Skip-Gram和CBOW两种模型，从直观上理解，Skip-Gram是给定 Input Word 来预测上下文。而CBOW是给定上下文来预测。本篇文章仅讲解Skip-Gram模型。</p>
+        <p class="article-more-link">
+            <a href="/2018/10/08/skip-gram/#more">Read More</a>
+        </p>
+    
+    </div>
+    
+    
+    
+</article>
+
+
+
+    
+        
+<div class="article-cover">
+   <img class="article-cover-img" src="https://s2.ax1x.com/2019/11/21/MoKHH0.jpg"> 
+</div>
+
+<article class="article content gallery" itemscope itemprop="blogPost">
+    <h1 class="article-title is-size-3 is-size-4-mobile" itemprop="name">
+        
+            <a href="/2018/09/18/ddpg/" itemprop="url">深度确定性策略梯度</a>
+        
+    </h1>
+    <div class="article-meta columns is-variable is-1 is-multiline is-mobile is-size-7-mobile">
+        <span class="column is-narrow">
+            2018-09-18
+            <!-- <time datetime="2018-09-17T16:00:00.000Z" itemprop="datePublished">Sep 18 2018</time> -->
+        </span>
+        
+        <span class="column is-narrow article-category">
+            <i class="far fa-folder"></i>
+            <a class="article-category-link" href="/categories/%E5%BC%BA%E5%8C%96%E5%AD%A6%E4%B9%A0/">强化学习</a><span>,</span><a class="article-category-link" href="/categories/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/">深度学习</a>
+        </span>
+        
+        <!--  -->
+    </div>
+    <div class="article-entry is-size-6-mobile" itemprop="articleBody">
+    
+        <p>虽然DQN的表现很好，但它有一个致命的缺点是无法学习连续动作空间。回想一下，DQN 是根据greddy策略找到最大Q值对应的行为，即 <span class="math inline">\(\large a = \mathop{argmax}\limits_{a \in \mathcal{A}} Q(s)\)</span>，也就说每一个行为对应一个Q值，当动作是高维度的或者是连续的，那么DQN的计算代价就很大，甚至无法进行学习。这时使用策略梯度就能很好解决这个问题。我们把环境动作设计成连续的，用动作特征表示一个动作，使用策略梯度，我们不需要计算每一个动作的Q值，而是可以通过参数化近似的办法直接输出一个动作特征，而不是从某个值映射到某个动作。DDPG (Deep Deterministic Policy Gradient)算法很好的弥补了DQN的缺陷。当然，并不是DDPG只能解决连续动作问题，只要把动作特征映射到某一个动作上就能应对非连续动作空间问题了。</p>
+        <p class="article-more-link">
+            <a href="/2018/09/18/ddpg/#more">Read More</a>
+        </p>
+    
+    </div>
+    
+    
+    
+</article>
+
+
+
+    
+        
+<div class="article-cover">
+   <img class="article-cover-img" src="https://s2.ax1x.com/2019/11/21/MoKTun.jpg"> 
+</div>
+
+<article class="article content gallery" itemscope itemprop="blogPost">
+    <h1 class="article-title is-size-3 is-size-4-mobile" itemprop="name">
+        
+            <a href="/2018/08/30/ddqn/" itemprop="url">双深度Q网络</a>
+        
+    </h1>
+    <div class="article-meta columns is-variable is-1 is-multiline is-mobile is-size-7-mobile">
+        <span class="column is-narrow">
+            2018-08-30
+            <!-- <time datetime="2018-08-29T16:00:00.000Z" itemprop="datePublished">Aug 30 2018</time> -->
+        </span>
+        
+        <span class="column is-narrow article-category">
+            <i class="far fa-folder"></i>
+            <a class="article-category-link" href="/categories/%E5%BC%BA%E5%8C%96%E5%AD%A6%E4%B9%A0/">强化学习</a><span>,</span><a class="article-category-link" href="/categories/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/">深度学习</a>
+        </span>
+        
+        <!--  -->
+    </div>
+    <div class="article-entry is-size-6-mobile" itemprop="articleBody">
+    
+        <p>本文主要讲一下 DQN 和 DDQN，以及它们的实验对比。</p>
+        <p class="article-more-link">
+            <a href="/2018/08/30/ddqn/#more">Read More</a>
+        </p>
+    
+    </div>
+    
+    
+    
+</article>
+
+
+
+    
+    
+        
+<nav class="pagination is-centered is-rounded" role="navigation" aria-label="pagination">
+    <div class="pagination-previous is-invisible is-hidden-mobile">
+        <a href="/page/0/">Prev</a>
+    </div>
+    <div class="pagination-next">
+        <a href="/page/2/">Next</a>
+    </div>
+    <ul class="pagination-list is-hidden-mobile">
+        
+        <li><a class="pagination-link is-current" href="/">1</a></li>
+        
+        <li><a class="pagination-link" href="/page/2/">2</a></li>
+        
+    </ul>
+</nav>
+    
+    </div>
+</section>
+    <footer class="footer">
+    <div class="container">
+        <div class="columns content">
+            <div class="column is-narrow has-text-centered">
+                &copy; 2019 Black Redscarf&nbsp;
+                Powered by <a href="http://hexo.io/" target="_blank">Hexo</a> & <a
+                        href="http://github.com/ppoffice/hexo-theme-minos">Minos</a>
+            </div>
+            <div class="column is-hidden-mobile"></div>
+
+            
+            <div class="column is-narrow">
+                <div class="columns is-mobile is-multiline is-centered">
+                
+                    
+                <a class="column is-narrow has-text-black" title="GitHub" href="https://github.com/blackredscarf/blackredscarf.github.io" target="_blank" rel="noopener">
+                    
+                    GitHub
+                    
+                </a>
+                
+                </div>
+            </div>
+            
+            
+        </div>
+    </div>
+</footer>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment-with-locales.min.js"></script>
+
+<!-- test if the browser is outdated -->
+<div id="outdated">
+    <h6>Your browser is out-of-date!</h6>
+    <p>Update your browser to view this website correctly. <a id="btnUpdateBrowser" href="http://outdatedbrowser.com/" target="_blank" rel="noopener">Update my browser now </a></p>
+    <p class="last"><a href="#" id="btnCloseUpdateBrowser" title="Close">&times;</a></p>
+</div>
+<script src="//cdnjs.cloudflare.com/ajax/libs/outdated-browser/1.1.5/outdatedbrowser.min.js"></script>
+<script>
+    $(document).ready(function () {
+        // plugin function, place inside DOM ready function
+        outdatedBrowser({
+            bgColor: '#f25648',
+            color: '#ffffff',
+            lowerThan: 'flex'
+        })
+    });
+</script>
+
+<script>
+    window.FontAwesomeConfig = {
+        searchPseudoElements: true
+    }
+    moment.locale("en-AU");
+</script>
+
+
+    
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+<script>
+    MathJax.Hub.Config({
+        "HTML-CSS": {
+            matchFontHeight: false
+        },
+        SVG: {
+            matchFontHeight: false
+        },
+        CommonHTML: {
+            matchFontHeight: false
+        },
+        tex2jax: {
+            inlineMath: [ ['$','$'],['\\(','\\)'] ],
+            displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+            processEscapes: false
+        }
+    });
+</script>
+
+    
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/katex.min.css" integrity="sha384-9eLZqc9ds8eNjO3TmqPeYcDj8n+Qfa4nuSiGYa6DjLNcv9BtN69ZIulL9+8CqC9Y" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/katex.min.js" integrity="sha384-K3vbOmF2BtaVai+Qk37uypf7VrgBubhQreNQe9aGsz9lB63dIFiQVlJbr92dw2Lx" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/contrib/auto-render.min.js" integrity="sha384-kmZOZB5ObwgQnS/DuDg6TScgOiWWBiVt0plIRkZCmE6rDZGrEOQeHM5PcHi+nyqe" crossorigin="anonymous"
+        onload="renderMathInElement(document.body);"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    renderMathInElement(document.body, {
+        // ...options...
+    });
+});
+</script>
+
+    
+    
+<script src="//cdnjs.cloudflare.com/ajax/libs/lightgallery/1.6.8/js/lightgallery-all.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/justifiedGallery/3.6.5/js/jquery.justifiedGallery.min.js"></script>
+<script>
+    (function ($) {
+        $(document).ready(function () {
+            if (typeof($.fn.lightGallery) === 'function') {
+                $('.article.gallery').lightGallery({ selector: '.gallery-item' });
+            }
+            if (typeof($.fn.justifiedGallery) === 'function') {
+                $('.justified-gallery').justifiedGallery();
+            }
+        });
+    })(jQuery);
+</script>
+
+    
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script>
+    <style>
+        .hljs {
+            position: relative;
+        }
+
+        .hljs .clipboard-btn {
+            float: right;
+            color: #9a9a9a;
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+
+        .hljs .clipboard-btn:hover {
+          color: #8a8a8a;
+        }
+
+        .hljs > .clipboard-btn {
+            display: none;
+            position: absolute;
+            right: 4px;
+            top: 4px;
+        }
+
+        .hljs:hover > .clipboard-btn {
+            display: inline;
+        }
+
+        .hljs > figcaption > .clipboard-btn {
+            margin-right: 4px;
+        }
+    </style>
+    <script>
+      $(document).ready(function () {
+        $('figure.hljs').each(function(i, figure) {
+          var codeId = 'code-' + i;
+          var code = figure.querySelector('.code');
+          var copyButton = $('<button>Copy <i class="far fa-clipboard"></i></button>');
+          code.id = codeId;
+          copyButton.addClass('clipboard-btn');
+          copyButton.attr('data-clipboard-target-id', codeId);
+
+          var figcaption = figure.querySelector('figcaption');
+
+          if (figcaption) {
+            figcaption.append(copyButton[0]);
+          } else {
+            figure.prepend(copyButton[0]);
+          }
+        })
+
+        var clipboard = new ClipboardJS('.clipboard-btn', {
+          target: function(trigger) {
+            return document.getElementById(trigger.getAttribute('data-clipboard-target-id'));
+          }
+        });
+        clipboard.on('success', function(e) {
+          e.clearSelection();
+        })
+      })
+    </script>
+
+    
+    
+
+    
+
+
+<script src="/js/script.js"></script>
+
+    
+    <div class="searchbox ins-search">
+    <div class="searchbox-mask"></div>
+    <div class="searchbox-container ins-search-container">
+        <div class="searchbox-input-wrapper">
+            <input type="text" class="searchbox-input ins-search-input" placeholder="Type something..." />
+            <span class="searchbox-close ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="searchbox-result-wrapper ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+    (function (window) {
+        var INSIGHT_CONFIG = {
+            TRANSLATION: {
+                POSTS: 'Posts',
+                PAGES: 'Pages',
+                CATEGORIES: 'Categories',
+                TAGS: 'Tags',
+                UNTITLED: '(Untitled)',
+            },
+            CONTENT_URL: '/content.json',
+        };
+        window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+    })(window);
+</script>
+<script src="/js/insight.js"></script><!-- hexo-inject:begin --><!-- Begin: Injected MathJax -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({"tex2jax":{"inlineMath":[["$","$"],["\\(","\\)"]],"skipTags":["script","noscript","style","textarea","pre","code"],"processEscapes":true},"TeX":{"equationNumbers":{"autoNumber":"AMS"}}});
+</script>
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for(i=0; i < all.length; i += 1) {
+      all[i].SourceElement().parentNode.className += ' has-jax';
+    }
+  });
+</script>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js">
+</script>
+<!-- End: Injected MathJax -->
+<!-- hexo-inject:end -->
+    
+</body>
+</html>
