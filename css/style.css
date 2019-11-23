@@ -78,6 +78,9 @@ a.tag.article-tag {
   height: 350px;
   object-fit: cover; }
 
+.leancloud_visitors {
+  visibility: hidden; }
+
 .go-next {
   margin-top: 30px; }
 
