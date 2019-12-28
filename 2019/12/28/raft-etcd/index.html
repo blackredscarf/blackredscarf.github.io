@@ -25,7 +25,7 @@
 <meta property="og:description" content="etcd作为一个受到ZooKeeper与doozer启发而催生的项目，拥有与之类似的功能。etcd中的Watcher机制，通过注册与异步通知机制，实现分布式环境下不同系统之间的通知与协调，从而对数据变更做到实时处理。实现方式通常是这样：不同系统都在etcd上对同一个目录进行注册，同时设置Watcher观测该目录的变化（如果对子目录的变化也有需要，可以设置递归模式），当某个系统更新了etcd的目录，">
 <meta property="og:locale" content="en">
 <meta property="og:image" content="https:&#x2F;&#x2F;i.loli.net&#x2F;2019&#x2F;12&#x2F;13&#x2F;Pg9bsx7mCNJIdka.jpg">
-<meta property="og:updated_time" content="2019-12-28T11:42:49.198Z">
+<meta property="og:updated_time" content="2019-12-28T11:48:09.955Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https:&#x2F;&#x2F;i.loli.net&#x2F;2019&#x2F;12&#x2F;13&#x2F;Pg9bsx7mCNJIdka.jpg">
 
@@ -184,7 +184,11 @@
 <p>若是前一个leader在分发某一个日志过程中挂掉了怎么办？如果这条日志还没来得及分发到任何一个节点上，leader就已经挂掉，那么这条日志必然随着leader的挂掉而丢失。如果成功分发到一个节点及以上，那么新leader一定是具有该日志的，否则log index落后一定不会成为leader。新leader发现该日志还没提交，就会分发该日志。与之前任期重复分发了也没关系，反正还没提交写入磁盘。</p>
 <h3 id="成员变更">成员变更</h3>
 <p>当新加入节点或减少节点，需要将新的集群配置表分发到各个节点上，这一行为与其他日志分发并无不同。如果在分发过程中，leader挂掉了，那么可能发送一种情况是：具有旧集群配置表的节点们会选出一个leader，而新集群配置表的节点们也可能选举出一个leader，最终造成一个集群两个leader。</p>
-<p>解决办法是每次只变更一个节点。事实证明，每次只变更一个节点不会产生分裂的情况，因为不会出现同时有两个超过半数以上子集群的存在。假设，我们有一个3节点的集群，然后添加一个节点，leader把变更日志分发到其他2个节点，这时，leader 出现了崩溃，重新选举。这个时候，会有2个结果： 1. 新配置复制到了集群的大多数（大多数的值在这里必须大于2 （包括 leaer））。如果新配置复制到了大多数集群，那么新 leader 肯定使用的是新的配置。 2. 新配置没有复制到集群的大多数。如果新配置没有复制到大多数集群，那么新 leader 肯定使用的是老的配置。</p>
+<p>解决办法是每次只变更一个节点。事实证明，每次只变更一个节点不会产生分裂的情况，因为不会出现同时有两个超过半数以上子集群的存在。假设，我们有一个3节点的集群，然后添加一个节点，leader把变更日志分发到其他2个节点，这时，leader 出现了崩溃，重新选举。这个时候，会有2个结果：</p>
+<ol type="1">
+<li>新配置复制到了集群的大多数（大多数的值在这里必须大于2 （包括 leaer））。如果新配置复制到了大多数集群，那么新 leader 肯定使用的是新的配置。</li>
+<li>新配置没有复制到集群的大多数。如果新配置没有复制到大多数集群，那么新 leader 肯定使用的是老的配置。</li>
+</ol>
 <p>可以参考论文中的图：</p>
 <figure>
 <img src="https://i.loli.net/2019/12/13/Pg9bsx7mCNJIdka.jpg" alt="change-single-server"><figcaption>change-single-server</figcaption>
