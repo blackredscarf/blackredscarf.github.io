@@ -118,10 +118,7 @@
                href="/categories/NLP">NLP</a>
             
             <a class="navbar-item "
-               href="/categories/%E5%BC%BA%E5%8C%96%E5%AD%A6%E4%B9%A0">强化学习</a>
-            
-            <a class="navbar-item "
-               href="/categories/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0">深度学习</a>
+               href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0">机器学习</a>
             
         </div>
         
@@ -141,13 +138,93 @@
     
         
 <div class="article-cover">
+   <img class="article-cover-img" src="https://s1.ax1x.com/2020/07/04/Nx1bo4.jpg"> 
+</div>
+
+<article class="article content gallery" itemscope itemprop="blogPost">
+    <h1 class="article-title is-size-3 is-size-4-mobile" itemprop="name">
+        
+            <a href="/2020/07/04/kafka/" itemprop="url">Kafka 分析</a>
+        
+    </h1>
+    <div class="article-meta columns is-variable is-1 is-multiline is-mobile is-size-7-mobile">
+        <span class="column is-narrow">
+            2020-07-04
+            <!-- <time datetime="2020-07-03T16:00:00.000Z" itemprop="datePublished">Jul 4 2020</time> -->
+        </span>
+        
+        <span class="column is-narrow article-category">
+            <i class="far fa-folder"></i>
+            <a class="article-category-link" href="/categories/%E5%88%86%E5%B8%83%E5%BC%8F/">分布式</a><span>,</span><a class="article-category-link" href="/categories/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/">消息队列</a>
+        </span>
+        
+        <!--  -->
+    </div>
+    <div class="article-entry is-size-6-mobile" itemprop="articleBody">
+    
+        <p>分布式消息队列的优势是很好地对计算机系统进行了解耦，不同系统之间通过消息队列来交换消息。Kafka是分布式消息队列的代表作之一，很好的兼顾了性能和一致性，但代价就是使用起来更加复杂。我花了点时间阅读了Kafka 0.10版本的源码，本文不对繁杂的源码细节和实现做描述，只关注架构和思路。</p>
+        <p class="article-more-link">
+            <a href="/2020/07/04/kafka/#more">Read More</a>
+        </p>
+    
+    </div>
+    
+    <!--  -->
+    
+</article>
+
+
+
+    
+        
+<div class="article-cover">
+   <img class="article-cover-img" src="https://s1.ax1x.com/2020/07/04/NxlvqS.jpg"> 
+</div>
+
+<article class="article content gallery" itemscope itemprop="blogPost">
+    <h1 class="article-title is-size-3 is-size-4-mobile" itemprop="name">
+        
+            <a href="/2020/06/06/raft-build/" itemprop="url">如何构建Raft分布式系统</a>
+        
+    </h1>
+    <div class="article-meta columns is-variable is-1 is-multiline is-mobile is-size-7-mobile">
+        <span class="column is-narrow">
+            2020-06-06
+            <!-- <time datetime="2020-06-05T16:00:00.000Z" itemprop="datePublished">Jun 6 2020</time> -->
+        </span>
+        
+        <span class="column is-narrow article-category">
+            <i class="far fa-folder"></i>
+            <a class="article-category-link" href="/categories/%E5%88%86%E5%B8%83%E5%BC%8F/">分布式</a>
+        </span>
+        
+        <!--  -->
+    </div>
+    <div class="article-entry is-size-6-mobile" itemprop="articleBody">
+    
+        <p>前文讲述了Raft算法的核心，本文提供将Raft算法应用于分布式系统的宏观指导，将不再赘述算法细节而是专注于用户层面和应用层面，描述一个Raft的分布式系统需要进行哪些工作。</p>
+        <p class="article-more-link">
+            <a href="/2020/06/06/raft-build/#more">Read More</a>
+        </p>
+    
+    </div>
+    
+    <!--  -->
+    
+</article>
+
+
+
+    
+        
+<div class="article-cover">
    <img class="article-cover-img" src="https://s2.ax1x.com/2019/12/28/lmJhuR.jpg"> 
 </div>
 
 <article class="article content gallery" itemscope itemprop="blogPost">
     <h1 class="article-title is-size-3 is-size-4-mobile" itemprop="name">
         
-            <a href="/2019/12/28/raft-etcd/" itemprop="url">Raft 与 Etcd</a>
+            <a href="/2019/12/28/raft/" itemprop="url">Raft 简述</a>
         
     </h1>
     <div class="article-meta columns is-variable is-1 is-multiline is-mobile is-size-7-mobile">
@@ -165,9 +242,10 @@
     </div>
     <div class="article-entry is-size-6-mobile" itemprop="articleBody">
     
-        <p><a href="https://github.com/etcd-io/etcd" target="_blank" rel="noopener">etcd</a>作为一个受到ZooKeeper与doozer启发而催生的项目，拥有与之类似的功能。etcd中的Watcher机制，通过注册与异步通知机制，实现分布式环境下不同系统之间的通知与协调，从而对数据变更做到实时处理。实现方式通常是这样：不同系统都在etcd上对同一个目录进行注册，同时设置Watcher观测该目录的变化（如果对子目录的变化也有需要，可以设置递归模式），当某个系统更新了etcd的目录，那么设置了Watcher的系统就会收到通知，并作出相应处理。</p>
+        <p>Raft 是一种分布式一致性算法，详细可见<a href="https://raft.github.io/raft.pdf" target="_blank" rel="noopener">论文</a>。主要作用是确保分布式系统的一致性问题。考虑主从模式的集群下，服务器挂掉或网络故障等情况发生时如何确保数据安全。在raft中，主节点称为leader，从节点称为follower。</p>
+<p>下面我尝试以简洁流畅的语言描述raft算法的各个重要部分，某些地方会结合<a href="https://github.com/etcd-io/etcd/tree/master/raft" target="_blank" rel="noopener">etcd/raft</a>的源码说明。</p>
         <p class="article-more-link">
-            <a href="/2019/12/28/raft-etcd/#more">Read More</a>
+            <a href="/2019/12/28/raft/#more">Read More</a>
         </p>
     
     </div>
@@ -186,7 +264,7 @@
     <div class="container">
         <div class="columns content">
             <div class="column is-narrow has-text-centered">
-                &copy; 2019 Black Redscarf&nbsp;
+                &copy; 2020 Black Redscarf&nbsp;
                 Powered by <a href="http://hexo.io/" target="_blank">Hexo</a> & <a
                         href="http://github.com/ppoffice/hexo-theme-minos">Minos</a>
             </div>

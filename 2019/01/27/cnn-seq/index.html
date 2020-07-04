@@ -17,7 +17,7 @@
 
 
     <meta name="description" content="使用长短时期记忆（LSTM）用于序列模型取得了很好的效果，在2017年由Facebook提出了使用卷积神经网络构建Seq2Seq模型 [1]。循环神经网络通过窗口移动方式输入数据进行训练，当句子有 \(\large n\) 个窗口时，获得对应的特征表示的时间复杂度为 \(\large \mathcal{O}(n)\)。而使用卷积神经网络进行并行化计算，当卷积核宽度为 \(\large k\) ，其">
-<meta name="keywords" content="NLP,深度学习">
+<meta name="keywords" content="深度学习,机器学习,NLP">
 <meta property="og:type" content="article">
 <meta property="og:title" content="卷积序列模型">
 <meta property="og:url" content="http:&#x2F;&#x2F;yoursite.com&#x2F;2019&#x2F;01&#x2F;27&#x2F;cnn-seq&#x2F;index.html">
@@ -25,7 +25,7 @@
 <meta property="og:description" content="使用长短时期记忆（LSTM）用于序列模型取得了很好的效果，在2017年由Facebook提出了使用卷积神经网络构建Seq2Seq模型 [1]。循环神经网络通过窗口移动方式输入数据进行训练，当句子有 \(\large n\) 个窗口时，获得对应的特征表示的时间复杂度为 \(\large \mathcal{O}(n)\)。而使用卷积神经网络进行并行化计算，当卷积核宽度为 \(\large k\) ，其">
 <meta property="og:locale" content="en">
 <meta property="og:image" content="https:&#x2F;&#x2F;i.loli.net&#x2F;2019&#x2F;01&#x2F;27&#x2F;5c4d42fa80b78.png">
-<meta property="og:updated_time" content="2019-11-23T03:46:25.315Z">
+<meta property="og:updated_time" content="2020-07-04T06:32:28.895Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https:&#x2F;&#x2F;i.loli.net&#x2F;2019&#x2F;01&#x2F;27&#x2F;5c4d42fa80b78.png">
 
@@ -124,10 +124,7 @@
                href="/categories/NLP">NLP</a>
             
             <a class="navbar-item "
-               href="/categories/%E5%BC%BA%E5%8C%96%E5%AD%A6%E4%B9%A0">强化学习</a>
-            
-            <a class="navbar-item "
-               href="/categories/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0">深度学习</a>
+               href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0">机器学习</a>
             
         </div>
         
@@ -156,7 +153,7 @@
         
         <span class="column is-narrow article-category">
             <i class="far fa-folder"></i>
-            <a class="article-category-link" href="/categories/NLP/">NLP</a><span>,</span><a class="article-category-link" href="/categories/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/">深度学习</a>
+            <a class="article-category-link" href="/categories/NLP/">NLP</a><span>,</span><a class="article-category-link" href="/categories/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/">深度学习</a><span>,</span><a class="article-category-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a>
         </span>
         
         <!--  -->
@@ -242,9 +239,11 @@ mask \in \mathbb{R}^{T \times B}
     
     <div class="columns is-variable is-1 is-multiline is-mobile">
     
-        <span class="column is-narrow"><a class="tag is-light article-tag" href="/tags/NLP/">#NLP</a></span>
-    
         <span class="column is-narrow"><a class="tag is-light article-tag" href="/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/">#深度学习</a></span>
+    
+        <span class="column is-narrow"><a class="tag is-light article-tag" href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">#机器学习</a></span>
+    
+        <span class="column is-narrow"><a class="tag is-light article-tag" href="/tags/NLP/">#NLP</a></span>
     
     </div>
     
@@ -302,7 +301,7 @@ mask \in \mathbb{R}^{T \times B}
     <div class="container">
         <div class="columns content">
             <div class="column is-narrow has-text-centered">
-                &copy; 2019 Black Redscarf&nbsp;
+                &copy; 2020 Black Redscarf&nbsp;
                 Powered by <a href="http://hexo.io/" target="_blank">Hexo</a> & <a
                         href="http://github.com/ppoffice/hexo-theme-minos">Minos</a>
             </div>
