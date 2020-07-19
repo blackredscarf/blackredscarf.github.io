@@ -115,6 +115,9 @@
                href="/categories/%E5%88%86%E5%B8%83%E5%BC%8F">分布式</a>
             
             <a class="navbar-item "
+               href="/categories/%E7%AE%97%E6%B3%95%E4%B8%8E%E8%AE%BE%E8%AE%A1">算法与设计</a>
+            
+            <a class="navbar-item "
                href="/categories/NLP">NLP</a>
             
             <a class="navbar-item "
@@ -128,6 +131,46 @@
 
     <section class="section">
     <div class="container">
+    
+        
+<div class="article-cover">
+   <img class="article-cover-img" src="https://s1.ax1x.com/2020/07/19/UWijvF.jpg"> 
+</div>
+
+<article class="article content gallery" itemscope itemprop="blogPost">
+    <h1 class="article-title is-size-3 is-size-4-mobile" itemprop="name">
+        
+            <a href="/2020/07/19/ring-buffer/" itemprop="url">无锁环形缓冲</a>
+        
+    </h1>
+    <div class="article-meta columns is-variable is-1 is-multiline is-mobile is-size-7-mobile">
+        <span class="column is-narrow">
+            2020-07-19
+            <!-- <time datetime="2020-07-18T16:00:00.000Z" itemprop="datePublished">Jul 19 2020</time> -->
+        </span>
+        
+        <span class="column is-narrow article-category">
+            <i class="far fa-folder"></i>
+            <a class="article-category-link" href="/categories/%E7%AE%97%E6%B3%95%E4%B8%8E%E8%AE%BE%E8%AE%A1/">算法与设计</a>
+        </span>
+        
+        <!--  -->
+    </div>
+    <div class="article-entry is-size-6-mobile" itemprop="articleBody">
+    
+        <p>无锁环形缓冲(Lock-free RingBuffer)，又称无锁管道，是一个在不使用锁的情况下允许多线程访问的缓冲区，是在竞争条件下维护数据的最高性能选择之一。Golang里面的channel用的也是类似方法。该方法早在1994年的 <a href="http://people.cs.pitt.edu/~jacklange/teaching/cs2510-f12/papers/implementing_lock_free.pdf" target="_blank" rel="noopener">Implementing Lock-Free Queues</a> 论文中就开始被研究。</p>
+        <p class="article-more-link">
+            <a href="/2020/07/19/ring-buffer/#more">Read More</a>
+        </p>
+    
+    </div>
+    
+    <!--  -->
+    
+</article>
+
+
+
     
         
 <div class="article-cover">
@@ -482,46 +525,6 @@
 <p>使用编码网路（encoder）对源句子进行编码，使用解码网络（decoder）对源句子的编码进行解码，解码出预测句子。同时，作为监督，把目标句子作为解码网络的输入。</p>
         <p class="article-more-link">
             <a href="/2018/12/31/rnn-nmt/#more">Read More</a>
-        </p>
-    
-    </div>
-    
-    <!--  -->
-    
-</article>
-
-
-
-    
-        
-<div class="article-cover">
-   <img class="article-cover-img" src="https://s2.ax1x.com/2019/11/21/MoKrjA.jpg"> 
-</div>
-
-<article class="article content gallery" itemscope itemprop="blogPost">
-    <h1 class="article-title is-size-3 is-size-4-mobile" itemprop="name">
-        
-            <a href="/2018/11/20/glove/" itemprop="url">GloVe</a>
-        
-    </h1>
-    <div class="article-meta columns is-variable is-1 is-multiline is-mobile is-size-7-mobile">
-        <span class="column is-narrow">
-            2018-11-20
-            <!-- <time datetime="2018-11-19T16:00:00.000Z" itemprop="datePublished">Nov 20 2018</time> -->
-        </span>
-        
-        <span class="column is-narrow article-category">
-            <i class="far fa-folder"></i>
-            <a class="article-category-link" href="/categories/NLP/">NLP</a><span>,</span><a class="article-category-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a>
-        </span>
-        
-        <!--  -->
-    </div>
-    <div class="article-entry is-size-6-mobile" itemprop="articleBody">
-    
-        <p>GloVe（Global Vector），是一种结合全局矩阵分解和本地上下文窗口的方法。LSA（latent semantic analysis）虽然能够有效的统计信息，但在词汇类比任务中表现很差。而Skip-gram虽然在词汇类比任务中表现很好，但依赖于窗口的移动，而不能有效统计全局的计数。论文作者认为，全局计数的对数加上双线性回归方法会非常合适。</p>
-        <p class="article-more-link">
-            <a href="/2018/11/20/glove/#more">Read More</a>
         </p>
     
     </div>

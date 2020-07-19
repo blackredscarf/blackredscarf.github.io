@@ -2,7 +2,7 @@
 <html class="has-navbar-fixed-top">
 <head>
     <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="utf-8">
-<title>Archives: 2019/12 - 绯色的魔法世界</title>
+<title>无锁环形缓冲 - 绯色的魔法世界</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
 <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/outdated-browser/1.1.5/outdatedbrowser.min.css">
@@ -16,12 +16,23 @@
 
 
 
-    <meta property="og:type" content="website">
-<meta property="og:title" content="绯色的魔法世界">
-<meta property="og:url" content="http:&#x2F;&#x2F;yoursite.com&#x2F;archives&#x2F;2019&#x2F;12&#x2F;index.html">
+    <meta name="description" content="无锁环形缓冲(Lock-free RingBuffer)，又称无锁管道，是一个在不使用锁的情况下允许多线程访问的缓冲区，是在竞争条件下维护数据的最高性能选择之一。Golang里面的channel用的也是类似方法。该方法早在1994年的 Implementing Lock-Free Queues 论文中就开始被研究。">
+<meta name="keywords" content="算法,多线程">
+<meta property="og:type" content="article">
+<meta property="og:title" content="无锁环形缓冲">
+<meta property="og:url" content="http:&#x2F;&#x2F;yoursite.com&#x2F;2020&#x2F;07&#x2F;19&#x2F;ring-buffer&#x2F;index.html">
 <meta property="og:site_name" content="绯色的魔法世界">
+<meta property="og:description" content="无锁环形缓冲(Lock-free RingBuffer)，又称无锁管道，是一个在不使用锁的情况下允许多线程访问的缓冲区，是在竞争条件下维护数据的最高性能选择之一。Golang里面的channel用的也是类似方法。该方法早在1994年的 Implementing Lock-Free Queues 论文中就开始被研究。">
 <meta property="og:locale" content="en">
+<meta property="og:image" content="https:&#x2F;&#x2F;s1.ax1x.com&#x2F;2020&#x2F;07&#x2F;19&#x2F;UROYDK.png">
+<meta property="og:image" content="https:&#x2F;&#x2F;s1.ax1x.com&#x2F;2020&#x2F;07&#x2F;19&#x2F;UROtHO.png">
+<meta property="og:image" content="https:&#x2F;&#x2F;s1.ax1x.com&#x2F;2020&#x2F;07&#x2F;19&#x2F;UROJu6.png">
+<meta property="og:image" content="https:&#x2F;&#x2F;s1.ax1x.com&#x2F;2020&#x2F;07&#x2F;19&#x2F;URO8jx.png">
+<meta property="og:image" content="https:&#x2F;&#x2F;s1.ax1x.com&#x2F;2020&#x2F;07&#x2F;19&#x2F;URO3g1.png">
+<meta property="og:image" content="https:&#x2F;&#x2F;s1.ax1x.com&#x2F;2020&#x2F;07&#x2F;19&#x2F;UROUED.png">
+<meta property="og:updated_time" content="2020-07-19T08:48:07.732Z">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https:&#x2F;&#x2F;s1.ax1x.com&#x2F;2020&#x2F;07&#x2F;19&#x2F;UROYDK.png">
 
 
 
@@ -132,21 +143,135 @@
     <section class="section">
     <div class="container">
     
+<div class="article-cover">
+   <img class="article-cover-img" src="https://s1.ax1x.com/2020/07/19/UWijvF.jpg"> 
+</div>
+
+<article class="article content gallery" itemscope itemprop="blogPost">
+    <h1 class="article-title is-size-3 is-size-4-mobile" itemprop="name">
+        
+            无锁环形缓冲
+        
+    </h1>
+    <div class="article-meta columns is-variable is-1 is-multiline is-mobile is-size-7-mobile">
+        <span class="column is-narrow">
+            2020-07-19
+            <!-- <time datetime="2020-07-18T16:00:00.000Z" itemprop="datePublished">Jul 19 2020</time> -->
+        </span>
+        
+        <span class="column is-narrow article-category">
+            <i class="far fa-folder"></i>
+            <a class="article-category-link" href="/categories/%E7%AE%97%E6%B3%95%E4%B8%8E%E8%AE%BE%E8%AE%A1/">算法与设计</a>
+        </span>
+        
+        <!--  -->
+    </div>
+    <div class="article-entry is-size-6-mobile" itemprop="articleBody">
     
-        <div class="archive content">
-            <h4 class="title is-4" id="2019">2019</h4>
-            <div class="articles">
+        <p>无锁环形缓冲(Lock-free RingBuffer)，又称无锁管道，是一个在不使用锁的情况下允许多线程访问的缓冲区，是在竞争条件下维护数据的最高性能选择之一。Golang里面的channel用的也是类似方法。该方法早在1994年的 <a href="http://people.cs.pitt.edu/~jacklange/teaching/cs2510-f12/papers/implementing_lock_free.pdf" target="_blank" rel="noopener">Implementing Lock-Free Queues</a> 论文中就开始被研究。</p>
+<a id="more"></a>
+<h2 id="构成">构成</h2>
+<p>一个RingBuffer主要包含如下字段：</p>
+<ol type="1">
+<li>buf 缓冲数组，每个元素作为结构体node，包含了pos字段表示元素位置，data字段表示用户插入的数据。</li>
+<li>cap 容量，整数</li>
+<li>mask 容量减一，整数</li>
+<li>queue 插入数据的指针，整数</li>
+<li>dequeue 获取数据的指针，整数</li>
+<li>disposed 是否停止阻塞，布尔</li>
+</ol>
+<p>方法有如下：</p>
+<ol type="1">
+<li>Put(v) 插入数据</li>
+<li>Get() 获取数据</li>
+<li>Cap() 获取容量</li>
+<li>Len() 数据数量</li>
+<li>Dispose() 中断阻塞</li>
+</ol>
+<h2 id="算法过程">算法过程</h2>
+<p>下面用图来分析插入和获取数据的过程。</p>
+<p>一开始，一个容量为4的缓存区里面每个node都自带从0开始递增的pos，queue和dequeue指针都是0。</p>
+<p><img src="https://s1.ax1x.com/2020/07/19/UROYDK.png"></p>
+<p>当插入数据时，会在queue指向的位置插入数据，该位置pos加一；然后queue指针会移动指向下一个node，即值加一。</p>
+<p><img src="https://s1.ax1x.com/2020/07/19/UROtHO.png"></p>
+<p>同理，我们再依次插入两个数据，这时queue为3，指向第4个node。</p>
+<p><img src="https://s1.ax1x.com/2020/07/19/UROJu6.png"></p>
+<p>当获取数据时，会获取dequeue指向的位置的数据，然后该位置的pos=dequeue+cap，dequeue移动到下一个node，即加一。之所以pos=dequeue+cap是为了表示该位置已经空出，以便于插入时能通过queue判断出这一情况。</p>
+<p><img src="https://s1.ax1x.com/2020/07/19/URO8jx.png"></p>
+<p>我们继续插入数据，这次会把数据插入到第4个node中，然后queue移动。</p>
+<p><img src="https://s1.ax1x.com/2020/07/19/URO3g1.png"></p>
+<p>当获取数据后，第一个node就空了出来，意味着我们可以把数据插入到第一个node中。</p>
+<p><img src="https://s1.ax1x.com/2020/07/19/UROUED.png"></p>
+<p>当插入数据时，会作判断，必须是pos-queue=0时，我们才认为可以在该位置插入该数据，如果pos-queue&lt;0，意味着该位置的数据还没被获取，你不能去覆盖它，一般遇到这种情况会在一个循环中阻塞，直到该位置的数据被Get()或者被Dispose()。实际实现时，pos, queue等属性可能会作为无符号整型，pos-queue&lt;0的判断则应该变为pos-queue&gt;0。</p>
+<p>若想获得当前缓冲区中有多少数据还没被获取，即Len()函数，则只要queue-dequeue即可。</p>
+<p>若想中断阻塞或将管道改为非阻塞，则只需要在循环里面判断disposed字段是否为真即可。</p>
+<p>程序实现可以参考我写的这一版<a href="https://github.com/blackredscarf/rtdsync/blob/master/include/rtd/ringbuf.h" target="_blank" rel="noopener">rtd/ringbuf.h</a>。</p>
+<h2 id="无锁原因">无锁原因</h2>
+<p>之所以环形缓冲能实现无锁，是因为采用了双指针和数值化。双指针分别指向插入数据位置和获取数据位置，读写时互不干扰，唯一会发生干扰的情况就是当缓冲区满了，两者指向同一位置，必须等到该位置数据被Get之后才能插入，而又这里仅仅涉及数值上的比较和更改，这部分完全可以简化为原子操作。</p>
+<h2 id="参考">参考</h2>
+<ul>
+<li><a href="http://people.cs.pitt.edu/~jacklange/teaching/cs2510-f12/papers/implementing_lock_free.pdf" target="_blank" rel="noopener">Implementing Lock-Free Queues</a></li>
+<li><a href="https://github.com/Workiva/go-datastructures/blob/master/queue/ring.go" target="_blank" rel="noopener">go-datastructures/queue/ring.go</a></li>
+<li><a href="http://www.1024cores.net/home/lock-free-algorithms/queues/bounded-mpmc-queue" target="_blank" rel="noopener">bounded-mpmc-queue</a></li>
+</ul>
+
+    
+    </div>
+    
+    <div class="columns is-variable is-1 is-multiline is-mobile">
+    
+        <span class="column is-narrow"><a class="tag is-light article-tag" href="/tags/%E7%AE%97%E6%B3%95/">#算法</a></span>
+    
+        <span class="column is-narrow"><a class="tag is-light article-tag" href="/tags/%E5%A4%9A%E7%BA%BF%E7%A8%8B/">#多线程</a></span>
+    
+    </div>
+    
+    <!-- 
+    <span id="2020/07/19/ring-buffer/" class="leancloud_visitors" data-flag-title="无锁环形缓冲">
+        <em class="post-meta-item-text">阅读量 </em>
+        <i class="leancloud-visitors-count">1000000</i>
+    </span>
+     -->
+    
+    <div class="go-next columns is-mobile is-multiline article-nav">
+        <span class="column is-12-mobile is-half-desktop is-hidden-mobile article-nav-prev">
             
-                <div class="article content>">
-                    <time class="is-text-small" datetime="2019-12-27T16:00:00.000Z" itemprop="datePublished">
-                        Dec 28</time>
-                    <h6 class="title is-6"><a href="/2019/12/28/raft/">Raft 简述</a></h6>
-                </div>
+        </span>
+        <span class="column is-12-mobile is-half-desktop  article-nav-next">
             
-            </div>
-        </div>
+            <a href="/2020/07/04/kafka/">Kafka 分析</a>
+            
+        </span>
+    </div>
     
+</article>
+
+
+
+<div class="comments">
+    <h3 class="title is-4">Comments</h3>
     
+<div id="valine-thread"></div>
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+<script>
+    new Valine({
+        el: '#valine-thread',
+        appId: 'DEXiOMuMN86LKmdUtJYX4FRL-MdYXbMMI',
+        appKey: 'tPt6E0GhkwXKEBUacbugDcWb',
+        notify: false,
+        verify: false,
+        avatar: '',
+        placeholder: 'Say something...',
+        meta: ['nick', 'mail'],
+        visitor: true,
+        lang: ''
+    })
+</script>
+
+
+</div>
+
     </div>
 </section>
     <footer class="footer">
