@@ -165,7 +165,7 @@
     </div>
     <div class="article-entry is-size-6-mobile" itemprop="articleBody">
     
-        <p>无锁环形缓冲(Lock-free RingBuffer)，又称无锁管道，是一个在不使用锁的情况下允许多线程访问的缓冲区，是在竞争条件下维护数据的最高性能选择之一。Golang里面的channel用的也是类似方法。该方法早在1994年的 <a href="http://people.cs.pitt.edu/~jacklange/teaching/cs2510-f12/papers/implementing_lock_free.pdf" target="_blank" rel="noopener">Implementing Lock-Free Queues</a> 论文中就开始被研究。</p>
+        <p>无锁环形缓冲(Lock-free RingBuffer)，又称无锁管道，是一个在不使用锁的情况下允许多线程访问的缓冲区，是在竞争条件下维护数据的最高性能选择之一。该方法早在1994年的 <a href="http://people.cs.pitt.edu/~jacklange/teaching/cs2510-f12/papers/implementing_lock_free.pdf" target="_blank" rel="noopener">Implementing Lock-Free Queues</a> 论文中就开始被研究，该文尝试实现了无锁链表，而本文将尝试实现无锁的环形数组。</p>
         <p class="article-more-link">
             <a href="/2020/07/19/ring-buffer/#more">Read More</a>
         </p>
