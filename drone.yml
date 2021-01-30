@@ -5,14 +5,13 @@ name: myblog
 steps:
 - name: deploy
   image: appleboy/drone-ssh
+  volumes:
+  - /root/.ssh/id_rsa:/root/.ssh/id_rsa
   settings:
     port: 22
-    host:
-      from_secret: host
-    username:
-      frome_secret: username
-    key:
-      from_secret: key
+    host: zzjw.cc
+    username: root
+    key_path: /root/.ssh/id_rsa
     script:
     - chmod +x /data/myblog/deploy.sh
     - /data/myblog/deploy.sh
