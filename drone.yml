@@ -1,0 +1,18 @@
+kind: pipeline
+type: docker
+name: myblog
+
+steps:
+- name: deploy
+  image: appleboy/drone-ssh
+  settings:
+    port: 22
+    host:
+      from_secret: host
+    username:
+      frome_secret: username
+    key:
+      from_secret: key
+    script:
+    - chmod +x /data/myblog/deploy.sh
+    - /data/myblog/deploy.sh
