@@ -6,7 +6,8 @@ steps:
 - name: deploy
   image: appleboy/drone-ssh
   volumes:
-  - "/root/.ssh/id_rsa:/root/.ssh/id_rsa"
+  - name: ssh
+    path: /root/.ssh/id_rsa
   settings:
     port: 22
     host: zzjw.cc
@@ -15,3 +16,8 @@ steps:
     script:
     - chmod +x /data/myblog/deploy.sh
     - /data/myblog/deploy.sh
+
+volumes:
+  - name: ssh
+    host:
+        path: /root/.ssh/id_rsa
