@@ -20,7 +20,7 @@
 <meta name="keywords" content="算法设计">
 <meta property="og:type" content="article">
 <meta property="og:title" content="布隆过滤器">
-<meta property="og:url" content="http:&#x2F;&#x2F;zzjw.cc&#x2F;2020&#x2F;11&#x2F;24&#x2F;bloom-filter&#x2F;index.html">
+<meta property="og:url" content="http:&#x2F;&#x2F;blackredscarf.github.io&#x2F;2020&#x2F;11&#x2F;24&#x2F;bloom-filter&#x2F;index.html">
 <meta property="og:site_name" content="绯色的魔法世界">
 <meta property="og:description" content="布隆过滤器是一种空间高效的数据结构，用于判断一个元素是否位于集合中，但空间高效是有代价的。它基本实现方式是把元素计算成一个小序列存到数据结构中，多个序列有一定几率会在数据结构中重叠，所以有一定几率会判断错误，而且数据转换成序列后是不可逆的。所以，该数据结构一般用于容错高的场景，作为一个额外的数据结构来判断元素是否在集合中。">
 <meta property="og:locale" content="en">
@@ -265,7 +265,7 @@ k = (w/n) * \ln 2
         el: '#valine-thread',
         appId: 'DEXiOMuMN86LKmdUtJYX4FRL-MdYXbMMI',
         appKey: 'tPt6E0GhkwXKEBUacbugDcWb',
-        notify: false,
+        notify: true,
         verify: false,
         avatar: '',
         placeholder: 'Say something...',
