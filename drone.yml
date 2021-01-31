@@ -12,7 +12,7 @@ steps:
     port: 22
     host: zzjw.cc
     username: root
-    key_path: "/root/.ssh/id_rsa"
+    key_path: /root/.ssh/id_rsa
     script:
     - chmod +x /data/myblog/deploy.sh
     - /data/myblog/deploy.sh
