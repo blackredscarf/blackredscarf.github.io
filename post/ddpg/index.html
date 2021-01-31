@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html class="has-navbar-fixed-top">
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="utf-8">
+<title>深度确定性策略梯度 - 绯色的魔法世界</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+<link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/outdated-browser/1.1.5/outdatedbrowser.min.css">
+
+
+
+
+<meta name="description" content="">
+
+
+
+
+
+    <meta name="description" content="虽然DQN的表现很好，但它有一个致命的缺点是无法学习连续动作空间。回想一下，DQN 是根据greddy策略找到最大Q值对应的行为，即 \(\large a = \mathop{argmax}\limits_{a \in \mathcal{A}} Q(s)\)，也就说每一个行为对应一个Q值，当动作是高维度的或者是连续的，那么DQN的计算代价就很大，甚至无法进行学习。这时使用策略梯度就能很好解决这个问">
+<meta name="keywords" content="深度学习,机器学习,强化学习">
+<meta property="og:type" content="article">
+<meta property="og:title" content="深度确定性策略梯度">
+<meta property="og:url" content="http:&#x2F;&#x2F;blackredscarf.github.io&#x2F;post&#x2F;ddpg&#x2F;index.html">
+<meta property="og:site_name" content="绯色的魔法世界">
+<meta property="og:description" content="虽然DQN的表现很好，但它有一个致命的缺点是无法学习连续动作空间。回想一下，DQN 是根据greddy策略找到最大Q值对应的行为，即 \(\large a = \mathop{argmax}\limits_{a \in \mathcal{A}} Q(s)\)，也就说每一个行为对应一个Q值，当动作是高维度的或者是连续的，那么DQN的计算代价就很大，甚至无法进行学习。这时使用策略梯度就能很好解决这个问">
+<meta property="og:locale" content="en">
+<meta property="og:image" content="https:&#x2F;&#x2F;i.loli.net&#x2F;2018&#x2F;09&#x2F;18&#x2F;5ba101047aa06.png">
+<meta property="og:image" content="https:&#x2F;&#x2F;i.loli.net&#x2F;2018&#x2F;09&#x2F;18&#x2F;5ba1011866671.png">
+<meta property="og:image" content="https:&#x2F;&#x2F;i.loli.net&#x2F;2018&#x2F;09&#x2F;18&#x2F;5ba10127ed63d.png">
+<meta property="og:updated_time" content="2020-07-04T06:32:43.059Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https:&#x2F;&#x2F;i.loli.net&#x2F;2018&#x2F;09&#x2F;18&#x2F;5ba101047aa06.png">
+
+
+
+
+
+<link rel="icon" href="https://s1.ax1x.com/2020/07/25/aSC9Cn.png">
+
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Ovo|Source+Code+Pro">
+<link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/bulma/0.6.2/css/bulma.min.css">
+
+
+<link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/lightgallery/1.6.8/css/lightgallery.min.css">
+<link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/justifiedGallery/3.6.5/css/justifiedGallery.min.css">
+
+
+<link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/highlight.js/10.1.1/styles/atom-one-light.min.css">
+
+<link rel="stylesheet" href="/css/style.css">
+
+<script defer src="https://cdn.bootcdn.net/ajax/libs/font-awesome/5.14.0/js/all.min.js"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+    
+
+
+</head>
+<body>
+    
+
+<!-- hexo-inject:begin --><!-- hexo-inject:end --><nav class="navbar is-transparent is-fixed-top navbar-main" role="navigation" aria-label="main navigation">
+    <div class="top-title-line">
+        <div class="top-title">
+            <a href="/"><span>绯色的魔法世界</span></a>
+        </div>
+    </div>
+    <div class="nav-tool-line">
+        <div class="nav-tool">
+            
+            <a class="navbar-item search" title="Search" href="javascript:;" target="_blank" rel="noopener">
+                <i class="fas fa-search"></i>
+            </a>
+            
+            
+            <a class="navbar-item" title="GitHub" href="https://github.com/blackredscarf" target="_blank" rel="noopener">
+                
+                <i class="fab fa-github"></i>
+                
+            </a>
+               
+            
+        </div>    
+    </div>
+    <div class="container">
+        <div class="navbar-brand">
+            <!-- <a class="navbar-item navbar-logo" href="/">
+                
+                <img src="/images/logo.png" alt="" height="28">
+                
+            </a> -->
+            <div class="navbar-burger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+        
+        <div class="navbar-menu navbar-start">
+            
+            <a class="navbar-item "
+               href="/">Home</a>
+            
+            <a class="navbar-item "
+               href="/archives">归档</a>
+            
+            <a class="navbar-item "
+               href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F">操作系统</a>
+            
+            <a class="navbar-item "
+               href="/categories/%E5%88%86%E5%B8%83%E5%BC%8F">分布式</a>
+            
+            <a class="navbar-item "
+               href="/categories/%E7%AE%97%E6%B3%95%E8%AE%BE%E8%AE%A1">算法设计</a>
+            
+            <a class="navbar-item "
+               href="/categories/%E9%9A%8F%E8%AE%B0">随记</a>
+            
+            <a class="navbar-item "
+               href="/categories/NLP">NLP</a>
+            
+            <a class="navbar-item "
+               href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0">机器学习</a>
+            
+        </div>
+        
+        
+    </div>
+</nav>
+
+    <section class="section">
+    <div class="container">
+    
+<div class="article-cover">
+   <img class="article-cover-img" src="https://s2.ax1x.com/2019/11/21/MoKHH0.jpg"> 
+</div>
+
+<article class="article content gallery" itemscope itemprop="blogPost">
+    <h1 class="article-title is-size-3 is-size-4-mobile" itemprop="name">
+        
+            深度确定性策略梯度
+        
+    </h1>
+    <div class="article-meta columns is-variable is-1 is-multiline is-mobile is-size-7-mobile">
+        <span class="column is-narrow">
+            2018-09-18
+            <!-- <time datetime="2018-09-17T16:00:00.000Z" itemprop="datePublished">Sep 18 2018</time> -->
+        </span>
+        
+        <span class="column is-narrow article-category">
+            <i class="far fa-folder"></i>
+            <a class="article-category-link" href="/categories/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/">深度学习</a><span>,</span><a class="article-category-link" href="/categories/%E5%BC%BA%E5%8C%96%E5%AD%A6%E4%B9%A0/">强化学习</a><span>,</span><a class="article-category-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a>
+        </span>
+        
+        <!--  -->
+    </div>
+    <div class="article-entry is-size-6-mobile" itemprop="articleBody">
+    
+        <p>虽然DQN的表现很好，但它有一个致命的缺点是无法学习连续动作空间。回想一下，DQN 是根据greddy策略找到最大Q值对应的行为，即 <span class="math inline">\(\large a = \mathop{argmax}\limits_{a \in \mathcal{A}} Q(s)\)</span>，也就说每一个行为对应一个Q值，当动作是高维度的或者是连续的，那么DQN的计算代价就很大，甚至无法进行学习。这时使用策略梯度就能很好解决这个问题。我们把环境动作设计成连续的，用动作特征表示一个动作，使用策略梯度，我们不需要计算每一个动作的Q值，而是可以通过参数化近似的办法直接输出一个动作特征，而不是从某个值映射到某个动作。DDPG (Deep Deterministic Policy Gradient)算法很好的弥补了DQN的缺陷。当然，并不是DDPG只能解决连续动作问题，只要把动作特征映射到某一个动作上就能应对非连续动作空间问题了。</p>
+<a id="more"></a>
+<h2 id="算法">算法</h2>
+<p>DDPG使用演员-评论家模型（actor-critic），设计了4个参数化函数。其中actor包含策略函数 <span class="math inline">\(\large \mu\)</span>，目标策略函数 <span class="math inline">\(\large \mu&#39;\)</span>，而critic包含Q函数 <span class="math inline">\(\large Q\)</span>，目标Q函数 <span class="math inline">\(\large Q&#39;\)</span>。</p>
+<p>我们的目标是把 <span class="math inline">\(\large \mu\)</span> 参数训练好，因为届时我们获取动作特征的方法是，</p>
+<p><span class="math display">\[
+a = \mu(s)
+\]</span></p>
+<p>在训练过程中，critic的 <span class="math inline">\(\large Q\)</span> 的作用是对actor策略 <span class="math inline">\(\large \mu\)</span> 进行评估，</p>
+<p><span class="math display">\[
+\begin{aligned}
+a &amp;= \mu(s) \\
+q &amp;= Q(s, a)
+\end{aligned}
+\]</span></p>
+<p>通过 <span class="math inline">\(\large Q(s, a)\)</span> 可以一个评价当前actor在状态 <span class="math inline">\(\large s\)</span> 执行动作 <span class="math inline">\(\large a\)</span> 的分数。</p>
+<p>上面提到的参数中，目标参数 <span class="math inline">\(\large \mu&#39;\)</span> 和 <span class="math inline">\(\large Q&#39;\)</span> 作为监督者，以此来计算 <span class="math inline">\(\large \mu\)</span> 和 <span class="math inline">\(\large Q\)</span> 函数的参数梯度。</p>
+<p>每一个episode，我们先从经验池 <span class="math inline">\(\large R\)</span> 中抽样 <span class="math inline">\(\large N\)</span> 个转移，</p>
+<p><span class="math display">\[
+(s_i, a_i, r_i, s_{i+1})_i^N \in R
+\]</span></p>
+<p>对于 <span class="math inline">\(\large Q\)</span> 的损失函数，我们定义为：</p>
+<p><span class="math display">\[
+\begin{aligned}
+&amp; a_{i+1} = \mu&#39;(s_{i+1}) \\
+&amp; y_i = r_i + \gamma Q&#39;(s_{i+1}, a_{i+1}) \\
+&amp; J = \frac{1}{N} \sum_i (y_i-Q(s_i,a))^2
+\end{aligned}
+\]</span></p>
+<p>对于 <span class="math inline">\(\large \mu\)</span> 的损函数，论文中直接给的是梯度公式。而我参考了其他人的实现，发现他们定义了一个相对简单的损失函数。</p>
+<p><span class="math display">\[
+\begin{aligned}
+&amp; a_i = \mu(s_i) \\
+&amp; J = -\frac{1}{N} \sum_i Q(s_i,a_i)
+\end{aligned}
+\]</span></p>
+<p>大概理解就是，我们设法把 <span class="math inline">\(\large Q(s_i,a_i)\)</span> 最大化，即通过梯度下降，最小化其负数。</p>
+<p>更新完梯度后，需要进行参数软更新（soft-update）：</p>
+<p><span class="math display">\[
+\begin{aligned}
+w^{Q&#39;} &amp;= \tau \; w^{Q} + (1-\tau)w^{Q&#39;} \\
+w^{\mu&#39;} &amp;= \tau \; w^{\mu} + (1-\tau)w^{\mu&#39;} \\
+\tau &amp;\ll 1
+\end{aligned}
+\]</span></p>
+<p>每次更新target参数时，我们不会完全更新，而是保留多一些过往的记忆。</p>
+<p>论文中提到，为了让的动作更加丰富，使个体勇于探索，我们要在动作特征上加入噪音。</p>
+<p><span class="math display">\[
+\mu(s) = \mu(s) + \epsilon \; \mathcal{N}
+\]</span></p>
+<p>其中 <span class="math inline">\(\large \mathcal{N}\)</span> 使用<a href="https://en.wikipedia.org/wiki/Ornstein–Uhlenbeck_process" target="_blank" rel="noopener">Ornstein-Uhlenbeck process</a>算法生成噪音。其中 <span class="math inline">\(\large \epsilon\)</span> 是一个动态的衰减系数，论文中没有提到，实际使用时如果不加可能导致训练过程非常震荡。</p>
+<h2 id="实验细节">实验细节</h2>
+<p>论文后面附加部分提供了算法参数的一些细节。</p>
+<ul>
+<li>梯度更新使用Adam，actor和critic的学习率分别为1e-4和1e-3。</li>
+<li><span class="math inline">\(\gamma\)</span> 为0.99</li>
+<li><span class="math inline">\(\large \tau\)</span> 为0.001</li>
+<li>参数化近似使用神经网络，actor和critic使用三层神经网络，分别是400，300和300个神经元。actor的输出层使用tanh。critic第一层输入状态特征，第一层的输出与动作特征一起输入第二层。</li>
+<li>参数初始化，前两层使用fanin_init初始化，最后一层使用区间为[-3e-3, 3e-3]的归一化分布。</li>
+<li>Ornstein-Uhlenbeck process的参数中，<span class="math inline">\(\large \theta\)</span> 为0.15，<span class="math inline">\(\large \sigma\)</span> 为0.2</li>
+</ul>
+<p>还有一个就是噪音衰减的问题，这个问题论文中没有提到，但我自己测试时去发现了这个问题不容忽视。<span class="math inline">\(\large \epsilon\)</span> 初始值为1，每完成一个episode就减去 <span class="math inline">\(\large d\)</span>，这个 <span class="math inline">\(\large d\)</span> 的很难选，假设是0.01，那么100个episode后 <span class="math inline">\(\large \epsilon\)</span> 就衰减到0，之后就无法加入噪音了。如果你的模型训练难度较大，要训练几百上千个episode，你必须确保能够持续加入噪音，同时兼顾到训练后期减少噪音的加入。</p>
+<h2 id="代码实现">代码实现</h2>
+<p>我用pytorch实现了DDPG算法，详见<a href="https://github.com/blackredscarf/pytorch-DDPG" target="_blank" rel="noopener">Github</a></p>
+<h2 id="测试">测试</h2>
+<p>以下是我自己跑的测试结果，测试过程表明某些参数的调节是非常重要的。</p>
+<h3 id="mountaincarcontinuous-v0">MountainCarContinuous-v0</h3>
+<p>环境细节看<a href="https://github.com/openai/gym/wiki/MountainCarContinuous-v0" target="_blank" rel="noopener">这里</a>，小车到达终点就能获得100的奖励。这个环境中小车很容易就找到前往终点的路，所以噪声的衰减可以大一些，设置 <span class="math inline">\(\large d=0.01\)</span>。</p>
+<p><img src="https://i.loli.net/2018/09/18/5ba101047aa06.png" width="700px"></p>
+<p>可以看到，小车通过探索很快就找到了终点，并且奖励也接近最优，但因为仍然在往动作中加入噪声，所以小车在尝试有没有更好的路径，经过一番挣扎后，小车发现别的路径都行不通，而此时噪声已经几乎没有了，所以不再进行探索，又回到了之前的获得高奖励的路径上。</p>
+<p>如果我们设置 <span class="math inline">\(\large d=0.001\)</span>，表现如下：</p>
+<p><img src="https://i.loli.net/2018/09/18/5ba1011866671.png" width="700px"></p>
+<p>可以发现，噪声衰减调小了，使得小车进行持续的探索。上图经历的episode较少，虽然最终可能找到优秀的路径，但时间代价会很大。原本很快就能解决问题的，没有必要进行长时间的探索。</p>
+<h3 id="pendulum-v0">Pendulum-v0</h3>
+<p>这个是一个未解决环境，即没有一个奖励区间能说明已经解决。环境细节可以参考<a href="https://github.com/openai/gym/wiki/Pendulum-v0" target="_blank" rel="noopener">这里</a>。</p>
+<p>因为环境动作多样化，我们可以进行更多的探索，所以把噪声衰减调节慢一点，设置 <span class="math inline">\(\large d=0.001\)</span>。</p>
+<p><img src="https://i.loli.net/2018/09/18/5ba10127ed63d.png" width="700px"></p>
+<p>奖励虽然在增长，但一直在负数，后期收敛极慢。而曲线仍然在震荡是因为我们的噪声还没衰减到0。</p>
+<h2 id="参考文献">参考文献</h2>
+<ul>
+<li><a href="https://arxiv.org/abs/1509.02971" target="_blank" rel="noopener">Continuous control with deep reinforcement learning</a></li>
+</ul>
+
+    
+    </div>
+    
+    <div class="columns is-variable is-1 is-multiline is-mobile">
+    
+        <span class="column is-narrow"><a class="tag is-light article-tag" href="/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/">#深度学习</a></span>
+    
+        <span class="column is-narrow"><a class="tag is-light article-tag" href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">#机器学习</a></span>
+    
+        <span class="column is-narrow"><a class="tag is-light article-tag" href="/tags/%E5%BC%BA%E5%8C%96%E5%AD%A6%E4%B9%A0/">#强化学习</a></span>
+    
+    </div>
+    
+    <!-- 
+    <span id="post/ddpg/" class="leancloud_visitors" data-flag-title="深度确定性策略梯度">
+        <em class="post-meta-item-text">阅读量 </em>
+        <i class="leancloud-visitors-count">1000000</i>
+    </span>
+     -->
+    
+    <div class="go-next columns is-mobile is-multiline article-nav">
+        <span class="column is-12-mobile is-half-desktop  article-nav-prev">
+            
+            <a href="/post/skip-gram/">负采样的Skip-Gram模型</a>
+            
+        </span>
+        <span class="column is-12-mobile is-half-desktop  article-nav-next">
+            
+            <a href="/post/ddqn/">双深度Q网络</a>
+            
+        </span>
+    </div>
+    
+</article>
+
+
+
+<div class="comments">
+    <h3 class="title is-4">Comments</h3>
+    
+<div id="valine-thread"></div>
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+<script>
+    new Valine({
+        el: '#valine-thread',
+        appId: 'DEXiOMuMN86LKmdUtJYX4FRL-MdYXbMMI',
+        appKey: 'tPt6E0GhkwXKEBUacbugDcWb',
+        notify: true,
+        verify: false,
+        avatar: '',
+        placeholder: 'Say something...',
+        meta: ['nick', 'mail'],
+        visitor: true,
+        lang: ''
+    })
+</script>
+
+
+</div>
+
+    </div>
+</section>
+    <footer class="footer">
+    <div class="container">
+        <div class="columns content">
+            <div class="column is-narrow has-text-centered">
+                &copy; 2021 Black Redscarf&nbsp;
+                Powered by <a href="http://hexo.io/" target="_blank">Hexo</a> & <a
+                        href="http://github.com/ppoffice/hexo-theme-minos">Minos</a>
+            </div>
+            <div class="column is-hidden-mobile"></div>
+
+            
+            <div class="column is-narrow">
+                <div class="columns is-mobile is-multiline is-centered">
+                
+                    
+                <a class="column is-narrow has-text-black" title="GitHub" href="https://github.com/blackredscarf" target="_blank" rel="noopener">
+                    
+                    GitHub
+                    
+                </a>
+                
+                </div>
+            </div>
+            
+            
+        </div>
+    </div>
+</footer>
+    <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/moment.js/2.22.2/moment-with-locales.min.js"></script>
+
+<!-- test if the browser is outdated -->
+<div id="outdated">
+    <h6>Your browser is out-of-date!</h6>
+    <p>Update your browser to view this website correctly. <a id="btnUpdateBrowser" href="http://outdatedbrowser.com/" target="_blank" rel="noopener">Update my browser now </a></p>
+    <p class="last"><a href="#" id="btnCloseUpdateBrowser" title="Close">&times;</a></p>
+</div>
+<script src="https://cdn.bootcdn.net/ajax/libs/outdated-browser/1.1.5/outdatedbrowser.min.css"></script>
+<script>
+    $(document).ready(function () {
+        // plugin function, place inside DOM ready function
+        outdatedBrowser({
+            bgColor: '#f25648',
+            color: '#ffffff',
+            lowerThan: 'flex'
+        })
+    });
+</script>
+
+<script>
+    window.FontAwesomeConfig = {
+        searchPseudoElements: true
+    }
+    moment.locale("en-AU");
+</script>
+
+
+    
+    
+<script src="https://cdn.bootcdn.net/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+<script>
+    MathJax.Hub.Config({
+        "HTML-CSS": {
+            matchFontHeight: false
+        },
+        SVG: {
+            matchFontHeight: false
+        },
+        CommonHTML: {
+            matchFontHeight: false
+        },
+        tex2jax: {
+            inlineMath: [ ['$','$'],['\\(','\\)'] ],
+            displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+            processEscapes: false
+        }
+    });
+</script>
+
+    
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/katex.min.css" integrity="sha384-9eLZqc9ds8eNjO3TmqPeYcDj8n+Qfa4nuSiGYa6DjLNcv9BtN69ZIulL9+8CqC9Y" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/katex.min.js" integrity="sha384-K3vbOmF2BtaVai+Qk37uypf7VrgBubhQreNQe9aGsz9lB63dIFiQVlJbr92dw2Lx" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/contrib/auto-render.min.js" integrity="sha384-kmZOZB5ObwgQnS/DuDg6TScgOiWWBiVt0plIRkZCmE6rDZGrEOQeHM5PcHi+nyqe" crossorigin="anonymous"
+        onload="renderMathInElement(document.body);"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    renderMathInElement(document.body, {
+        // ...options...
+    });
+});
+</script>
+
+    
+    
+<script src="https://cdn.bootcdn.net/ajax/libs/lightgallery/1.6.8/js/lightgallery-all.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/justifiedGallery/3.6.5/js/jquery.justifiedGallery.min.js"></script>
+<script>
+    (function ($) {
+        $(document).ready(function () {
+            if (typeof($.fn.lightGallery) === 'function') {
+                $('.article.gallery').lightGallery({ selector: '.gallery-item' });
+            }
+            if (typeof($.fn.justifiedGallery) === 'function') {
+                $('.justified-gallery').justifiedGallery();
+            }
+        });
+    })(jQuery);
+</script>
+
+    
+    
+    <script src="https://cdn.bootcdn.net/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script>
+    <style>
+        .hljs {
+            position: relative;
+        }
+
+        .hljs .clipboard-btn {
+            float: right;
+            color: #9a9a9a;
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+
+        .hljs .clipboard-btn:hover {
+          color: #8a8a8a;
+        }
+
+        .hljs > .clipboard-btn {
+            display: none;
+            position: absolute;
+            right: 4px;
+            top: 4px;
+        }
+
+        .hljs:hover > .clipboard-btn {
+            display: inline;
+        }
+
+        .hljs > figcaption > .clipboard-btn {
+            margin-right: 4px;
+        }
+    </style>
+    <script>
+      $(document).ready(function () {
+        $('figure.hljs').each(function(i, figure) {
+          var codeId = 'code-' + i;
+          var code = figure.querySelector('.code');
+          var copyButton = $('<button>Copy <i class="far fa-clipboard"></i></button>');
+          code.id = codeId;
+          copyButton.addClass('clipboard-btn');
+          copyButton.attr('data-clipboard-target-id', codeId);
+
+          var figcaption = figure.querySelector('figcaption');
+
+          if (figcaption) {
+            figcaption.append(copyButton[0]);
+          } else {
+            figure.prepend(copyButton[0]);
+          }
+        })
+
+        var clipboard = new ClipboardJS('.clipboard-btn', {
+          target: function(trigger) {
+            return document.getElementById(trigger.getAttribute('data-clipboard-target-id'));
+          }
+        });
+        clipboard.on('success', function(e) {
+          e.clearSelection();
+        })
+      })
+    </script>
+
+    
+    
+
+    
+
+
+<script src="/js/script.js"></script>
+
+    
+    <div class="searchbox ins-search">
+    <div class="searchbox-mask"></div>
+    <div class="searchbox-container ins-search-container">
+        <div class="searchbox-input-wrapper">
+            <input type="text" class="searchbox-input ins-search-input" placeholder="Type something..." />
+            <span class="searchbox-close ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="searchbox-result-wrapper ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+    (function (window) {
+        var INSIGHT_CONFIG = {
+            TRANSLATION: {
+                POSTS: 'Posts',
+                PAGES: 'Pages',
+                CATEGORIES: 'Categories',
+                TAGS: 'Tags',
+                UNTITLED: '(Untitled)',
+            },
+            CONTENT_URL: '/content.json',
+        };
+        window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+    })(window);
+</script>
+<script src="/js/insight.js"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    
+</body>
+</html>
