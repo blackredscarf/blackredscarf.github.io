@@ -2,7 +2,7 @@
 <html class="has-navbar-fixed-top">
 <head>
     <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="utf-8">
-<title>CentOS6升级glibc2.17 - 绯色的魔法世界</title>
+<title>压缩算法Snappy原理 - 绯色的魔法世界</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
 <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/outdated-browser/1.1.5/outdatedbrowser.min.css">
@@ -16,15 +16,15 @@
 
 
 
-    <meta name="description" content="前段时间在CentOS6集群上跑TensorFlow的时候遇到了glibc和gcc版本过低的问题。本篇先讲升级glibc。 注意，glibc是linux的核心底层库，一旦升级失败，系统基本就完蛋了。虽然这个教程我有九成把握能升级成功，但是为了避免突发情况，建议你在实际环境上升级之前，先跑一台虚拟机去模拟升级。">
-<meta name="keywords" content="操作系统,Linux">
+    <meta name="description" content="snappy是google开源的压缩算法实现，通过测试表明snappy拥有极高的性能表现，但google并没有发表相关论文，可以认为snappy是一个工业算法。snappy借鉴了LZ77的思路，LZ77的匹配过程时间复杂度过高，google对其做了许多优化。在讲snappy之前，我先简单说明LZ77的基本思想。">
+<meta name="keywords" content="算法设计">
 <meta property="og:type" content="article">
-<meta property="og:title" content="CentOS6升级glibc2.17">
-<meta property="og:url" content="http:&#x2F;&#x2F;blackredscarf.github.io&#x2F;post&#x2F;centos-upgrade-glibc&#x2F;index.html">
+<meta property="og:title" content="压缩算法Snappy原理">
+<meta property="og:url" content="http:&#x2F;&#x2F;blackredscarf.github.io&#x2F;post&#x2F;snappy&#x2F;index.html">
 <meta property="og:site_name" content="绯色的魔法世界">
-<meta property="og:description" content="前段时间在CentOS6集群上跑TensorFlow的时候遇到了glibc和gcc版本过低的问题。本篇先讲升级glibc。 注意，glibc是linux的核心底层库，一旦升级失败，系统基本就完蛋了。虽然这个教程我有九成把握能升级成功，但是为了避免突发情况，建议你在实际环境上升级之前，先跑一台虚拟机去模拟升级。">
+<meta property="og:description" content="snappy是google开源的压缩算法实现，通过测试表明snappy拥有极高的性能表现，但google并没有发表相关论文，可以认为snappy是一个工业算法。snappy借鉴了LZ77的思路，LZ77的匹配过程时间复杂度过高，google对其做了许多优化。在讲snappy之前，我先简单说明LZ77的基本思想。">
 <meta property="og:locale" content="en">
-<meta property="og:updated_time" content="2019-11-21T15:07:46.767Z">
+<meta property="og:updated_time" content="2021-03-02T13:04:27.802Z">
 <meta name="twitter:card" content="summary">
 
 
@@ -140,85 +140,146 @@
     <div class="container">
     
 <div class="article-cover">
-   <img class="article-cover-img" src="https://s2.ax1x.com/2019/11/21/MoM8PS.jpg"> 
+   <img class="article-cover-img" src="https://s3.ax1x.com/2021/03/02/6kgTW4.jpg"> 
 </div>
 
 <article class="article content gallery" itemscope itemprop="blogPost">
     <h1 class="article-title is-size-3 is-size-4-mobile" itemprop="name">
         
-            CentOS6升级glibc2.17
+            压缩算法Snappy原理
         
     </h1>
     <div class="article-meta columns is-variable is-1 is-multiline is-mobile is-size-7-mobile">
         <span class="column is-narrow">
-            2018-06-30
-            <!-- <time datetime="2018-06-29T16:00:00.000Z" itemprop="datePublished">Jun 30 2018</time> -->
+            2021-03-02
+            <!-- <time datetime="2021-03-01T16:00:00.000Z" itemprop="datePublished">Mar 2 2021</time> -->
         </span>
         
         <span class="column is-narrow article-category">
             <i class="far fa-folder"></i>
-            <a class="article-category-link" href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/">操作系统</a>
+            <a class="article-category-link" href="/categories/%E7%AE%97%E6%B3%95%E8%AE%BE%E8%AE%A1/">算法设计</a>
         </span>
         
         <!--  -->
     </div>
     <div class="article-entry is-size-6-mobile" itemprop="articleBody">
     
-        <p>前段时间在CentOS6集群上跑TensorFlow的时候遇到了glibc和gcc版本过低的问题。本篇先讲升级glibc。</p>
-<p>注意，glibc是linux的核心底层库，一旦升级失败，系统基本就完蛋了。虽然这个教程我有九成把握能升级成功，但是为了避免突发情况，建议你在实际环境上升级之前，先跑一台虚拟机去模拟升级。</p>
+        <p>snappy是google开源的压缩算法实现，通过测试表明snappy拥有极高的性能表现，但google并没有发表相关论文，可以认为snappy是一个工业算法。snappy借鉴了LZ77的思路，LZ77的匹配过程时间复杂度过高，google对其做了许多优化。在讲snappy之前，我先简单说明LZ77的基本思想。</p>
 <a id="more"></a>
-<h2 id="检测你的glibc版本">检测你的glibc版本</h2>
-<p><figure class="highlight plain hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">strings /lib64/libc.so.6 | grep GLIBC</span><br></pre></td></tr></table></figure></p>
-<p>或 <figure class="highlight plain hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ldd --version</span><br></pre></td></tr></table></figure></p>
-<h2 id="安装必要依赖">安装必要依赖</h2>
-<p><figure class="highlight plain hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">yum install -y wget gcc glibc kernel-devel</span><br></pre></td></tr></table></figure></p>
-<h2 id="方法一rpm无痛升级">方法一：rpm无痛升级</h2>
-<p>可以直接用社区制作好的rpm包来轻松升级。缺点是社区维护的版本不高，目前centos6最高维护到2.17，你想装2.18的话就没有了。</p>
-<h3 id="下载rpm包">下载rpm包</h3>
-<p><figure class="highlight plain hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">wget http://copr-be.cloud.fedoraproject.org/results/mosquito/myrepo-el6/epel-6-x86_64/glibc-2.17-55.fc20/glibc-2.17-55.el6.x86_64.rpm</span><br><span class="line">wget http://copr-be.cloud.fedoraproject.org/results/mosquito/myrepo-el6/epel-6-x86_64/glibc-2.17-55.fc20/glibc-common-2.17-55.el6.x86_64.rpm</span><br><span class="line">wget http://copr-be.cloud.fedoraproject.org/results/mosquito/myrepo-el6/epel-6-x86_64/glibc-2.17-55.fc20/glibc-devel-2.17-55.el6.x86_64.rpm</span><br><span class="line">wget http://copr-be.cloud.fedoraproject.org/results/mosquito/myrepo-el6/epel-6-x86_64/glibc-2.17-55.fc20/glibc-headers-2.17-55.el6.x86_64.rpm</span><br></pre></td></tr></table></figure> ### 安装rpm包 <figure class="highlight plain hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">rpm -Uvh glibc-2.17-55.el6.x86_64.rpm \</span><br><span class="line">glibc-common-2.17-55.el6.x86_64.rpm \</span><br><span class="line">glibc-devel-2.17-55.el6.x86_64.rpm \</span><br><span class="line">glibc-headers-2.17-55.el6.x86_64.rpm</span><br></pre></td></tr></table></figure></p>
-<p>安装完后查看一下当前glibc的版本，如果最高到2.17的话，说明安装成功。</p>
-<h2 id="方法二源码安装glibc">方法二：源码安装glibc</h2>
-<p>源码安装的缺点就是有些麻烦，要花时间下载以及编译安装。优点就是你想要的所有版本都能安装上。</p>
-<h3 id="下载和解压">下载和解压</h3>
-<p><figure class="highlight plain hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">cd /usr/local/src</span><br><span class="line">wget https://mirrors.tuna.tsinghua.edu.cn/gnu/glibc/glibc-2.17.tar.gz</span><br><span class="line"></span><br><span class="line">tar -xf glibc-2.17.tar.gz</span><br></pre></td></tr></table></figure></p>
-<h3 id="配置编译参数">配置编译参数</h3>
-<p><figure class="highlight plain hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">mkdir glibc-build</span><br><span class="line">cd glibc-build</span><br><span class="line"></span><br><span class="line">../glibc-2.17/configure  --prefix=/usr --disable-profile --enable-add-ons --with-headers=/usr/include --with-binutils=/usr/bin</span><br></pre></td></tr></table></figure></p>
-<h3 id="编译与安装">编译与安装</h3>
-<p><figure class="highlight plain hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">make</span><br><span class="line">make install</span><br></pre></td></tr></table></figure></p>
-<p>安装完后查看一下当前glibc的版本，如果最高到2.17的话，说明安装成功。</p>
-<h2 id="问题">问题</h2>
-<p>你会注意到，配置安装目录的路径是<code>/usr</code>，这么做的目的是在安装的时候直接覆盖旧版的glibc。</p>
-<p>网上的一些博客的教程会在配置安装目录的时候，把路径配置到<code>/usr</code>之外的地方，比如 <figure class="highlight plain hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">../configure --prefix=/opt/glibc-2.17</span><br></pre></td></tr></table></figure></p>
-<p>然后把旧的软连接<code>/lib64/libc.so.6</code>删掉，再创建新的软连接。</p>
-<p>事实上，这种做法是有风险的，一旦你把软连接删掉，系统在那一瞬间，一些核心的命令和功能就暂时废掉了。一开始我也这么做的，当我马上再创建新的软连接时就报了各种错。为了实验可行性，还导致我重装了好几次系统。</p>
+<h2 id="lz77">LZ77</h2>
+<p>假设我们有一个数列<span class="math inline">\(S=[9,8,2,3,4,5,6,2,3,4]\)</span>，我们发现子数列<span class="math inline">\(S_{2,4}=[2,3,4]\)</span>与<span class="math inline">\(S_{7,9}=[2,3,4]\)</span>是相同的，则我们可以将该数列编码为<span class="math inline">\(S=[9,8,2,3,4,5,6,(2,3)]\)</span>，2表示开始位置，3表示位数。解码时，我们将该元组替换为子数列<span class="math inline">\(S_{2,2+3-1}\)</span>，即<span class="math inline">\(S_{2,4}\)</span>。</p>
+<p>完整的描述是，对于数列<span class="math inline">\(S\)</span>，编码时，当发现子数列<span class="math inline">\(S_{i,j}\)</span>与<span class="math inline">\(S_{m,n}\)</span>相同，则可将<span class="math inline">\(S_{m,n}\)</span>替换为元组<span class="math inline">\((i,j-i+1)\)</span>；解码时，则将元组<span class="math inline">\((i,n)\)</span>替换为子数列<span class="math inline">\(S_{i,i+n-1}\)</span>。</p>
+<p>对于匹配相同子数列的过程，即使用模式串去查找匹配串的过程。假设数列<span class="math inline">\(S\)</span>，<span class="math inline">\(n\)</span>为数列长度，<span class="math inline">\(i\)</span>为模式串开始位置，<span class="math inline">\(w\)</span>为模式串固定大小，也称为窗口大小。<span class="math inline">\(j=i+w+1\)</span>为匹配串开始位置，最大匹配长度为<span class="math inline">\(b\)</span>，即我们要用<span class="math inline">\(S_{i,i+w}\)</span>去匹配<span class="math inline">\(S_{j,j+b}\)</span>。时间复杂度大概为<span class="math inline">\(O(n*w*b)\)</span>。</p>
+<h2 id="snappy">Snappy</h2>
+<p>为了直观，我先简单说明Snappy的编码和解码的核心过程，然后在其基础上分析其优化点。</p>
+<h3 id="编码">编码</h3>
+<p>对于数组<span class="math inline">\(S\)</span>，匹配串开始位置为<span class="math inline">\(j\)</span>，<span class="math inline">\(j\)</span>将以一定步长<span class="math inline">\(s\)</span>增长，我们把找过的<span class="math inline">\(j\)</span>存于数组<span class="math inline">\(T\)</span>中，而模式串开始位置<span class="math inline">\(i\)</span>必须<span class="math inline">\(T\)</span>中获取，我们不限定模式串和匹配串的最大长度，而是限定它们的最小长度为<span class="math inline">\(m=4\)</span>，并直到无法匹配为止，假设最终匹配长度为<span class="math inline">\(l\)</span>，则<span class="math inline">\(S_{i,i+l}\)</span>与<span class="math inline">\(S_{j,j+l}\)</span>匹配。我们将<span class="math inline">\(S_{j,j+l}\)</span>编码为一个三元组，在数组中将用三个位置去表示它，具体参数见下面的说明。</p>
+<p>匹配过程为：</p>
+<ul>
+<li><span class="math inline">\(j = j + s\)</span></li>
+<li><span class="math inline">\(T = T + j\)</span>，把<span class="math inline">\(j\)</span>放入数组<span class="math inline">\(T\)</span></li>
+<li><span class="math inline">\(i = T_u\)</span>，从<span class="math inline">\(T\)</span>中获取<span class="math inline">\(i\)</span>，<span class="math inline">\(u\)</span>暂且为随机数</li>
+<li>若<span class="math inline">\(S_{i,i+l}==S_{j,j+l}, \; l&gt;m\)</span> 则认为两个子串相匹配</li>
+</ul>
+<p>找到一个匹配后需要对其编码，假设把编码结果放在数组<span class="math inline">\(D\)</span>中，其上一次编码后的位置为<span class="math inline">\(d\)</span>，而模式串上一次最后匹配位置为<span class="math inline">\(v\)</span>，</p>
+<p>（1）编码模式串</p>
+<p><span class="math display">\[
+\begin{aligned}
+&amp;D_{d}=tag0 \\
+&amp;D_{d+1}=i-v+1 \\ 
+&amp;D_{d+2,:}=S_{v,i} \\
+&amp;d=d+2+(i-v+1)
+\end{aligned}
+\]</span></p>
+<p>编码后的第一个数是编码标记<span class="math inline">\(tag0\)</span>，是一个指定数值，用于解码时进行辨识；第二个数是模式串长度；第三个数开始是模式串的拷贝，<span class="math inline">\(D_{d+2,:}\)</span>中的结束位以<span class="math inline">\(:\)</span>表示省略，因为长度可由<span class="math inline">\(S_{v,i}\)</span>确定。这是对不需要压缩的数据，即模式串，进行一个简单拷贝，我们也把该数据称为literal。</p>
+<p>（2）编码匹配串</p>
+<p><span class="math display">\[
+\begin{aligned}
+&amp;D_{d}=tag1 \\
+&amp;D_{d+1}=j-i \\ 
+&amp;D_{d+1}=l \\
+&amp;d=d+3 \\
+&amp;v=i+l
+\end{aligned}
+\]</span></p>
+<p>用3个数表示，<span class="math inline">\(tag1\)</span>是编码标记，是一个指定数值，<span class="math inline">\(j-i\)</span>是模式串相对于匹配串的位移，<span class="math inline">\(l\)</span>为匹配长度</p>
+<p>编码完成后，重复匹配过程，直到数组末尾。</p>
+<h3 id="解码">解码</h3>
+<p>对于数组<span class="math inline">\(S\)</span>，将其解码至<span class="math inline">\(D\)</span>，对<span class="math inline">\(S\)</span>解码的上次最后位置位<span class="math inline">\(i\)</span>，而<span class="math inline">\(D\)</span>的最后位置是<span class="math inline">\(j\)</span>，</p>
+<p>若<span class="math inline">\(S_i=tag0\)</span>，解码模式串，</p>
+<p><span class="math display">\[
+\begin{aligned}
+&amp;l=S_{i} \\ 
+&amp;D_{j,:}=S_{i+1,i+1+l} \\
+&amp;j=j+l \\
+&amp;i=i+1+l
+\end{aligned}
+\]</span></p>
+<p>若<span class="math inline">\(S_i=tag1\)</span>，解码匹配串，</p>
+<p><span class="math display">\[
+\begin{aligned}
+&amp;o=S_{i+1} \\ 
+&amp;l=S_{i+2} \\
+&amp;D_{j,j+l}=D_{j-o,:} \\
+&amp;j=j+l \\
+&amp;i=i+2
+\end{aligned}
+\]</span></p>
+<h3 id="优化">优化</h3>
+<p>上面的说明主要为了快速展现算法核心，其实省略了很多工程上的问题，google为其增加了很多优化点，但并没有特地写论文来为这些优化点提供数学支持。</p>
+<h4 id="编码位">编码位</h4>
+<p>在实际使用中，我们的数组将是一个常见的uint8数组，即每个元素为1个字节大小。当我们发现模式串与匹配串至少有连续4个相同字节时，我们就会进行编码，替换为3个整数的标记，但一个32位整数就要占4个字节，意味着，最少对4个字节的数据进行编码时，却要花费3*4=12个字节的空间。所以我们会根据这三个整数或两个整数的数值大小，通过位运算对其压缩，确保至少不会比4个字节更大。</p>
+<p>比如我们在编码模式串(Literal)时，当匹配长度<span class="math inline">\(l&lt;60\)</span>，则<span class="math inline">\(S_{d}=l&lt;&lt;2|tag0\)</span>，用高位两位表示<span class="math inline">\(l\)</span>，用低位两位表示<span class="math inline">\(tag0\)</span>，相当于把两个32位整数压成了一个8位整数。解码时，<span class="math inline">\(s=S_{i}\&amp;3\)</span>取出后两位，若<span class="math inline">\(s=tag0\)</span>，则<span class="math inline">\(l=S_{i}&gt;&gt;2\)</span>取前两位，即可得到模式串的长度。</p>
+<p>对于编码位压缩的更多种情况，snappy设计了4种tag来区分，这里不再赘述，具体可参考源码。</p>
+<h4 id="哈希查找">哈希查找</h4>
+<p>前面编码时说到，会把找过的匹配串位置放入数组<span class="math inline">\(T\)</span>中，之后的模式串位置会从<span class="math inline">\(T\)</span>中获取<span class="math inline">\(i = T_u\)</span>，之前说<span class="math inline">\(u\)</span>是随机数，但这里应该是要通过hash函数获得的值，并且为了减少重复查找同一个匹配位，获取过的位置会被替换位新的匹配位。假设hash函数为<span class="math inline">\(H\)</span>，则</p>
+<ul>
+<li><span class="math inline">\(j = jn\)</span></li>
+<li><span class="math inline">\(jn = j + s\)</span> 预先计算下一个匹配串位置</li>
+<li><span class="math inline">\(i = T_u\)</span></li>
+<li><span class="math inline">\(T = T + j\)</span></li>
+<li><span class="math inline">\(u = H(jn)\)</span> 计算下一次模式串位置</li>
+<li>若<span class="math inline">\(S_{i,i+l}==S_{j,j+l}, \; l&gt;m\)</span> 则认为两个子串相匹配</li>
+</ul>
+<p>通过hash来增加随机性，因为是根据匹配串位置来计算的哈希值，所以确保同一数据进行多次编码可以得到相同的结果。同时，当发现可编码数据后，会一次往<span class="math inline">\(T\)</span>中插入两次匹配串位置，以增加碰撞几率。</p>
+<h4 id="步长">步长</h4>
+<p>匹配位移动会根据步长<span class="math inline">\(s\)</span>移动，步长一开始是1，每比较<span class="math inline">\(2^5=32\)</span>次模式串和匹配串，步长<span class="math inline">\(s\)</span>加1。当<span class="math inline">\(s=k\)</span>时，在没有匹配成功的情况下，匹配位移动32次后实际移动了<span class="math inline">\(2^{4+k}\)</span>位，随着<span class="math inline">\(k\)</span>增大，总移动位数为<span class="math inline">\(\sum_1^k 2^{4+k}\)</span>。</p>
+<p>对于长度为<span class="math inline">\(n\)</span>的数组，可得</p>
+<p><span class="math display">\[
+\large
+n = argmax_k \sum_1^k 2^{4+k}
+\]</span></p>
+<p><span class="math inline">\(k\)</span>每加一，比较32次，每次比较4字节，所以在没有发现可编码数据时，时间复杂度为<span class="math inline">\(O(32*k*4)\)</span></p>
+<h2 id="参考">参考</h2>
+<ul>
+<li><a href="https://cs.nyu.edu/~roweis/csc310-2006/extras/ziv_lempel_1977_universal_algorithm.pdf" target="_blank" rel="noopener">A universal algorithm for sequential data compression</a></li>
+<li><a href="https://github.com/google/snappy" target="_blank" rel="noopener">github.com/google/snappy</a></li>
+<li><a href="https://github.com/golang/snappy" target="_blank" rel="noopener">github.com/golang/snappy</a></li>
+</ul>
 
     
     </div>
     
     <div class="columns is-variable is-1 is-multiline is-mobile">
     
-        <span class="column is-narrow"><a class="tag is-light article-tag" href="/tags/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/">#操作系统</a></span>
-    
-        <span class="column is-narrow"><a class="tag is-light article-tag" href="/tags/Linux/">#Linux</a></span>
+        <span class="column is-narrow"><a class="tag is-light article-tag" href="/tags/%E7%AE%97%E6%B3%95%E8%AE%BE%E8%AE%A1/">#算法设计</a></span>
     
     </div>
     
     <!-- 
-    <span id="post/centos-upgrade-glibc/" class="leancloud_visitors" data-flag-title="CentOS6升级glibc2.17">
+    <span id="post/snappy/" class="leancloud_visitors" data-flag-title="压缩算法Snappy原理">
         <em class="post-meta-item-text">阅读量 </em>
         <i class="leancloud-visitors-count">1000000</i>
     </span>
      -->
     
     <div class="go-next columns is-mobile is-multiline article-nav">
-        <span class="column is-12-mobile is-half-desktop  article-nav-prev">
-            
-            <a href="/post/ddqn/">双深度Q网络</a>
+        <span class="column is-12-mobile is-half-desktop is-hidden-mobile article-nav-prev">
             
         </span>
         <span class="column is-12-mobile is-half-desktop  article-nav-next">
             
-            <a href="/post/centos-upgrade-gcc/">CentOS6升级gcc4.9</a>
+            <a href="/post/einstein/">《爱因斯坦传》读后随记</a>
             
         </span>
     </div>

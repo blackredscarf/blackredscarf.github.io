@@ -137,6 +137,47 @@
     
         
 <div class="article-cover">
+   <img class="article-cover-img" src="https://s2.ax1x.com/2019/12/28/lmJhuR.jpg"> 
+</div>
+
+<article class="article content gallery" itemscope itemprop="blogPost">
+    <h1 class="article-title is-size-3 is-size-4-mobile" itemprop="name">
+        
+            <a href="/post/raft/" itemprop="url">Raft 简述</a>
+        
+    </h1>
+    <div class="article-meta columns is-variable is-1 is-multiline is-mobile is-size-7-mobile">
+        <span class="column is-narrow">
+            2019-12-28
+            <!-- <time datetime="2019-12-27T16:00:00.000Z" itemprop="datePublished">Dec 28 2019</time> -->
+        </span>
+        
+        <span class="column is-narrow article-category">
+            <i class="far fa-folder"></i>
+            <a class="article-category-link" href="/categories/%E5%88%86%E5%B8%83%E5%BC%8F/">分布式</a>
+        </span>
+        
+        <!--  -->
+    </div>
+    <div class="article-entry is-size-6-mobile" itemprop="articleBody">
+    
+        <p>Raft 是一种分布式一致性算法，详细可见<a href="https://raft.github.io/raft.pdf" target="_blank" rel="noopener">论文</a>。主要作用是确保分布式系统的一致性问题。考虑主从模式的集群下，服务器挂掉或网络故障等情况发生时如何确保数据安全。在raft中，主节点称为leader，从节点称为follower。</p>
+<p>下面我尝试以简洁流畅的语言描述raft算法的各个重要部分，某些地方会结合<a href="https://github.com/etcd-io/etcd/tree/master/raft" target="_blank" rel="noopener">etcd/raft</a>的源码说明。</p>
+        <p class="article-more-link">
+            <a href="/post/raft/#more">Read More</a>
+        </p>
+    
+    </div>
+    
+    <!--  -->
+    
+</article>
+
+
+
+    
+        
+<div class="article-cover">
    <img class="article-cover-img" src="https://s2.ax1x.com/2019/11/23/MHq7tK.jpg"> 
 </div>
 
@@ -477,7 +518,7 @@
         
         <span class="column is-narrow article-category">
             <i class="far fa-folder"></i>
-            <a class="article-category-link" href="/categories/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/">深度学习</a><span>,</span><a class="article-category-link" href="/categories/%E5%BC%BA%E5%8C%96%E5%AD%A6%E4%B9%A0/">强化学习</a><span>,</span><a class="article-category-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a>
+            <a class="article-category-link" href="/categories/%E5%BC%BA%E5%8C%96%E5%AD%A6%E4%B9%A0/">强化学习</a><span>,</span><a class="article-category-link" href="/categories/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/">深度学习</a><span>,</span><a class="article-category-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a>
         </span>
         
         <!--  -->
@@ -487,46 +528,6 @@
         <p>虽然DQN的表现很好，但它有一个致命的缺点是无法学习连续动作空间。回想一下，DQN 是根据greddy策略找到最大Q值对应的行为，即 <span class="math inline">\(\large a = \mathop{argmax}\limits_{a \in \mathcal{A}} Q(s)\)</span>，也就说每一个行为对应一个Q值，当动作是高维度的或者是连续的，那么DQN的计算代价就很大，甚至无法进行学习。这时使用策略梯度就能很好解决这个问题。我们把环境动作设计成连续的，用动作特征表示一个动作，使用策略梯度，我们不需要计算每一个动作的Q值，而是可以通过参数化近似的办法直接输出一个动作特征，而不是从某个值映射到某个动作。DDPG (Deep Deterministic Policy Gradient)算法很好的弥补了DQN的缺陷。当然，并不是DDPG只能解决连续动作问题，只要把动作特征映射到某一个动作上就能应对非连续动作空间问题了。</p>
         <p class="article-more-link">
             <a href="/post/ddpg/#more">Read More</a>
-        </p>
-    
-    </div>
-    
-    <!--  -->
-    
-</article>
-
-
-
-    
-        
-<div class="article-cover">
-   <img class="article-cover-img" src="https://s2.ax1x.com/2019/11/21/MoKTun.jpg"> 
-</div>
-
-<article class="article content gallery" itemscope itemprop="blogPost">
-    <h1 class="article-title is-size-3 is-size-4-mobile" itemprop="name">
-        
-            <a href="/post/ddqn/" itemprop="url">双深度Q网络</a>
-        
-    </h1>
-    <div class="article-meta columns is-variable is-1 is-multiline is-mobile is-size-7-mobile">
-        <span class="column is-narrow">
-            2018-08-30
-            <!-- <time datetime="2018-08-29T16:00:00.000Z" itemprop="datePublished">Aug 30 2018</time> -->
-        </span>
-        
-        <span class="column is-narrow article-category">
-            <i class="far fa-folder"></i>
-            <a class="article-category-link" href="/categories/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/">深度学习</a><span>,</span><a class="article-category-link" href="/categories/%E5%BC%BA%E5%8C%96%E5%AD%A6%E4%B9%A0/">强化学习</a><span>,</span><a class="article-category-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a>
-        </span>
-        
-        <!--  -->
-    </div>
-    <div class="article-entry is-size-6-mobile" itemprop="articleBody">
-    
-        <p>本文主要讲一下 DQN 和 DDQN，以及它们的实验对比。</p>
-        <p class="article-more-link">
-            <a href="/post/ddqn/#more">Read More</a>
         </p>
     
     </div>
