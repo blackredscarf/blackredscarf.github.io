@@ -2,7 +2,7 @@
 <html class="has-navbar-fixed-top">
 <head>
     <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="utf-8">
-<title>CentOS6升级glibc2.17 - 绯色的魔法世界</title>
+<title>现代文件系统实现简述 - 绯色的魔法世界</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
 <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/outdated-browser/1.1.5/outdatedbrowser.min.css">
@@ -16,16 +16,20 @@
 
 
 
-    <meta name="description" content="前段时间在CentOS6集群上跑TensorFlow的时候遇到了glibc和gcc版本过低的问题。本篇先讲升级glibc。 注意，glibc是linux的核心底层库，一旦升级失败，系统基本就完蛋了。虽然这个教程我有九成把握能升级成功，但是为了避免突发情况，建议你在实际环境上升级之前，先跑一台虚拟机去模拟升级。">
-<meta name="keywords" content="操作系统,Linux">
+    <meta name="description" content="文件是磁盘信息的抽象概念，使用户不用了解实际磁盘工作方式等细节，而文件系统则是对文件在磁盘上的存储进行规范，同时为用户访问文件提供接口。这里主要描述文件系统的一些概念，工作原理和实现方法。">
+<meta name="keywords" content="操作系统">
 <meta property="og:type" content="article">
-<meta property="og:title" content="CentOS6升级glibc2.17">
-<meta property="og:url" content="http:&#x2F;&#x2F;blackredscarf.github.io&#x2F;post&#x2F;centos-upgrade-glibc&#x2F;index.html">
+<meta property="og:title" content="现代文件系统实现简述">
+<meta property="og:url" content="http:&#x2F;&#x2F;blackredscarf.github.io&#x2F;post&#x2F;file&#x2F;index.html">
 <meta property="og:site_name" content="绯色的魔法世界">
-<meta property="og:description" content="前段时间在CentOS6集群上跑TensorFlow的时候遇到了glibc和gcc版本过低的问题。本篇先讲升级glibc。 注意，glibc是linux的核心底层库，一旦升级失败，系统基本就完蛋了。虽然这个教程我有九成把握能升级成功，但是为了避免突发情况，建议你在实际环境上升级之前，先跑一台虚拟机去模拟升级。">
+<meta property="og:description" content="文件是磁盘信息的抽象概念，使用户不用了解实际磁盘工作方式等细节，而文件系统则是对文件在磁盘上的存储进行规范，同时为用户访问文件提供接口。这里主要描述文件系统的一些概念，工作原理和实现方法。">
 <meta property="og:locale" content="en">
-<meta property="og:updated_time" content="2019-11-21T15:07:46.767Z">
+<meta property="og:image" content="https:&#x2F;&#x2F;i.loli.net&#x2F;2021&#x2F;04&#x2F;03&#x2F;WUNMeC7s3yKRZDj.png">
+<meta property="og:image" content="https:&#x2F;&#x2F;i.loli.net&#x2F;2021&#x2F;04&#x2F;04&#x2F;lxi4TvCgXNF5z2H.png">
+<meta property="og:image" content="https:&#x2F;&#x2F;i.loli.net&#x2F;2021&#x2F;04&#x2F;04&#x2F;mA65Lt239pkqWUv.png">
+<meta property="og:updated_time" content="2021-04-11T05:46:38.386Z">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https:&#x2F;&#x2F;i.loli.net&#x2F;2021&#x2F;04&#x2F;03&#x2F;WUNMeC7s3yKRZDj.png">
 
 
 
@@ -140,19 +144,19 @@
     <div class="container">
     
 <div class="article-cover">
-   <img class="article-cover-img" src="https://s2.ax1x.com/2019/11/21/MoM8PS.jpg"> 
+   <img class="article-cover-img" src="https://z3.ax1x.com/2021/04/11/cwrzr9.jpg"> 
 </div>
 
 <article class="article content gallery" itemscope itemprop="blogPost">
     <h1 class="article-title is-size-3 is-size-4-mobile" itemprop="name">
         
-            CentOS6升级glibc2.17
+            现代文件系统实现简述
         
     </h1>
     <div class="article-meta columns is-variable is-1 is-multiline is-mobile is-size-7-mobile">
         <span class="column is-narrow">
-            2018-06-30
-            <!-- <time datetime="2018-06-29T16:00:00.000Z" itemprop="datePublished">Jun 30 2018</time> -->
+            2021-04-11
+            <!-- <time datetime="2021-04-10T16:00:00.000Z" itemprop="datePublished">Apr 11 2021</time> -->
         </span>
         
         <span class="column is-narrow article-category">
@@ -164,33 +168,51 @@
     </div>
     <div class="article-entry is-size-6-mobile" itemprop="articleBody">
     
-        <p>前段时间在CentOS6集群上跑TensorFlow的时候遇到了glibc和gcc版本过低的问题。本篇先讲升级glibc。</p>
-<p>注意，glibc是linux的核心底层库，一旦升级失败，系统基本就完蛋了。虽然这个教程我有九成把握能升级成功，但是为了避免突发情况，建议你在实际环境上升级之前，先跑一台虚拟机去模拟升级。</p>
+        <p>文件是磁盘信息的抽象概念，使用户不用了解实际磁盘工作方式等细节，而文件系统则是对文件在磁盘上的存储进行规范，同时为用户访问文件提供接口。这里主要描述文件系统的一些概念，工作原理和实现方法。</p>
 <a id="more"></a>
-<h2 id="检测你的glibc版本">检测你的glibc版本</h2>
-<p><figure class="highlight plain hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">strings /lib64/libc.so.6 | grep GLIBC</span><br></pre></td></tr></table></figure></p>
-<p>或 <figure class="highlight plain hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ldd --version</span><br></pre></td></tr></table></figure></p>
-<h2 id="安装必要依赖">安装必要依赖</h2>
-<p><figure class="highlight plain hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">yum install -y wget gcc glibc kernel-devel</span><br></pre></td></tr></table></figure></p>
-<h2 id="方法一rpm无痛升级">方法一：rpm无痛升级</h2>
-<p>可以直接用社区制作好的rpm包来轻松升级。缺点是社区维护的版本不高，目前centos6最高维护到2.17，你想装2.18的话就没有了。</p>
-<h3 id="下载rpm包">下载rpm包</h3>
-<p><figure class="highlight plain hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">wget http://copr-be.cloud.fedoraproject.org/results/mosquito/myrepo-el6/epel-6-x86_64/glibc-2.17-55.fc20/glibc-2.17-55.el6.x86_64.rpm</span><br><span class="line">wget http://copr-be.cloud.fedoraproject.org/results/mosquito/myrepo-el6/epel-6-x86_64/glibc-2.17-55.fc20/glibc-common-2.17-55.el6.x86_64.rpm</span><br><span class="line">wget http://copr-be.cloud.fedoraproject.org/results/mosquito/myrepo-el6/epel-6-x86_64/glibc-2.17-55.fc20/glibc-devel-2.17-55.el6.x86_64.rpm</span><br><span class="line">wget http://copr-be.cloud.fedoraproject.org/results/mosquito/myrepo-el6/epel-6-x86_64/glibc-2.17-55.fc20/glibc-headers-2.17-55.el6.x86_64.rpm</span><br></pre></td></tr></table></figure> ### 安装rpm包 <figure class="highlight plain hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">rpm -Uvh glibc-2.17-55.el6.x86_64.rpm \</span><br><span class="line">glibc-common-2.17-55.el6.x86_64.rpm \</span><br><span class="line">glibc-devel-2.17-55.el6.x86_64.rpm \</span><br><span class="line">glibc-headers-2.17-55.el6.x86_64.rpm</span><br></pre></td></tr></table></figure></p>
-<p>安装完后查看一下当前glibc的版本，如果最高到2.17的话，说明安装成功。</p>
-<h2 id="方法二源码安装glibc">方法二：源码安装glibc</h2>
-<p>源码安装的缺点就是有些麻烦，要花时间下载以及编译安装。优点就是你想要的所有版本都能安装上。</p>
-<h3 id="下载和解压">下载和解压</h3>
-<p><figure class="highlight plain hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">cd /usr/local/src</span><br><span class="line">wget https://mirrors.tuna.tsinghua.edu.cn/gnu/glibc/glibc-2.17.tar.gz</span><br><span class="line"></span><br><span class="line">tar -xf glibc-2.17.tar.gz</span><br></pre></td></tr></table></figure></p>
-<h3 id="配置编译参数">配置编译参数</h3>
-<p><figure class="highlight plain hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">mkdir glibc-build</span><br><span class="line">cd glibc-build</span><br><span class="line"></span><br><span class="line">../glibc-2.17/configure  --prefix=/usr --disable-profile --enable-add-ons --with-headers=/usr/include --with-binutils=/usr/bin</span><br></pre></td></tr></table></figure></p>
-<h3 id="编译与安装">编译与安装</h3>
-<p><figure class="highlight plain hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">make</span><br><span class="line">make install</span><br></pre></td></tr></table></figure></p>
-<p>安装完后查看一下当前glibc的版本，如果最高到2.17的话，说明安装成功。</p>
-<h2 id="问题">问题</h2>
-<p>你会注意到，配置安装目录的路径是<code>/usr</code>，这么做的目的是在安装的时候直接覆盖旧版的glibc。</p>
-<p>网上的一些博客的教程会在配置安装目录的时候，把路径配置到<code>/usr</code>之外的地方，比如 <figure class="highlight plain hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">../configure --prefix=/opt/glibc-2.17</span><br></pre></td></tr></table></figure></p>
-<p>然后把旧的软连接<code>/lib64/libc.so.6</code>删掉，再创建新的软连接。</p>
-<p>事实上，这种做法是有风险的，一旦你把软连接删掉，系统在那一瞬间，一些核心的命令和功能就暂时废掉了。一开始我也这么做的，当我马上再创建新的软连接时就报了各种错。为了实验可行性，还导致我重装了好几次系统。</p>
+<h2 id="分区">分区</h2>
+<p>磁盘可以划分为多个分区，每个分区可以运行一套独立的文件系统。磁盘的0号扇区，即开头位置，为主引导记录（Master Boot Record，MBR），在计算机启动时用来引导计算机。MBR的结尾有一个分区表，该表给出了每个分区的起始和结束地址。</p>
+<p>虽然你的磁盘上可能有多个分区，但计算机必须先找到操作系统所在的分区，即<strong>活动分区</strong>，而该分区的第一个位置被称为<strong>引导块</strong>，用于引导计算机去启动该操作系统。其实，不管是不是活动分区，每个分区的第一个位置都默认作为引导块。在计算机被引导时，BIOS读入并执行MBR。MBR做的第一件事是找到活动分区，读入它的引导块（boot block），并执行之。</p>
+<p>而分区的第二个位置则是<strong>超级块</strong>（superblock），在计算机启动时，会把超级块读入内存。超级块中的信息包括：确定文件系统类型用的魔数 （magic number）、文件系统中数据块的数量以及其他重要的管理信息。</p>
+<figure>
+<img src="https://i.loli.net/2021/04/03/WUNMeC7s3yKRZDj.png" alt="file-1.png"><figcaption>file-1.png</figcaption>
+</figure>
+<p>接着是文件系统中空闲块的信息，例如，可以用位图或指针列表的形式给出。后面跟随的是一组i节点，这是一个数据结构数组，每个文件一个，i节点说明了文件的方方面面。接着是根目录，它存放文件系统目录树的根部。最后，磁盘的其他部分存放了其他所有的目录和文件。</p>
+<h2 id="i节点">i节点</h2>
+<p>i节点是一个数据结构，其记录着若干个<strong>磁盘块</strong>的位置。一般，一个文件就是一个i节点。因为磁盘块的大小是不定的，可能是1kb或2kb，而文件的大小可能大于该值，所以文件可能离散存到多个磁盘块中。</p>
+<p>i节点的实现可以是多样的。比如把磁盘块存储结构设计为数组，用另一个变量表示其长度。也可以为一个i节点设计固定的磁盘块数量，然后用一个变量指向另一个磁盘块存储结构，来扩展磁盘块数量。</p>
+<h2 id="日志结构文件系统">日志结构文件系统</h2>
+<p>Linux ext2等UNIX文件系统有一些弊端，一个是读写速度慢，每一次写操作都必须马上写入磁盘，而每次磁盘寻道操作都会对后面的操作造成延迟，有时也不能充分使用磁盘带宽，假设一个磁盘的带宽是1M，每次写操作要花10ms，如果你一次只写20kb，意味着写速度只有20kb/10ms。而如果你能缓冲1M的数据量，再一次性写入，这时的速度就是1M/10ms，充分利用了磁盘带宽。</p>
+<p><strong>日志结构文件系统</strong>（Log-structured File System，<strong>LFS</strong>），在内存中设立一个缓冲队列，把写操作缓冲到队列中，每隔一段时间，被缓冲在内存中的所有未决的写操作都被存到磁盘中。多个写操作可能组成一个<strong>段</strong>，一个段可能会包括i节点、目录块、数据块，如果所有的段平均在1MB左右，那么就几乎可以利用磁盘的完整带宽。</p>
+<p>LFS会把i节点缓存到磁盘或内存中，称为i节点图。要打开一个文件，则首先需要从i节点图中找到文件的i节点。一旦i节点定位之后就可以找到相应的块的地址。</p>
+<p>如果我们删除了一个文件，除了需要更新i节点图，还需要回收段中的i节点。LFS有一个清理线程，该清理线程周期地扫描日志进行磁盘压缩。线程会扫描每一个段的i节点，然后查看当前i节点图，判断该i节点是否有效以及文件块是否仍在使用中，如果没有使用，那么i节点和块就进入内存等待写入到下一个段中，原来的段被标记为空闲，以便可以用它来存放新的数据。</p>
+<p>虽然基于日志结构的文件系统是一个很吸引人的想法，但是由于它们和现有的文件系统不相匹配，所以还没有被广泛应用。</p>
+<h2 id="日志文件系统">日志文件系统</h2>
+<p>日志结构的基本想法是保存一个用于记录系统下一步将要做什么的日志。这样当系统在完成它们即将完成的任务前崩溃时，重新启动后，可以通过查看日志，获取崩溃前计划完成的任务，并完成它们。这样的文件系统被称为日志文件系统，并已经被实际应用。微软的NTFS文件系统、Linux ext3和ReiserFS文件系统都使用日志。</p>
+<p>考虑一个删除文件的操作，可能分三个步骤: 一是在目录中删除文件，二是释放i节点到空闲i节点池，三是将磁盘块归还到空闲磁盘块池。假设系统在步骤一后崩溃，那么文件对应的i节点和磁盘块就无法得到释放，在其他步骤处崩溃也会导致不一致性。</p>
+<p>日志文件系统会先把操作写作日志，然后持久化到磁盘，确保存入后才开始执行操作，操作全部成功后，才擦除日志。如果系统崩溃，则检查日志来重新运行未完成的操作。这么做意味着一个操作可能会被执行多次，这要求操作重复执行的结果是一样的，即操作具有<strong>幂等性</strong>。比如，“把i节点k加入空闲表的末端”就是不幂等的，而“如果k不在空闲表则把k加入”则是幂等的。</p>
+<h2 id="虚拟文件系统">虚拟文件系统</h2>
+<p>事实上，一个操作系统可能用到多种文件系统，比如Linux可能把ext2作为根文件系统，而/home用的是ext3，以及装载一个CD到/mnt下，用的是ISO 9660。这时候需要用一个中间层来统一接口，屏蔽不同文件系统的操作差异，该中间层被称为<strong>虚拟文件系统</strong>（Virtual File System，VFS）。</p>
+<figure>
+<img src="https://i.loli.net/2021/04/04/lxi4TvCgXNF5z2H.png" alt="file-2.png"><figcaption>file-2.png</figcaption>
+</figure>
+<p>VFS提供一个POSIX接口给用户进程调用，一般程序访问的是VFS而不是实际的文件系统。</p>
+<p>当系统启动时，装载进来的文件系统必须向VFS注册，注册时需要提供规定的函数列表，比如read, write, close等。当打开一个文件时，则先根据路径，找到它所在的文件系统，然后通过文件系统注册的接口去打开该文件。具体操作时，VFS会创建一个v节点去调用实际文件系统，文件系统会返回文件的i节点信息，并存到v节点中，v节点也会包含该文件系统的函数列表的指针。</p>
+<p>v节点创建后，VFS会在文件描述符表中创建一个文件描述符，并把文件描述符存放一个代理数据结构中，该代理数据结构也会包含该v节点，VFS向调用者返回文件描述符。调用者可以用文件描述符作为POSIX接口的传入值，VFS通过文件描述符找到代理数据结构和v节点，进而操作文件。</p>
+<p>比如用户调用read操作，传入文件描述符，VFS通过文件描述符找到v节点，从函数表找到对应函数，向函数传入i节点，由实际文件系统通过i节点找到对应的块并返回数据。</p>
+<figure>
+<img src="https://i.loli.net/2021/04/04/mA65Lt239pkqWUv.png" alt="file-3.png"><figcaption>file-3.png</figcaption>
+</figure>
+<h2 id="联合文件系统">联合文件系统</h2>
+<p>联合文件系统（Union file system, UFS）允许把多个文件系统进行合并成一个对外文件系统。合并过程中会区分层级，一个文件系统就是一层，合并即是把层堆叠起来，对于用户来说，他打开联合文件系统时，看到的是所有层级合并的结果。如果相同路径和文件名的文件同时存在多个层级，那么只有最高层级的文件对用户可见，其他会被隐藏。联合文件系统有一个原则是：低层文件系统永远是只读的（read-only），只有最高层文件系统是可读写的。</p>
+<p>当用户需要查找和读取文件时，会从最高层级开始往下查找，查找到后就返回给用户。当用户创建文件时，则只在最高层的文件系统里创建。当用户修改一个文件，会先判断该文件属于哪一层，如果属于最高层，则直接修改即可；否则，需要从低层把该文件复制到最高层，然后再进行修改，这就是所谓的<strong>写时复制</strong>（Copy On Write）。</p>
+<p>当用户删除一个文件时，先判断文件属于哪一层，如果在最高层，直接删除即可。否则，会在最高层创建一个whiteout文件，标记哪个文件被删除，查找文件时就会止步，而实际上该文件并未从低层文件系统中删除。当用户删除一个目录时，会创建opaque目录，标记被删除的目录，工作流程和删除文件类似。重命名文件和目录时，只有文件和目录都在最高层才允许操作，否则返回EXDEV错误。</p>
+<p>现在有诸多联合文件系统的实现版本，比如AUFS, OverlayFS等。</p>
+<h2 id="参考">参考</h2>
+<ul>
+<li><a href="https://books.google.com.hk/books/about/Modern_Operating_Systems.html?id=3PM5ngEACAAJ&amp;redir_esc=y" target="_blank" rel="noopener">Modern Operating Systems (3rd Edition)</a></li>
+<li><a href="https://www.ee.ryerson.ca/~courses/coe518/LinuxJournal/elj2004-128-unionfs.pdf" target="_blank" rel="noopener">Kernel Korner: Unionfs: Bringing Filesystems Together</a></li>
+</ul>
 
     
     </div>
@@ -199,26 +221,22 @@
     
         <span class="column is-narrow"><a class="tag is-light article-tag" href="/tags/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/">#操作系统</a></span>
     
-        <span class="column is-narrow"><a class="tag is-light article-tag" href="/tags/Linux/">#Linux</a></span>
-    
     </div>
     
     <!-- 
-    <span id="post/centos-upgrade-glibc/" class="leancloud_visitors" data-flag-title="CentOS6升级glibc2.17">
+    <span id="post/file/" class="leancloud_visitors" data-flag-title="现代文件系统实现简述">
         <em class="post-meta-item-text">阅读量 </em>
         <i class="leancloud-visitors-count">1000000</i>
     </span>
      -->
     
     <div class="go-next columns is-mobile is-multiline article-nav">
-        <span class="column is-12-mobile is-half-desktop  article-nav-prev">
-            
-            <a href="/post/centos-upgrade-gcc/">CentOS6升级gcc4.9</a>
+        <span class="column is-12-mobile is-half-desktop is-hidden-mobile article-nav-prev">
             
         </span>
         <span class="column is-12-mobile is-half-desktop  article-nav-next">
             
-            <a href="/post/blog-log/">博客折腾记录</a>
+            <a href="/post/snappy/">压缩算法Snappy原理</a>
             
         </span>
     </div>
