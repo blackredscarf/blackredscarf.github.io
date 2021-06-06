@@ -27,7 +27,8 @@
 <meta property="og:image" content="https:&#x2F;&#x2F;i.loli.net&#x2F;2021&#x2F;04&#x2F;03&#x2F;WUNMeC7s3yKRZDj.png">
 <meta property="og:image" content="https:&#x2F;&#x2F;i.loli.net&#x2F;2021&#x2F;04&#x2F;04&#x2F;lxi4TvCgXNF5z2H.png">
 <meta property="og:image" content="https:&#x2F;&#x2F;i.loli.net&#x2F;2021&#x2F;04&#x2F;04&#x2F;mA65Lt239pkqWUv.png">
-<meta property="og:updated_time" content="2021-04-11T05:46:38.386Z">
+<meta property="og:image" content="https:&#x2F;&#x2F;i.loli.net&#x2F;2021&#x2F;06&#x2F;06&#x2F;rE7H1NIJcdnDSo4.png">
+<meta property="og:updated_time" content="2021-06-06T07:09:03.400Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https:&#x2F;&#x2F;i.loli.net&#x2F;2021&#x2F;04&#x2F;03&#x2F;WUNMeC7s3yKRZDj.png">
 
@@ -208,6 +209,15 @@
 <p>当用户需要查找和读取文件时，会从最高层级开始往下查找，查找到后就返回给用户。当用户创建文件时，则只在最高层的文件系统里创建。当用户修改一个文件，会先判断该文件属于哪一层，如果属于最高层，则直接修改即可；否则，需要从低层把该文件复制到最高层，然后再进行修改，这就是所谓的<strong>写时复制</strong>（Copy On Write）。</p>
 <p>当用户删除一个文件时，先判断文件属于哪一层，如果在最高层，直接删除即可。否则，会在最高层创建一个whiteout文件，标记哪个文件被删除，查找文件时就会止步，而实际上该文件并未从低层文件系统中删除。当用户删除一个目录时，会创建opaque目录，标记被删除的目录，工作流程和删除文件类似。重命名文件和目录时，只有文件和目录都在最高层才允许操作，否则返回EXDEV错误。</p>
 <p>现在有诸多联合文件系统的实现版本，比如AUFS, OverlayFS等。</p>
+<h2 id="网络文件系统">网络文件系统</h2>
+<p>网络文件系统(Network File System, NFS)，可以使服务器目录挂载到多个客户端的文件系统上。这个过程对于应用程序来说是透明的，应用程序并不用关心它访问的文件是本地的还是远程的，只需通过VFS的接口访问文件即可。</p>
+<figure>
+<img src="https://i.loli.net/2021/06/06/rE7H1NIJcdnDSo4.png" alt="file-4.png"><figcaption>file-4.png</figcaption>
+</figure>
+<p>NFS经过多个版本的迭代，其中第三版的NFS并不支持open和close操作，因为设计者认为对远程文件的读取和写入的操作都要求是幂等的，而且对于客户端来说，read和write只是涉及数据块的传输而已，真正发生open和close操作是在服务器上。而且这样的话，对于服务器来说是无状态的，read操作的偏移量和块字节数的维护都发生在客户端上。第四版的NFS支持open和close操作，即服务器的NFS变为有状态的。</p>
+<p>对于NFS的实现原理，上面说过，VFS会对文件维护一个v节点，指向本地文件i节点。而客户端NFS则维护一个r节点，与远程文件的i节点对应。如果文件是一个远程文件，VFS的v节点则会指向其r节点。假设客户端需要读取一个远程文件，内核会先判断这是一个远程目录，然后NFS驱动向远程请求该文件的文件句柄(文件描述符)，并为此创建一个r节点，同时v节点指向该r节点。</p>
+<p>后续的操作都是通过该文件描述符标识，VFS会通过NFS驱动向远程发出请求，消息包含描述符、偏移量和字节数等。一般默认的读取字节数是8kb。到客户端收到8kb块后，不管用户程序有没有继续请求，都会自动请求下一块，这个特性称为<strong>预读</strong>(read ahead)，以便于需要下一块时可以快速得到。同理，当客户端通过write写数据时，也会积累到8kb才会发送到服务器，除非你手动刷新或关闭文件。</p>
+<p>NFS会提供缓存机制，方便对同一个文件进行多次快速读取。但缓存会导致多个客户端同时读写时的数据不一致问题，这时，要么可以通过定时清理缓存来解决，要么通过与服务器比较文件的最后修改时间解决。</p>
 <h2 id="参考">参考</h2>
 <ul>
 <li><a href="https://books.google.com.hk/books/about/Modern_Operating_Systems.html?id=3PM5ngEACAAJ&amp;redir_esc=y" target="_blank" rel="noopener">Modern Operating Systems (3rd Edition)</a></li>
