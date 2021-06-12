@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html class="has-navbar-fixed-top">
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="utf-8">
+<title>操作系统网络概述 - 绯色的魔法世界</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+<link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/outdated-browser/1.1.5/outdatedbrowser.min.css">
+
+
+
+
+<meta name="description" content="">
+
+
+
+
+
+    <meta name="description" content="这里主要讲讲操作系统底层网络模块的一些概念和工作流程，了解数据在操作系统层面如何传输和转换，以及虚拟网络的构造和原理。">
+<meta name="keywords" content="操作系统">
+<meta property="og:type" content="article">
+<meta property="og:title" content="操作系统网络概述">
+<meta property="og:url" content="http:&#x2F;&#x2F;blackredscarf.github.io&#x2F;post&#x2F;net&#x2F;index.html">
+<meta property="og:site_name" content="绯色的魔法世界">
+<meta property="og:description" content="这里主要讲讲操作系统底层网络模块的一些概念和工作流程，了解数据在操作系统层面如何传输和转换，以及虚拟网络的构造和原理。">
+<meta property="og:locale" content="en">
+<meta property="og:image" content="https:&#x2F;&#x2F;i.loli.net&#x2F;2021&#x2F;04&#x2F;24&#x2F;HmXJfyPwYNcznVq.png">
+<meta property="og:image" content="https:&#x2F;&#x2F;i.loli.net&#x2F;2021&#x2F;05&#x2F;30&#x2F;BG5SoAmpUjqrMDu.jpg">
+<meta property="og:updated_time" content="2021-06-12T08:24:41.828Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https:&#x2F;&#x2F;i.loli.net&#x2F;2021&#x2F;04&#x2F;24&#x2F;HmXJfyPwYNcznVq.png">
+
+
+
+
+
+<link rel="icon" href="https://s1.ax1x.com/2020/07/25/aSC9Cn.png">
+
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Ovo|Source+Code+Pro">
+<link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/bulma/0.6.2/css/bulma.min.css">
+
+
+<link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/lightgallery/1.6.8/css/lightgallery.min.css">
+<link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/justifiedGallery/3.6.5/css/justifiedGallery.min.css">
+
+
+<link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/highlight.js/10.1.1/styles/atom-one-light.min.css">
+
+<link rel="stylesheet" href="/css/style.css">
+
+<script defer src="https://cdn.bootcdn.net/ajax/libs/font-awesome/5.14.0/js/all.min.js"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+    
+
+
+</head>
+<body>
+    
+
+<!-- hexo-inject:begin --><!-- hexo-inject:end --><nav class="navbar is-transparent is-fixed-top navbar-main" role="navigation" aria-label="main navigation">
+    <div class="top-title-line">
+        <div class="top-title">
+            <a href="/"><span>绯色的魔法世界</span></a>
+        </div>
+    </div>
+    <div class="nav-tool-line">
+        <div class="nav-tool">
+            
+            <a class="navbar-item search" title="Search" href="javascript:;" target="_blank" rel="noopener">
+                <i class="fas fa-search"></i>
+            </a>
+            
+            
+            <a class="navbar-item" title="GitHub" href="https://github.com/blackredscarf" target="_blank" rel="noopener">
+                
+                <i class="fab fa-github"></i>
+                
+            </a>
+               
+            
+        </div>    
+    </div>
+    <div class="container">
+        <div class="navbar-brand">
+            <!-- <a class="navbar-item navbar-logo" href="/">
+                
+                <img src="/images/logo.png" alt="" height="28">
+                
+            </a> -->
+            <div class="navbar-burger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+        
+        <div class="navbar-menu navbar-start">
+            
+            <a class="navbar-item "
+               href="/">Home</a>
+            
+            <a class="navbar-item "
+               href="/archives">归档</a>
+            
+            <a class="navbar-item "
+               href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F">操作系统</a>
+            
+            <a class="navbar-item "
+               href="/categories/%E5%88%86%E5%B8%83%E5%BC%8F">分布式</a>
+            
+            <a class="navbar-item "
+               href="/categories/%E7%AE%97%E6%B3%95%E8%AE%BE%E8%AE%A1">算法设计</a>
+            
+            <a class="navbar-item "
+               href="/categories/%E9%9A%8F%E8%AE%B0">随记</a>
+            
+            <a class="navbar-item "
+               href="/categories/NLP">NLP</a>
+            
+            <a class="navbar-item "
+               href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0">机器学习</a>
+            
+        </div>
+        
+        
+    </div>
+</nav>
+
+    <section class="section">
+    <div class="container">
+    
+<div class="article-cover">
+   <img class="article-cover-img" src="https://z3.ax1x.com/2021/06/12/258YUf.jpg"> 
+</div>
+
+<article class="article content gallery" itemscope itemprop="blogPost">
+    <h1 class="article-title is-size-3 is-size-4-mobile" itemprop="name">
+        
+            操作系统网络概述
+        
+    </h1>
+    <div class="article-meta columns is-variable is-1 is-multiline is-mobile is-size-7-mobile">
+        <span class="column is-narrow">
+            2021-06-12
+            <!-- <time datetime="2021-06-11T16:00:00.000Z" itemprop="datePublished">Jun 12 2021</time> -->
+        </span>
+        
+        <span class="column is-narrow article-category">
+            <i class="far fa-folder"></i>
+            <a class="article-category-link" href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/">操作系统</a>
+        </span>
+        
+        <!--  -->
+    </div>
+    <div class="article-entry is-size-6-mobile" itemprop="articleBody">
+    
+        <p>这里主要讲讲操作系统底层网络模块的一些概念和工作流程，了解数据在操作系统层面如何传输和转换，以及虚拟网络的构造和原理。</p>
+<a id="more"></a>
+<h2 id="网络接口控制器">网络接口控制器</h2>
+<p>网络接口控制器(Network interface controller, NIC)，又称网卡，是接收网络数据的硬件设备。NIC负责接收网络数据帧，然后通知设备驱动程序读取，该过程的实现原理是，设备驱动程序初始化时会向NIC请求一个IRQ编号（中断请求编号）以及告诉NIC读取和写入数据的内存地址（队列），然后向CPU的中断表注册该IRQ编号的处理函数(interrput handler)。</p>
+<p>当NIC接收当帧数据时，会先把数据写入到指定队列，然后向CPU发送IRQ（中断请求），CPU根据IRQ编号找到设备驱动程序注册的处理函数，并将其调用；处理函数会先调用NIC的接口要求其暂时关闭IRQ，因为驱动程序已经知道需要读取数据，NIC不需要再继续发送IRQ，当数据被驱动程序读取完而队列为空时才会重新开启IRQ。这种关闭IRQ的方案被称为NAPI(New API)，而与之相对的旧API(netif_rx)是没有关闭IRQ功能的。</p>
+<p>相反，当驱动程序收到应用层下来的数据时会把数据写入队列，并向NIC发送IRQ，NIC收到IRQ后则关闭该驱动的IRQ功能，然后读取数据并发送出去。在IRQ被关闭的期间，NIC并不知道该队列里有新数据，所以它会采用轮询的方式，检查每一条IRQ关闭的队列，该过程在内核中由net_rx_action()处理。当队列为空时，则发送IRQ给CPU，CPU再回调驱动的相应函数。</p>
+<h2 id="中断处理">中断处理</h2>
+<p>中断处理的方式可以有很多种，多是为了提供性能而设计的。比如在高流量情况下，每一帧都触发一个IRQ会频繁占用CPU时间，而采用通知一次后便关闭IRQ的方案的话，若驱动程序没有及时处理数据，就会导致NIC缓冲区被占满导致数据丢失。还有一种方案是定时中断，比如规定每100ms才发送一次中断，这样能保证IRQ不会过于频繁，但在低流量的情况下，会造成不必要的延迟。有时候我们可以结合上面提到的两种方案，分别用于低流量和高流量场景。</p>
+<p>中断处理面临的不只是网络流量大小问题，更多是操作系统内部的处理时间问题。当CPU接收到一个硬件中断时，调用其中断处理函数的这个过程是不可暂停的，若中断频繁发生，而某个中断处理函数占用过多时间则导致其他中断请求发生延迟。为了解决这个问题，一般处理函数会分为上半部和下半部，上半部是非抢占的，必须快速处理，而下半部是可抢占的，这种处理函数一般被称为软IRQ。</p>
+<p>可抢占程序的一般设计思路是使用线程和锁。使用线程时，即为每个下半部处理函数都创建一个内核线程去处理，进而可以使其在执行过程中可休眠或中断。而加锁则是为了处理相同的处理函数在多个CPU中同时执行时能够访问共享数据。</p>
+<h2 id="协议栈">协议栈</h2>
+<p>跨主机的网络传输需要设定格式，以便于对方收到数据后可以正确的解析，这种数据格式规范称之为协议。操作系统在处理数据时会经过多层协议处理，比如典型的TCP/IP五层协议，数据从本机发送出去，总共需要经过五层协议的处理。</p>
+<p>在应用层，数据单位是消息(message)，协议由应用程序自己决定。到了传输层，数据单位称为段(segment)，会把应用层消息分成多个段，在每个段前面添加上一个报头，该报头包含的典型数据就是源端口号和目的端口号，其他参数与程序所采用的传输层协议有关，常见的是TCP和UDP协议。</p>
+<p>到了网络层，数据单位是包(packet)，其会在传输层每一段的前面加上报头，包含的典型数据是源IP，目的IP以及传输层协议，同理，报头的其他参数与程序所采用的网络层协议有关，常见的是IPv4和IPv6协议。到了数据链路层，数据单位是帧(frame)，在包的前面再加一个报头，一般包含数据有源MAC地址，目的MAC地址以及网络层协议，常用的链路层协议是Ethernet。注意，这里的目的MAC地址并非最终主机的MAC地址，而是帧传输的第一个路由器MAC地址。</p>
+<p>到了物理层，数据在铜缆线或光纤缆线中传输，数据单位是比特(bit)。但并非通过缆线一次性传输到最终主机，而是可能会经过若干路由器。路由器在收到帧后，会把报头删掉，并读取包的目的IP地址，如果发现不是自己，就给包加上一个新报头，赋予新的目的MAC地址，然后传出去，在之后可能被下一个路由器接收，以此类推。</p>
+<p>最后，帧的目的MAC地址将会是最终目的主机的MAC地址，每张网卡(NIC)都会绑定唯一的MAC地址，所以可以认为MAC地址就是网卡地址。网卡收到帧后会交给驱动程序，即进入数据链路层，程序检查帧的网络层协议，并将帧剥离报头变为包，交由网络层协议对应的函数处理。网络层函数若确定包的目的地址就是自己的IP地址，就会在本地进行处理，检查运输层协议，剥离网络层报头变为段，交给运输层协议对应的函数来处理。运输层从报头获得目的端口，剥离运输层报头变为消息，交给监听该端口的应用程序处理。</p>
+<p>到此你会发现，数据从发出到接收，协议会遵循后进先出的处理顺序，相当于栈，所以称之为协议栈。</p>
+<figure>
+<img src="https://i.loli.net/2021/04/24/HmXJfyPwYNcznVq.png" alt="net-1"><figcaption>net-1</figcaption>
+</figure>
+<p>上图的(d)经过路由器的处理变成了(e)。</p>
+<h2 id="socket">socket</h2>
+<p>应用程序可以开启一个socket监听某个端口。当接受的数据到达运输层后，剥离运输层报头，并解析报头得到目的端口，然后判断该socket的receive buffer是不是满了，如果receive buffer满了，则会丢弃数据包。socket允许用户设置过滤器，在这个阶段把不符合条件的数据包过滤掉，这个过程在源码中的sock_queue_rcv_skb函数里，注意这一步并没有把数据放到队列中，而是做一些判断和过滤。</p>
+<p>下一步，就会把数据包放到socket的接收队列尾部(__skb_queue_tail)，然后通知socket数据包准备就绪(sk_data_ready)。到目前为止的操作都属于运输层。</p>
+<p>在应用层，用户一般会通过select或epoll去监听socket。为了不占用CPU资源，没有数据时select或epoll会将进程挂起，当socket有数据时就会唤醒监听的进程。</p>
+<h2 id="tuntap">TUN/TAP</h2>
+<p>TUN/TAP分别是两种虚拟网络设备。所谓虚拟网络设备其实就是操作系统上的一个进程，并运行着驱动程序。</p>
+<p>TAP用于把链路层的帧数据转发至用户空间应用程序。启动一个TAP后，会自动生成一个虚拟MAC地址，你需要对路由表配置什么样的数据会转发至该TAP，并让你的应用程序监听该TAP来接收数据。网卡把接收到的帧数据交给协议栈，协议栈在链路层根据路由表把帧数据转发至对应的TAP。</p>
+<p>TUN用于把网络层的包数据转发至用户空间应用程序。启动一个TUN后，你要手动指定一个IP地址给TUN，在路由表配置什么样的数据会转发至该TUN，并让你的应用程序监听该TUN来接收数据。网卡把接收到的帧数据交给协议栈，协议栈在网络层根据路由表把包数据转发至对应的TUN。</p>
+<p>同时，应用程序通过socket发送出去的数据可以在协议栈被路由表转发至对应TUN/TAP。到了这里，你就会发现，你可以通过TUN/TAP拦截应用程序发出的网络数据或从主机外接收的数据，将它们交由另一个应用程序处理。一般使用场景有数据压缩解压，加解密，VPN等。</p>
+<p>应用程序可以往TUN/TAP写入数据，数据会经过协议栈处理，然后再从网卡发送出去。</p>
+<h2 id="veth">veth</h2>
+<p>veth是一种成对出现的虚拟设备，默认与协议栈相连，你可以在两个veth之间建立管道，为它们设置虚拟IP，当你往一个veth里面发数据，它会通过管道传递到另一个veth上。</p>
+<h2 id="nat">NAT</h2>
+<p>NAT(Network Address Translation)，是一种网络地址转发技术，位于网络层，一般用于私有网络访问公有网络时，对私有的源地址改为公网地址，再向公网请求。为了确保回包能准确发给对应的私有地址，NAT网关会为每一个连接分配一个独有的端口，回包时通过端口号就能知道该映射成哪个私有地址了。</p>
+<p>假设物理机公网地址是220.138.23.45，通过虚拟机192.168.10.11:12345访问外部网络，物理机将私有地址192.168.10.11:12345映射为端口号18888，回包的目的地址将是220.138.23.45:18888，物理机收到回包后，根据18888就能知道该把回包转发给192.168.10.11:12345了。</p>
+<h2 id="网桥">网桥</h2>
+<p>网络设备之间的转发硬件设备有三种： 1. 中继器(repeater)，按比特传输数据，也被称为集线器。 2. 网桥(bridge)，按帧传输数据，即等待收集到一帧数据后再转发出去，也被称为交换机。 3. 路由器(router)，按包传输数据，并且能解析目的IP地址并精确地转发到目的终端。</p>
+<p>这里插入一个题外话，把两个网络设备连接在一起的设备都可以称为<strong>网关</strong>(Gateway)，所以中继器、网桥和路由器都可以作为网关，网关的一个重要功能就是负责转发，网络数据从设备中发出后会先经过网关，然后再从网关转发到目的设备，至于是精准转发还是广播转发就要看网关设备自己的功能了。具体一点的例子是，在局域网内，我们给作为网关的路由器分配一个IP，如192.168.30.1/24，其他设备的IP则改变末尾数，分配为30.2，30.3等等，这样它就处于同一网段。当处于另一个网络的设备，比如31.2发数据给30.2时，可能会先发至自己的网关31.1，再根据路由表发至网关30.1，它再转发至30.2。当然，网关设备的转发算法不强制配成同一网段IP，就算你把IP乱配也不会影响它的功能，但有时候根据路由算法，会优先发给与目的IP处于同一网段的网关。</p>
+<p>最简单的网桥会有两个端口，这里的端口是指网线的插口，可以将两个局域网(LAN)连接在一起，而常见的网桥会有多个端口，可以将多个LAN连接在一起。当多个LAN连接在一起后，由一台主机发出的数据，会被网桥连接的所有LAN的所有主机收到，其中部分主机发现数据不是发给自己的就会丢弃掉。所以你会发现网桥只是把不同局域网连接在一起，并把数据广播给所有终端，并不能精确地把数据发送给目的终端。</p>
+<p>如果你需要减少广播带来的不必要网络损坏，可以使用路由器连接多个LAN，路由器之间会交换和缓存所有LAN的所有终端的IP地址，进而可以解析出包的目的IP地址并精确发给目的终端。</p>
+<p>如果仔细思考，会发现网桥是可以知道目的终端处于哪个LAN上的。当网桥收到主机A发出的帧时，它就知道了主机A处于哪个LAN上，那么假设以后主机B向主机A发送数据，它就可以只把数据转发至主机A所在的LAN，减少广播压力。这种方法称为<strong>地址学习</strong>，这里的地址是指MAC地址。但这个方法也有个缺陷，就是主机A的位置可能被挪到别的LAN上，这时数据转发就会失败，具备该功能的网桥也应该具备老化机制，即在一段时间内没有收到来自主机A的帧，就会把主机A缓存清掉。</p>
+<p>网桥不能用于环路拓扑的网络结构中，最简单的环路就是两个LAN之间用两台网桥连接，这会可能导致一帧数据在两个网桥之间来回转发。STP(Spanning Tree Protocol，生成树协议)可以解决环路网络拓扑的问题，具体不再展开讲。</p>
+<h2 id="虚拟网桥">虚拟网桥</h2>
+<p>虚拟网桥是操作系统中的一个进程，默认与协议栈相连，也可以和物理设备(NIC)与虚拟设备(TUN/TAP, veth)相连。本质与物理网桥并无区别，通过MAC地址进行广播和转发。网桥本身是用来做转发的，为了方便路由算法根据网段查找，你可以为虚拟网桥配置虚拟IP。</p>
+<p>当你在物理机上开虚拟机时，一般会把物理网卡与虚拟网桥相连，虚拟机的虚拟网卡与物理机上的veth相连，veth再与虚拟网桥相连。这样的模式，通过虚拟网桥，虚拟机之间可以相互通信，虚拟机与物理机相互通信，虚拟机与外网通信。当虚拟机与外网通信时，网络数据先从虚拟网卡到veth，再从虚拟网桥到协议栈，在网络层经过NAT，再从物理网卡出去。</p>
+<figure>
+<img src="https://i.loli.net/2021/05/30/BG5SoAmpUjqrMDu.jpg" alt="bridge"><figcaption>bridge</figcaption>
+</figure>
+<h2 id="netfilteriptables">netfilter/iptables</h2>
+<p>netfilter顾名思义是一个网络数据的过滤器，它在协议栈IP层处理数据的5个阶段，提供给用户注册回调方法的机会，使用户能够对数据包在特定位置做特定处理。而iptables则是提供给用户配置回调方法的工具，一般我们把回调方法被调用的地方称为钩子。iptables默认只影响IPv4的数据包，IPv6的数据包由ip6tables负责配置。</p>
+<p>netfilter提供了5个钩子：</p>
+<ol type="1">
+<li>NF_IP_PRE_ROUTING：数据包还没经过路由选择</li>
+<li>NF_IP_LOCAL_IN：数据包经过路由选择，目的IP是本机</li>
+<li>NF_IP_FORWARD：数据包经过路由选择，目的IP不是本机</li>
+<li>NF_IP_LOCAL_OUT：本机程序发出的数据包，还没经过路由选择</li>
+<li>NF_IP_POST_ROUTING：本机程序发出的数据包，经过路由选择</li>
+</ol>
+<p>整理一下不同情况数据包经过钩子的流程：</p>
+<ol type="1">
+<li>目的IP是本机的数据包：NF_IP_PRE_ROUTING -&gt; NF_IP_LOCAL_IN</li>
+<li>目的IP不是本机的数据包：NF_IP_PRE_ROUTING -&gt; NF_IP_FORWARD -&gt; NF_IP_POST_ROUTING</li>
+<li>本机发出的数据包：NF_IP_LOCAL_OUT -&gt; NF_IP_POST_ROUTING</li>
+</ol>
+<p>iptables提供了5种规则(rule)，用户可以注册这5种规则对应的处理函数：</p>
+<ol type="1">
+<li>Filter: 用于过滤数据，规定哪些数据可以通过，哪些不行。</li>
+<li>NAT: 控制网络地址的转换。</li>
+<li>Mangle: 用于修改IP数据包结构体的包头。注意，并不是直接修改IP数据包，而是内核中的数据包结构体(skb)的包头。</li>
+<li>Raw: netfilter有一个功能叫connection tracking，用于追踪所有连接，Raw则是可以控制哪些数据包不被追踪。</li>
+<li>Security: 用于在数据包上设置SELinux相关标记，方便后面SELinux相关模块的处理。</li>
+</ol>
+<p>5种rule会分别放在5个table中，iptables中的tables说的就是这5个表。那么我们要如何把rule对应的回调函数与netfilter的钩子相关联呢？每个表都会有若干条链表(chain)，一条链表对应一个钩子，链表存放rule函数。当经过一个钩子，就会先找表，再从表中找到对应的链表，然后依次执行链表上的rule函数。</p>
+<p>一个钩子并不是同时支持所有rule函数的，比如NF_IP_PRE_ROUTING钩子不支持filter，这个阶段还没经过路由选择，内核开发者可能认为这个阶段做过滤没有意义，所以NF_IP_PRE_ROUTING钩子没有filter表。</p>
+<p>一个钩子可以支持多种rule函数，那它们执行顺序是什么呢？事实上，不同钩子对rule的执行顺序是不同的。</p>
+<ol type="1">
+<li>NF_IP_PRE_ROUTING: Raw, (Connection tracking), Mangle, DNAT</li>
+<li>NF_IP_LOCAL_IN: Mangle, Filter, Security, SNAT</li>
+<li>NF_IP_FORWARD: Mangle, Filter, Security</li>
+<li>NF_IP_LOCAL_OUT: Raw, (Connection tracking), Mangle, DNAT, Filter, Filter, Security</li>
+<li>NF_IP_POST_ROUTING: Mangle, SNAT</li>
+</ol>
+<p>上面把NAT分为DNAT和SNAT表示分别对目的地址和源地址做转换。</p>
+<p>每种rule需要做两件事情：</p>
+<ol type="1">
+<li>Matching：匹配一个数据包，比如协议类型、地址、端口、包头里面的数据以及连接状态等。</li>
+<li>Targets：收到数据包后怎么处理。DROP：丢弃数据包；RETURN：跳出chain，后续rule不执行；QUEUE：把数据包放入用户空间队列；ACCEPT：继续执行后续rule；跳转到用户自定义chain。</li>
+</ol>
+<p>上面提到用户自定义chain，这种chain没有与之对应的钩子，所以必须从内建钩子的处理函数中触发跳转。如果你想知道如何使用iptables可以参考该<a href="https://www.frozentux.net/iptables-tutorial/iptables-tutorial.html" target="_blank" rel="noopener">文档</a>。</p>
+<p>这里再讲一下连接追踪(Connection tracking)。一般来说，网络传输没有连接这种物理概念，连接是一种逻辑概念，比如TCP双方传输若干个握手包，则认为连接建立成功。连接追踪则是基于这种理念设计的，根据两个端传输数据包的情况，来判断两个端处于什么连接状态。</p>
+<p>连接追踪包含如下几种状态：</p>
+<ol type="1">
+<li>NEW: 当收到一个包，从地址上判断这个包与现有所有连接都没有关联，而且该包是一个TCP SYN或UPD包，则认为该包尝试建立连接。</li>
+<li>ESTABLISHED：当检测到NEW连接中发出一个反向包。比如TCP ACK包。</li>
+<li>RELATED：数据包不属于现有连接，但与某个ESTABLISHED连接有关联。比如FTP。</li>
+<li>INVALID: 数据包不属于任何连接，也不是一个请求建立连接的包。比如一些发错的垃圾数据包。</li>
+<li>UNTRACKED: 被Raw表标记为不需要追踪的数据包。</li>
+</ol>
+<h2 id="参考">参考</h2>
+<ul>
+<li><a href="https://books.google.com.hk/books/about/Understanding_Linux_Network_Internals.html?id=ALapr7CvAKkC&amp;redir_esc=y" target="_blank" rel="noopener">Understanding Linux Network Internals</a></li>
+<li><a href="https://segmentfault.com/a/1190000009043962" target="_blank" rel="noopener">netfilter/iptables简介</a></li>
+<li><a href="https://segmentfault.com/a/1190000009251098" target="_blank" rel="noopener">Linux虚拟网络设备之veth</a></li>
+<li><a href="https://segmentfault.com/a/1190000009249039" target="_blank" rel="noopener">Linux虚拟网络设备之tun/tap</a></li>
+<li><a href="https://segmentfault.com/a/1190000009491002" target="_blank" rel="noopener">Linux虚拟网络设备之bridge</a></li>
+<li><a href="https://segmentfault.com/a/1190000008926093" target="_blank" rel="noopener">Linux网络 - 数据包的发送过程</a></li>
+<li><a href="https://segmentfault.com/a/1190000008836467" target="_blank" rel="noopener">Linux网络 - 数据包的接收过程</a></li>
+</ul>
+
+    
+    </div>
+    
+    <div class="columns is-variable is-1 is-multiline is-mobile">
+    
+        <span class="column is-narrow"><a class="tag is-light article-tag" href="/tags/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/">#操作系统</a></span>
+    
+    </div>
+    
+    <!-- 
+    <span id="post/net/" class="leancloud_visitors" data-flag-title="操作系统网络概述">
+        <em class="post-meta-item-text">阅读量 </em>
+        <i class="leancloud-visitors-count">1000000</i>
+    </span>
+     -->
+    
+    <div class="go-next columns is-mobile is-multiline article-nav">
+        <span class="column is-12-mobile is-half-desktop is-hidden-mobile article-nav-prev">
+            
+        </span>
+        <span class="column is-12-mobile is-half-desktop  article-nav-next">
+            
+            <a href="/post/file/">现代文件系统实现简述</a>
+            
+        </span>
+    </div>
+    
+</article>
+
+
+
+<div class="comments">
+    <h3 class="title is-4">Comments</h3>
+    
+<div id="valine-thread"></div>
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+<script>
+    new Valine({
+        el: '#valine-thread',
+        appId: 'DEXiOMuMN86LKmdUtJYX4FRL-MdYXbMMI',
+        appKey: 'tPt6E0GhkwXKEBUacbugDcWb',
+        notify: true,
+        verify: false,
+        avatar: '',
+        placeholder: 'Say something...',
+        meta: ['nick', 'mail'],
+        visitor: true,
+        lang: ''
+    })
+</script>
+
+
+</div>
+
+    </div>
+</section>
+    <footer class="footer">
+    <div class="container">
+        <div class="columns content">
+            <div class="column is-narrow has-text-centered">
+                &copy; 2021 Black Redscarf&nbsp;
+                Powered by <a href="http://hexo.io/" target="_blank">Hexo</a> & <a
+                        href="http://github.com/ppoffice/hexo-theme-minos">Minos</a>
+            </div>
+            <div class="column is-hidden-mobile"></div>
+
+            
+            <div class="column is-narrow">
+                <div class="columns is-mobile is-multiline is-centered">
+                
+                    
+                <a class="column is-narrow has-text-black" title="GitHub" href="https://github.com/blackredscarf" target="_blank" rel="noopener">
+                    
+                    GitHub
+                    
+                </a>
+                
+                </div>
+            </div>
+            
+            
+        </div>
+    </div>
+</footer>
+    <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/moment.js/2.22.2/moment-with-locales.min.js"></script>
+
+<!-- test if the browser is outdated -->
+<div id="outdated">
+    <h6>Your browser is out-of-date!</h6>
+    <p>Update your browser to view this website correctly. <a id="btnUpdateBrowser" href="http://outdatedbrowser.com/" target="_blank" rel="noopener">Update my browser now </a></p>
+    <p class="last"><a href="#" id="btnCloseUpdateBrowser" title="Close">&times;</a></p>
+</div>
+<script src="https://cdn.bootcdn.net/ajax/libs/outdated-browser/1.1.5/outdatedbrowser.min.css"></script>
+<script>
+    $(document).ready(function () {
+        // plugin function, place inside DOM ready function
+        outdatedBrowser({
+            bgColor: '#f25648',
+            color: '#ffffff',
+            lowerThan: 'flex'
+        })
+    });
+</script>
+
+<script>
+    window.FontAwesomeConfig = {
+        searchPseudoElements: true
+    }
+    moment.locale("en-AU");
+</script>
+
+
+    
+    
+<script src="https://cdn.bootcdn.net/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+<script>
+    MathJax.Hub.Config({
+        "HTML-CSS": {
+            matchFontHeight: false
+        },
+        SVG: {
+            matchFontHeight: false
+        },
+        CommonHTML: {
+            matchFontHeight: false
+        },
+        tex2jax: {
+            inlineMath: [ ['$','$'],['\\(','\\)'] ],
+            displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+            processEscapes: false
+        }
+    });
+</script>
+
+    
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/katex.min.css" integrity="sha384-9eLZqc9ds8eNjO3TmqPeYcDj8n+Qfa4nuSiGYa6DjLNcv9BtN69ZIulL9+8CqC9Y" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/katex.min.js" integrity="sha384-K3vbOmF2BtaVai+Qk37uypf7VrgBubhQreNQe9aGsz9lB63dIFiQVlJbr92dw2Lx" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/contrib/auto-render.min.js" integrity="sha384-kmZOZB5ObwgQnS/DuDg6TScgOiWWBiVt0plIRkZCmE6rDZGrEOQeHM5PcHi+nyqe" crossorigin="anonymous"
+        onload="renderMathInElement(document.body);"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    renderMathInElement(document.body, {
+        // ...options...
+    });
+});
+</script>
+
+    
+    
+<script src="https://cdn.bootcdn.net/ajax/libs/lightgallery/1.6.8/js/lightgallery-all.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/justifiedGallery/3.6.5/js/jquery.justifiedGallery.min.js"></script>
+<script>
+    (function ($) {
+        $(document).ready(function () {
+            if (typeof($.fn.lightGallery) === 'function') {
+                $('.article.gallery').lightGallery({ selector: '.gallery-item' });
+            }
+            if (typeof($.fn.justifiedGallery) === 'function') {
+                $('.justified-gallery').justifiedGallery();
+            }
+        });
+    })(jQuery);
+</script>
+
+    
+    
+    <script src="https://cdn.bootcdn.net/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script>
+    <style>
+        .hljs {
+            position: relative;
+        }
+
+        .hljs .clipboard-btn {
+            float: right;
+            color: #9a9a9a;
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+
+        .hljs .clipboard-btn:hover {
+          color: #8a8a8a;
+        }
+
+        .hljs > .clipboard-btn {
+            display: none;
+            position: absolute;
+            right: 4px;
+            top: 4px;
+        }
+
+        .hljs:hover > .clipboard-btn {
+            display: inline;
+        }
+
+        .hljs > figcaption > .clipboard-btn {
+            margin-right: 4px;
+        }
+    </style>
+    <script>
+      $(document).ready(function () {
+        $('figure.hljs').each(function(i, figure) {
+          var codeId = 'code-' + i;
+          var code = figure.querySelector('.code');
+          var copyButton = $('<button>Copy <i class="far fa-clipboard"></i></button>');
+          code.id = codeId;
+          copyButton.addClass('clipboard-btn');
+          copyButton.attr('data-clipboard-target-id', codeId);
+
+          var figcaption = figure.querySelector('figcaption');
+
+          if (figcaption) {
+            figcaption.append(copyButton[0]);
+          } else {
+            figure.prepend(copyButton[0]);
+          }
+        })
+
+        var clipboard = new ClipboardJS('.clipboard-btn', {
+          target: function(trigger) {
+            return document.getElementById(trigger.getAttribute('data-clipboard-target-id'));
+          }
+        });
+        clipboard.on('success', function(e) {
+          e.clearSelection();
+        })
+      })
+    </script>
+
+    
+    
+
+    
+
+
+<script src="/js/script.js"></script>
+
+    
+    <div class="searchbox ins-search">
+    <div class="searchbox-mask"></div>
+    <div class="searchbox-container ins-search-container">
+        <div class="searchbox-input-wrapper">
+            <input type="text" class="searchbox-input ins-search-input" placeholder="Type something..." />
+            <span class="searchbox-close ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="searchbox-result-wrapper ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+    (function (window) {
+        var INSIGHT_CONFIG = {
+            TRANSLATION: {
+                POSTS: 'Posts',
+                PAGES: 'Pages',
+                CATEGORIES: 'Categories',
+                TAGS: 'Tags',
+                UNTITLED: '(Untitled)',
+            },
+            CONTENT_URL: '/content.json',
+        };
+        window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+    })(window);
+</script>
+<script src="/js/insight.js"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    
+</body>
+</html>
