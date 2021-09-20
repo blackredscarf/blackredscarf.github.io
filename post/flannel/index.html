@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html class="has-navbar-fixed-top">
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="utf-8">
+<title>Flannel网络虚拟化探究 - 绯色的魔法世界</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+<link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/outdated-browser/1.1.5/outdatedbrowser.min.css">
+
+
+
+
+<meta name="description" content="">
+
+
+
+
+
+    <meta name="description" content="Flannel作为容器和Kubernetes网络虚拟化插件，为多机集群的容器间通信提供了支持，目前有3种后端类型。这里我先简单分析Docker和Kubernetes的网络通信原理和问题，然后再分析Flannel的解决方案。">
+<meta name="keywords" content="操作系统,Linux,计算机网络">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Flannel网络虚拟化探究">
+<meta property="og:url" content="http:&#x2F;&#x2F;blackredscarf.github.io&#x2F;post&#x2F;flannel&#x2F;index.html">
+<meta property="og:site_name" content="绯色的魔法世界">
+<meta property="og:description" content="Flannel作为容器和Kubernetes网络虚拟化插件，为多机集群的容器间通信提供了支持，目前有3种后端类型。这里我先简单分析Docker和Kubernetes的网络通信原理和问题，然后再分析Flannel的解决方案。">
+<meta property="og:locale" content="en">
+<meta property="og:image" content="https:&#x2F;&#x2F;i.loli.net&#x2F;2021&#x2F;08&#x2F;07&#x2F;ia6dQhwIeuvzjtP.jpg">
+<meta property="og:image" content="https:&#x2F;&#x2F;i.loli.net&#x2F;2021&#x2F;08&#x2F;01&#x2F;qzMa2jkxuRQlwrW.png">
+<meta property="og:image" content="https:&#x2F;&#x2F;i.loli.net&#x2F;2021&#x2F;08&#x2F;07&#x2F;Dd5saFro4tk19Xl.jpg">
+<meta property="og:updated_time" content="2021-09-20T03:48:00.148Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https:&#x2F;&#x2F;i.loli.net&#x2F;2021&#x2F;08&#x2F;07&#x2F;ia6dQhwIeuvzjtP.jpg">
+
+
+
+
+
+<link rel="icon" href="https://s1.ax1x.com/2020/07/25/aSC9Cn.png">
+
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Ovo|Source+Code+Pro">
+<link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/bulma/0.6.2/css/bulma.min.css">
+
+
+<link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/lightgallery/1.6.8/css/lightgallery.min.css">
+<link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/justifiedGallery/3.6.5/css/justifiedGallery.min.css">
+
+
+<link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/highlight.js/10.1.1/styles/atom-one-light.min.css">
+
+<link rel="stylesheet" href="/css/style.css">
+
+<script defer src="https://cdn.bootcdn.net/ajax/libs/font-awesome/5.14.0/js/all.min.js"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+    
+
+
+</head>
+<body>
+    
+
+<!-- hexo-inject:begin --><!-- hexo-inject:end --><nav class="navbar is-transparent is-fixed-top navbar-main" role="navigation" aria-label="main navigation">
+    <div class="top-title-line">
+        <div class="top-title">
+            <a href="/"><span>绯色的魔法世界</span></a>
+        </div>
+    </div>
+    <div class="nav-tool-line">
+        <div class="nav-tool">
+            
+            <a class="navbar-item search" title="Search" href="javascript:;" target="_blank" rel="noopener">
+                <i class="fas fa-search"></i>
+            </a>
+            
+            
+            <a class="navbar-item" title="GitHub" href="https://github.com/blackredscarf" target="_blank" rel="noopener">
+                
+                <i class="fab fa-github"></i>
+                
+            </a>
+               
+            
+        </div>    
+    </div>
+    <div class="container">
+        <div class="navbar-brand">
+            <!-- <a class="navbar-item navbar-logo" href="/">
+                
+                <img src="/images/logo.png" alt="" height="28">
+                
+            </a> -->
+            <div class="navbar-burger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+        
+        <div class="navbar-menu navbar-start">
+            
+            <a class="navbar-item "
+               href="/">Home</a>
+            
+            <a class="navbar-item "
+               href="/archives">归档</a>
+            
+            <a class="navbar-item "
+               href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F">操作系统</a>
+            
+            <a class="navbar-item "
+               href="/categories/%E5%88%86%E5%B8%83%E5%BC%8F">分布式</a>
+            
+            <a class="navbar-item "
+               href="/categories/%E7%AE%97%E6%B3%95%E8%AE%BE%E8%AE%A1">算法设计</a>
+            
+            <a class="navbar-item "
+               href="/categories/%E9%9A%8F%E8%AE%B0">随记</a>
+            
+            <a class="navbar-item "
+               href="/categories/NLP">NLP</a>
+            
+            <a class="navbar-item "
+               href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0">机器学习</a>
+            
+        </div>
+        
+        
+    </div>
+</nav>
+
+    <section class="section">
+    <div class="container">
+    
+<div class="article-cover">
+   <img class="article-cover-img" src="https://z3.ax1x.com/2021/09/20/4Geya6.jpg"> 
+</div>
+
+<article class="article content gallery" itemscope itemprop="blogPost">
+    <h1 class="article-title is-size-3 is-size-4-mobile" itemprop="name">
+        
+            Flannel网络虚拟化探究
+        
+    </h1>
+    <div class="article-meta columns is-variable is-1 is-multiline is-mobile is-size-7-mobile">
+        <span class="column is-narrow">
+            2021-09-20
+            <!-- <time datetime="2021-09-19T16:00:00.000Z" itemprop="datePublished">Sep 20 2021</time> -->
+        </span>
+        
+        <span class="column is-narrow article-category">
+            <i class="far fa-folder"></i>
+            <a class="article-category-link" href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/">操作系统</a>
+        </span>
+        
+        <!--  -->
+    </div>
+    <div class="article-entry is-size-6-mobile" itemprop="articleBody">
+    
+        <p>Flannel作为容器和Kubernetes网络虚拟化插件，为多机集群的容器间通信提供了支持，目前有3种后端类型。这里我先简单分析Docker和Kubernetes的网络通信原理和问题，然后再分析Flannel的解决方案。</p>
+<a id="more"></a>
+<h2 id="docker网络">Docker网络</h2>
+<p>Docker会为每一个容器创建若干种命名空间，拥有独立的协议栈、路由表、进程、套接字和网络设备。容器内与主机之间的通信通过虚拟设备进行，把一个虚拟设备设为容器的命名空间，另一个虚拟设备在默认命名空间，两个虚拟设备相连，容器内的网络数据会通过虚拟设备流出，主机端虚拟设备接收。</p>
+<p>为了能更好的转发数据包是，Docker会创建一个网桥docker0，所有主机端的虚拟设备都会与docker0相连，docker0被分配一个虚拟IP，所有容器的虚拟设备地址都属于docker0网段，各容器的虚拟设备地址会被网桥docker0记录。当发现数据包是从一个容器发至另一个容器，docker0通过解析其目的地址就能正确转发至对应容器；若目的地址不属于docker0网段，则会被发至协议栈。</p>
+<figure>
+<img src="https://i.loli.net/2021/08/07/ia6dQhwIeuvzjtP.jpg" alt="flannel-3.jpg"><figcaption>flannel-3.jpg</figcaption>
+</figure>
+<h2 id="k8s网络">K8s网络</h2>
+<p>K8s以Pod为单位管理，一个Pod内的所有容器共享网络命名空间，同样通过虚拟设备与主机通信。在单机情况下，K8s网络与Docker网络无异，但虚拟地址仅能在主机内使用，为了能使得集群内的每一个Pod能通过虚拟IP相互通信，需要做一些额外的工作。</p>
+<p>这实际涉及到一个网络虚拟化方案的问题，其实能做到这一点的方案有很多，各家公司或团队偏好和需求可能各不相同，为了满足这一点，CoreOS公司提出了CNI模型，旨在统一网络虚拟化的接口，使得各种虚拟化方案能够变为插件，在集群内可插拔的使用。</p>
+<p>目前K8s机器支持的网络插件有Calico, Flannel, Wave Net等等。下面我以Flannel为例，讲讲它如何实现网络虚拟化。</p>
+<h2 id="flannel后端类型">Flannel后端类型</h2>
+<p>Fannel支持几种网络虚拟化方案，根据<a href="https://github.com/flannel-io/flannel/blob/master/Documentation/backends.md" target="_blank" rel="noopener">官方文档</a>可知Fannel有三种后端类型。定义想要使用的后端类型只要在插入etcd的配置中声明即可，配置格式详见<a href="https://github.com/flannel-io/flannel/blob/master/Documentation/configuration.md" target="_blank" rel="noopener">这里</a>。下面分别介绍三种后端类型。</p>
+<h3 id="vxlan">VXLAN</h3>
+<p>VXLAN（Virtual Extensible Local Area Network，虚拟扩展局域网）是一种隧道技术，在集群中建立一条基于IP网络的逻辑隧道，这里的隧道可以理解为由很多个网络设备(VTEP)组成的网络，这里的网络设备相当于物理网桥或虚拟网桥，可以把报文相互转发。</p>
+<p>VTEP将数据帧加一个VXLAN头部并进行封装在UDP报文里面，然后放入隧道进行传输，这里的封装是报文在隧道中传输的凭据，就像网络层报头是在网络层传输的凭据一般，隧道在把报文转发给目标主机前由一个VTEP设备把之前的封装拆掉。所以对于主机来说，它们发出和接收的数据帧依旧是原始数据帧，隧道中发生的一切对于主机来说都是无感。</p>
+<p>关于VXLAN更详细的讲解可以参考这篇<a href="https://support.huawei.com/enterprise/zh/doc/EDOC1100087027" target="_blank" rel="noopener">文章</a>。</p>
+<h3 id="host-gw">host-gw</h3>
+<p>host-gw（host gateway，主机网关）。我们像划分物理网段那样，对所有主机划分虚拟网络段。原本一台主机的虚拟网络与另一台主机的虚拟网络没有关系，冲突了也无碍，但现在需要把集群中所有主机的虚拟网络统一起来，并按照规则划分，使其不会发生冲突。当确保虚拟网段不会冲突时，我们就可以预先的在每一台主机上对路由表进行修改，把所有虚拟网段直接映射到其对应的物理地址上，这样当一台主机访问一个虚拟地址时，就可以通过路由表直接投递到对应的物理地址并被目的主机接收。</p>
+<p>举个例子，我们往路由表里加入一条规则，把虚拟网段映射到某个物理地址上， <figure class="highlight plain hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">10.1.88.0/24 via 192.168.223.13 dev ens33</span><br></pre></td></tr></table></figure> 这里表示凡是目的地址在虚拟网段<code>10.1.88.0/24</code>范围内的包，都通过设备<code>ens33</code>发送到，发送到物理网关<code>192.168.223.13</code>上。</p>
+<p>一般来说，<code>via</code>后面都是定义下一跳物理网关（或路由器）的，这样就能使数据包通过网关传输。但这里的<code>192.168.223.13</code>实际上并非网关地址，而是主机地址，相当于我们把一台主机的物理地址作为另一条主机的虚拟网段的网关。</p>
+<p>这一后端类型全程都在内核中完成，是三种类型中性能最高的。</p>
+<h3 id="udp">UDP</h3>
+<p>使用UDP模式的前提同样是对集群的虚拟网段进行划分，我们会把虚拟网段和物理地址的映射记录到数据库中，比如etcd。当用户尝试向某个虚拟地址发包时会被路由到TUN设备flannel0上，并传输给常驻进程flanneld，flanneld把用户报文通过UDP封装一层，并查询数据库，把UDP报头目的地址设为目标物理地址，然后再发出去。目标主机收到包后传到flanneld进程里，flanneld对报文拆包，并把原始报文传给flannel0，然后就进入协议栈的流程。</p>
+<p>UDP类型导致数据包传输过程中多4次用户态与内核态之间的切换，源主机上从flannel0到flanneld，再从flanneld到协议栈，目的主机上从协议栈到flanneld，再从flanneld到flannel0。性能最差，官方的说法是不建议在生产环境使用。</p>
+<h2 id="flannel-udp的网络传输">Flannel UDP的网络传输</h2>
+<p>当开启UDP类型后，会新增一个flannel0的TUN设备，具有一个网段，并且网桥docker0网段会属于该网段。下面以某个k8s节点的网络设备情况举例，可以看到docker0属于flannel0的子网， <figure class="highlight plain hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"># ip addr</span><br><span class="line"></span><br><span class="line">flannel0: &lt;POINTOPOINT,MULTICAST,NOARP,UP,LOWER_UP&gt; mtu 1472 qdisc pfifo_fast state UNKNOWN group default qlen 500</span><br><span class="line">    inet 10.1.72.0/32 brd 10.1.72.0 scope global flannel0</span><br><span class="line">docker0: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1472 qdisc noqueue state UP group default</span><br><span class="line">    inet 10.1.72.1/24 brd 10.1.72.255 scope global docker0</span><br></pre></td></tr></table></figure> docker0与flannel0之间不直连，docker0输出的包会经过协议栈，经过路由表或NAT到达flannel0。flannel0的另一端会连着一个flanneld进程，他会负责包的封装和拆封。</p>
+<p>我们先来看看在UDP类型下K8s和Flannel是如何处理网络传输的。其实在K8s里，我们发送网络包的情况无非分为以下8种：</p>
+<ol type="1">
+<li>在容器内通过Cluster-IP发送到另一台主机上</li>
+<li>在主机通过Cluster-IP发送到另一台主机上</li>
+<li>在容器内通过Pod-IP发送到另一台主机上</li>
+<li>在主机通过Pod-IP发送到另一台主机上</li>
+<li>在容器内通过Cluster-IP发送到自己主机上</li>
+<li>在主机通过Cluster-IP发送到自己主机上</li>
+<li>在容器内通过Pod-IP发送到自己主机上</li>
+<li>在主机通过Pod-IP发送到自己主机上</li>
+</ol>
+<p>这里可以先下结论，在UDP类型下，只有情况2“在主机通过Cluster-IP发送到另一台主机上”是不可行的，其他情况都能做到。下面我会逐一分析以上几种情况的网络传输流程，具体验证方法可以通过Linux的iptables, tcpdump, ip route等工具完成。</p>
+<h4 id="情况1在容器内通过cluster-ip发送到另一台主机上">情况1：在容器内通过Cluster-IP发送到另一台主机上</h4>
+<p>我们先看第一种情况，整个传输流程可以看下图，</p>
+<figure>
+<img src="https://i.loli.net/2021/08/01/qzMa2jkxuRQlwrW.png" alt="flannel-1.png"><figcaption>flannel-1.png</figcaption>
+</figure>
+<p>传输流程：</p>
+<ol type="1">
+<li>当Pod A请求Cluster-IP时，网络包经过协议栈并会从容器中的eth0发送到宿主机veth；</li>
+<li>网络包通过veth进入docker0，通过docker0时，包的源地址被改写为docker0的地址；</li>
+<li>网络包从docker0进入协议栈，netfilter的PREROUTING阶段的会发生NAT，把目的地址从Cluster-IP改写为Pod B-IP。NAT规则是由主机上的kube-proxy动态修改的；</li>
+<li>网络包通过NAT转发至TUN设备flannel0，NAT后会马上进行一次路由选择，并且根据路由配置，会把源地址改为docker0地址；</li>
+<li>从flannel0进入用户态进程flanneld，flanneld会包的源地址改为flannel0地址，并把包封装到UDP报文中，UDP报头的源地址设为主机地址，目的地址设为Pod B所在的主机地址及其flanneld端口；</li>
+<li>UDP报文通过协议栈进入主机网卡eth0，并发送到物理网络上；</li>
+<li>另一台主机Node B的eth0收到网络包，网络包通过协议栈进入到flanneld进程；</li>
+<li>flanneld拆开UDP报文，并把原报文发给flannel0</li>
+<li>网络包从flannel0进入协议栈，在通过PREROUTING后被路由表路由到docker0；</li>
+<li>网络包从docker0到veth，再到容器内的eth0，通过协议栈到达用户进程。</li>
+</ol>
+<h4 id="情况2在主机通过cluster-ip发送到另一台主机上">情况2：在主机通过Cluster-IP发送到另一台主机上</h4>
+<p>前面下了结论，情况2无法做到，这里分析一下流程：</p>
+<ol type="1">
+<li>在宿主机请求Cluster-IP；</li>
+<li>网络包会通过协议栈，在netfilter的OUT阶段发送NAT，并转发至flannel0，flannel0把包发至flanneld；</li>
+<li>按常理，flanneld应该会如同情况1一般处理该网络包，但这里它并没有这么做。原因在于flanneld发现该网络包的源地址是主机地址，而非flannel0网段地址，所以会把这个网络包丢掉。</li>
+</ol>
+<h4 id="情况3在容器内通过pod-ip发送到另一台主机上">情况3：在容器内通过Pod-IP发送到另一台主机上</h4>
+<p>该情况与情况1大体相同，区别在于网络包从docker0进入协议栈后，并不会在PREROUTING阶段发送NAT，而是在之后被路由表路由到flannel0上，之后的步骤就和情况1完全相同了。</p>
+<h4 id="情况4在主机通过pod-ip发送到另一台主机上">情况4：在主机通过Pod-IP发送到另一台主机上</h4>
+<p>该情况的流程为：</p>
+<ol type="1">
+<li>在宿主机请求Cluster-IP；</li>
+<li>网络包被路由表路由至flannel0；</li>
+<li>理论上来说，这一步会遇到和情况2相同的问题，那就是源地址是主机地址，会被flanneld扔掉，但路由表具有改写源地址的功能，在路由到flannel0之前，就会把包的源地址改写成flannel0地址，所以可以被flanneld处理，之后的步骤就与情况1完全相同了。</li>
+</ol>
+<h4 id="情况5在容器内通过cluster-ip发送到自己主机上">情况5：在容器内通过Cluster-IP发送到自己主机上</h4>
+<p>该情况与情况1的区别是，网络包从docker0进入协议栈，在netfilter的PREROUTING阶段会被NAT到docker0而非flannel0，因为docker0是flannel0的子网，Pod B的地址同时符合两个网段，而路由时会路由到更具体的网段上。网桥docker0会把网络包发至对应的虚拟设备上。</p>
+<h4 id="情况6在主机通过cluster-ip发送到自己主机上">情况6：在主机通过Cluster-IP发送到自己主机上</h4>
+<p>这种情况下，网络包会通过OUT阶段的NAT转发到docker0，网桥docker0会把网络包发至对应的虚拟设备上。</p>
+<h4 id="情况7在容器内通过pod-ip发送到自己主机上">情况7：在容器内通过Pod-IP发送到自己主机上</h4>
+<p>该情况下，网络包通过docker0后进入协议栈，被路由表路由至docker0。值得注意的是，因为源地址属于与docker0同一个网段，所以路由的时候会保留源地址。</p>
+<h4 id="情况8在主机通过pod-ip发送到自己主机上">情况8：在主机通过Pod-IP发送到自己主机上</h4>
+<p>这种情况下，从宿主机发出的网络包会被路由表直接路由至docker0，网桥docker0会把网络包发至对应的虚拟设备上，全程没有经过宿主机协议栈。值得注意的是，因为源地址属于与docker0不再同一个网段，所以路由的时候把源地址改为docker0地址。</p>
+<h2 id="flannel-host-gw的网络传输">Flannel host-gw的网络传输</h2>
+<p>在host-gw后端下，不会创建flannel0，flanneld进程不再负责封包与拆包。当flanneld启动后，会先从etcd当前集群的虚拟网段信息，然后自己创建一个新的虚拟网段并记录在etcd，这个网段是给本机docker0使用的，以便于集群中所有docker0的网段都不会发生冲突。同时，flanneld会把集群中所有网段信息，即虚拟网段与物理节点地址的映射，写入本机路由表。flanneld会监听etcd上关于集群网段的信息变化，以便于及时更新本机的路由表。</p>
+<p>下面以集群中某个节点的路由表为例， <figure class="highlight plain hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"># ip route</span><br><span class="line">10.1.29.0/24 via 192.168.223.13 dev ens33</span><br><span class="line">10.1.97.0/24 dev docker0 proto kernel scope link src 10.1.97.1</span><br><span class="line">...</span><br></pre></td></tr></table></figure> 可以发现，<code>10.1.97.0/24</code>是本机的docker0网段，而<code>10.1.29.0/24</code>则是另一个节点的docker0网段，通过<code>via 192.168.223.13</code>直接指定其下一跳路由地址，即直接通过路由表将数据包传送至目标主机上。同时这样的配置不会修改数据包的目的地址，离开网卡时目的地址仍然是一个虚拟地址，只是通过路由表直接投递到目标主机上，当数据包到达目标主机时，可以通过目标主机的路由表能转发至docker0上。</p>
+<p>使用host-gw模式，因为不存在flanneld把数据包丢掉的情况，所以上面提到的8种情况下，所有数据包都是可达的。同时因为数据包全程都在内核转发，不经过内核态和用户态的拷贝，性能是最高的。</p>
+<p>下图是在host-gw后端下，在容器内通过Cluster-IP访问另一台主机的网络传输过程，</p>
+<figure>
+<img src="https://i.loli.net/2021/08/07/Dd5saFro4tk19Xl.jpg" alt="flannel-2.jpg"><figcaption>flannel-2.jpg</figcaption>
+</figure>
+
+    
+    </div>
+    
+    <div class="columns is-variable is-1 is-multiline is-mobile">
+    
+        <span class="column is-narrow"><a class="tag is-light article-tag" href="/tags/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/">#操作系统</a></span>
+    
+        <span class="column is-narrow"><a class="tag is-light article-tag" href="/tags/Linux/">#Linux</a></span>
+    
+        <span class="column is-narrow"><a class="tag is-light article-tag" href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/">#计算机网络</a></span>
+    
+    </div>
+    
+    <!-- 
+    <span id="post/flannel/" class="leancloud_visitors" data-flag-title="Flannel网络虚拟化探究">
+        <em class="post-meta-item-text">阅读量 </em>
+        <i class="leancloud-visitors-count">1000000</i>
+    </span>
+     -->
+    
+    <div class="go-next columns is-mobile is-multiline article-nav">
+        <span class="column is-12-mobile is-half-desktop is-hidden-mobile article-nav-prev">
+            
+        </span>
+        <span class="column is-12-mobile is-half-desktop  article-nav-next">
+            
+            <a href="/post/net/">操作系统网络概述</a>
+            
+        </span>
+    </div>
+    
+</article>
+
+
+
+<div class="comments">
+    <h3 class="title is-4">Comments</h3>
+    
+<div id="valine-thread"></div>
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+<script>
+    new Valine({
+        el: '#valine-thread',
+        appId: 'DEXiOMuMN86LKmdUtJYX4FRL-MdYXbMMI',
+        appKey: 'tPt6E0GhkwXKEBUacbugDcWb',
+        notify: true,
+        verify: false,
+        avatar: '',
+        placeholder: 'Say something...',
+        meta: ['nick', 'mail'],
+        visitor: true,
+        lang: ''
+    })
+</script>
+
+
+</div>
+
+    </div>
+</section>
+    <footer class="footer">
+    <div class="container">
+        <div class="columns content">
+            <div class="column is-narrow has-text-centered">
+                &copy; 2021 Black Redscarf&nbsp;
+                Powered by <a href="http://hexo.io/" target="_blank">Hexo</a> & <a
+                        href="http://github.com/ppoffice/hexo-theme-minos">Minos</a>
+            </div>
+            <div class="column is-hidden-mobile"></div>
+
+            
+            <div class="column is-narrow">
+                <div class="columns is-mobile is-multiline is-centered">
+                
+                    
+                <a class="column is-narrow has-text-black" title="GitHub" href="https://github.com/blackredscarf" target="_blank" rel="noopener">
+                    
+                    GitHub
+                    
+                </a>
+                
+                </div>
+            </div>
+            
+            
+        </div>
+    </div>
+</footer>
+    <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/moment.js/2.22.2/moment-with-locales.min.js"></script>
+
+<!-- test if the browser is outdated -->
+<div id="outdated">
+    <h6>Your browser is out-of-date!</h6>
+    <p>Update your browser to view this website correctly. <a id="btnUpdateBrowser" href="http://outdatedbrowser.com/" target="_blank" rel="noopener">Update my browser now </a></p>
+    <p class="last"><a href="#" id="btnCloseUpdateBrowser" title="Close">&times;</a></p>
+</div>
+<script src="https://cdn.bootcdn.net/ajax/libs/outdated-browser/1.1.5/outdatedbrowser.min.css"></script>
+<script>
+    $(document).ready(function () {
+        // plugin function, place inside DOM ready function
+        outdatedBrowser({
+            bgColor: '#f25648',
+            color: '#ffffff',
+            lowerThan: 'flex'
+        })
+    });
+</script>
+
+<script>
+    window.FontAwesomeConfig = {
+        searchPseudoElements: true
+    }
+    moment.locale("en-AU");
+</script>
+
+
+    
+    
+<script src="https://cdn.bootcdn.net/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+<script>
+    MathJax.Hub.Config({
+        "HTML-CSS": {
+            matchFontHeight: false
+        },
+        SVG: {
+            matchFontHeight: false
+        },
+        CommonHTML: {
+            matchFontHeight: false
+        },
+        tex2jax: {
+            inlineMath: [ ['$','$'],['\\(','\\)'] ],
+            displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+            processEscapes: false
+        }
+    });
+</script>
+
+    
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/katex.min.css" integrity="sha384-9eLZqc9ds8eNjO3TmqPeYcDj8n+Qfa4nuSiGYa6DjLNcv9BtN69ZIulL9+8CqC9Y" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/katex.min.js" integrity="sha384-K3vbOmF2BtaVai+Qk37uypf7VrgBubhQreNQe9aGsz9lB63dIFiQVlJbr92dw2Lx" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/contrib/auto-render.min.js" integrity="sha384-kmZOZB5ObwgQnS/DuDg6TScgOiWWBiVt0plIRkZCmE6rDZGrEOQeHM5PcHi+nyqe" crossorigin="anonymous"
+        onload="renderMathInElement(document.body);"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    renderMathInElement(document.body, {
+        // ...options...
+    });
+});
+</script>
+
+    
+    
+<script src="https://cdn.bootcdn.net/ajax/libs/lightgallery/1.6.8/js/lightgallery-all.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/justifiedGallery/3.6.5/js/jquery.justifiedGallery.min.js"></script>
+<script>
+    (function ($) {
+        $(document).ready(function () {
+            if (typeof($.fn.lightGallery) === 'function') {
+                $('.article.gallery').lightGallery({ selector: '.gallery-item' });
+            }
+            if (typeof($.fn.justifiedGallery) === 'function') {
+                $('.justified-gallery').justifiedGallery();
+            }
+        });
+    })(jQuery);
+</script>
+
+    
+    
+    <script src="https://cdn.bootcdn.net/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script>
+    <style>
+        .hljs {
+            position: relative;
+        }
+
+        .hljs .clipboard-btn {
+            float: right;
+            color: #9a9a9a;
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+
+        .hljs .clipboard-btn:hover {
+          color: #8a8a8a;
+        }
+
+        .hljs > .clipboard-btn {
+            display: none;
+            position: absolute;
+            right: 4px;
+            top: 4px;
+        }
+
+        .hljs:hover > .clipboard-btn {
+            display: inline;
+        }
+
+        .hljs > figcaption > .clipboard-btn {
+            margin-right: 4px;
+        }
+    </style>
+    <script>
+      $(document).ready(function () {
+        $('figure.hljs').each(function(i, figure) {
+          var codeId = 'code-' + i;
+          var code = figure.querySelector('.code');
+          var copyButton = $('<button>Copy <i class="far fa-clipboard"></i></button>');
+          code.id = codeId;
+          copyButton.addClass('clipboard-btn');
+          copyButton.attr('data-clipboard-target-id', codeId);
+
+          var figcaption = figure.querySelector('figcaption');
+
+          if (figcaption) {
+            figcaption.append(copyButton[0]);
+          } else {
+            figure.prepend(copyButton[0]);
+          }
+        })
+
+        var clipboard = new ClipboardJS('.clipboard-btn', {
+          target: function(trigger) {
+            return document.getElementById(trigger.getAttribute('data-clipboard-target-id'));
+          }
+        });
+        clipboard.on('success', function(e) {
+          e.clearSelection();
+        })
+      })
+    </script>
+
+    
+    
+
+    
+
+
+<script src="/js/script.js"></script>
+
+    
+    <div class="searchbox ins-search">
+    <div class="searchbox-mask"></div>
+    <div class="searchbox-container ins-search-container">
+        <div class="searchbox-input-wrapper">
+            <input type="text" class="searchbox-input ins-search-input" placeholder="Type something..." />
+            <span class="searchbox-close ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="searchbox-result-wrapper ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+    (function (window) {
+        var INSIGHT_CONFIG = {
+            TRANSLATION: {
+                POSTS: 'Posts',
+                PAGES: 'Pages',
+                CATEGORIES: 'Categories',
+                TAGS: 'Tags',
+                UNTITLED: '(Untitled)',
+            },
+            CONTENT_URL: '/content.json',
+        };
+        window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+    })(window);
+</script>
+<script src="/js/insight.js"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    
+</body>
+</html>
