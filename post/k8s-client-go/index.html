@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html class="has-navbar-fixed-top">
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="utf-8">
+<title>Kubernetes Client-go 源码解析 - 绯色的魔法世界</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+<link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/outdated-browser/1.1.5/outdatedbrowser.min.css">
+
+
+
+
+<meta name="description" content="">
+
+
+
+
+
+    <meta name="description" content="Client-go是认识Kubernetes开发接口的良好载体，理解Client-go的运行机制有助于理解Kubernetes的运行机制。其本身的设计模式和理念也值得学习和借鉴。">
+<meta name="keywords" content="Kubernetes">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Kubernetes Client-go 源码解析">
+<meta property="og:url" content="http:&#x2F;&#x2F;blackredscarf.github.io&#x2F;post&#x2F;k8s-client-go&#x2F;index.html">
+<meta property="og:site_name" content="绯色的魔法世界">
+<meta property="og:description" content="Client-go是认识Kubernetes开发接口的良好载体，理解Client-go的运行机制有助于理解Kubernetes的运行机制。其本身的设计模式和理念也值得学习和借鉴。">
+<meta property="og:locale" content="en">
+<meta property="og:updated_time" content="2021-12-22T13:22:21.053Z">
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+<link rel="icon" href="https://s1.ax1x.com/2020/07/25/aSC9Cn.png">
+
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Ovo|Source+Code+Pro">
+<link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/bulma/0.6.2/css/bulma.min.css">
+
+
+<link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/lightgallery/1.6.8/css/lightgallery.min.css">
+<link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/justifiedGallery/3.6.5/css/justifiedGallery.min.css">
+
+
+<link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/highlight.js/10.1.1/styles/atom-one-light.min.css">
+
+<link rel="stylesheet" href="/css/style.css">
+
+<script defer src="https://cdn.bootcdn.net/ajax/libs/font-awesome/5.14.0/js/all.min.js"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+    
+
+
+</head>
+<body>
+    
+
+<!-- hexo-inject:begin --><!-- hexo-inject:end --><nav class="navbar is-transparent is-fixed-top navbar-main" role="navigation" aria-label="main navigation">
+    <div class="top-title-line">
+        <div class="top-title">
+            <a href="/"><span>绯色的魔法世界</span></a>
+        </div>
+    </div>
+    <div class="nav-tool-line">
+        <div class="nav-tool">
+            
+            <a class="navbar-item search" title="Search" href="javascript:;" target="_blank" rel="noopener">
+                <i class="fas fa-search"></i>
+            </a>
+            
+            
+            <a class="navbar-item" title="GitHub" href="https://github.com/blackredscarf" target="_blank" rel="noopener">
+                
+                <i class="fab fa-github"></i>
+                
+            </a>
+               
+            
+        </div>    
+    </div>
+    <div class="container">
+        <div class="navbar-brand">
+            <!-- <a class="navbar-item navbar-logo" href="/">
+                
+                <img src="/images/logo.png" alt="" height="28">
+                
+            </a> -->
+            <div class="navbar-burger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+        
+        <div class="navbar-menu navbar-start">
+            
+            <a class="navbar-item "
+               href="/">Home</a>
+            
+            <a class="navbar-item "
+               href="/archives">归档</a>
+            
+            <a class="navbar-item "
+               href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F">操作系统</a>
+            
+            <a class="navbar-item "
+               href="/categories/%E5%88%86%E5%B8%83%E5%BC%8F">分布式</a>
+            
+            <a class="navbar-item "
+               href="/categories/%E7%AE%97%E6%B3%95%E8%AE%BE%E8%AE%A1">算法设计</a>
+            
+            <a class="navbar-item "
+               href="/categories/%E9%9A%8F%E8%AE%B0">随记</a>
+            
+            <a class="navbar-item "
+               href="/categories/NLP">NLP</a>
+            
+            <a class="navbar-item "
+               href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0">机器学习</a>
+            
+        </div>
+        
+        
+    </div>
+</nav>
+
+    <section class="section">
+    <div class="container">
+    
+<div class="article-cover">
+   <img class="article-cover-img" src="https://s4.ax1x.com/2021/12/22/T3iOLd.jpg"> 
+</div>
+
+<article class="article content gallery" itemscope itemprop="blogPost">
+    <h1 class="article-title is-size-3 is-size-4-mobile" itemprop="name">
+        
+            Kubernetes Client-go 源码解析
+        
+    </h1>
+    <div class="article-meta columns is-variable is-1 is-multiline is-mobile is-size-7-mobile">
+        <span class="column is-narrow">
+            2021-12-22
+            <!-- <time datetime="2021-12-21T16:00:00.000Z" itemprop="datePublished">Dec 22 2021</time> -->
+        </span>
+        
+        <span class="column is-narrow article-category">
+            <i class="far fa-folder"></i>
+            <a class="article-category-link" href="/categories/Kubernetes/">Kubernetes</a>
+        </span>
+        
+        <!--  -->
+    </div>
+    <div class="article-entry is-size-6-mobile" itemprop="articleBody">
+    
+        <p>Client-go是认识Kubernetes开发接口的良好载体，理解Client-go的运行机制有助于理解Kubernetes的运行机制。其本身的设计模式和理念也值得学习和借鉴。</p>
+<a id="more"></a>
+<h3 id="resourceversion">ResourceVersion</h3>
+<p>etcd默认保留5分钟以内的变更记录，每个资源发生变更都会更新一个更大的资源版本ResourceVersion，ResourceVersion是一个所有资源类型共享的全局变量。</p>
+<p>对于watch请求来说，你可以指定一个resourceVersion=0来获取5分钟以内的任意变更记录及其之后，这种表现很奇怪，所以不建议指定0。可以指定一个resourceVersion来获取这个资源版本之后的变更记录，但这个资源版本早于5分钟以内保留的最小版本，则会回复一个410状态码，如果大于最大版本，则可能会一直等下去，直到超时。</p>
+<p>对于list，请求后会返回一个Kind=XXList的资源类型，XXList这种资源类型是按照惯例附带创建的，比如Pod和PodList，如果你写过CRD应该能明白了；items字段内包含资源列表，metadata包含的了resourceVersion，但这个resourceVersion是PodList的资源版本，而不是Pod的资源版本，指定resourceVersion=0来获取任意的PodList，也可以指定一个resourceVersion来获取这个资源版本或之后的PodList，如果指定的resourceVersion小于当前最新资源版本，它总是返回最新的PodList，如果大于则返回504状态码。但如果你指定了limit参数或resourceVersionMatch=Excat，就意味着apiserver必须精准匹配你填写的resourceVersion，这时候就和watch一样了，如果找不到指定的resourceVersion（可能是超过了5分钟），则会返回410状态码。关于resourceVersion的解释可以看<a href="https://kubernetes.io/zh/docs/reference/using-api/api-concepts/#the-resourceversion-parameter" target="_blank" rel="noopener">官方文档</a>，虽然官方文档写得不清晰，但你可以结合我上面说的来理解。</p>
+<p>变更事件有四种：ADD, DELETE, MODIFY, BOOKMARK。前面三个容易看懂，但第四个BOOKMARK是干什么的？正如前面所说etcd只保留5分钟的变更记录，万一客户端很长时间内都没有watch到变更，然后断连之后又重连到apiserver时，客户端可能按常规的把上次收到的resourceVersion传到url里，但这个resourceVersion已经是一个过期的资源版本，apiserver找不到资源版本，就会回复一个410状态码。那么这时客户端为了能获取最新的资源版本号就不得不先list一次。为了防止这种情况，apiserver会定期发送BOOKMARK事件，BOOKMARK将包含一个当前最新的资源版本号，尽管这个版本号对应的资源类型并不是你监听的那种，但这样是为了客户端能更新最新的资源版本号。</p>
+<h3 id="api访问例子">API访问例子</h3>
+<p>这里提供API访问的例子，首先是list，通过resourceVersion=0来获取任意版本的PodList <figure class="highlight plain hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"># curl -s &quot;http://127.0.0.1:8001/api/v1/namespaces/default/pods?resourceVersion=0&quot; 2&gt;&amp;1 | head</span><br><span class="line">&#123;</span><br><span class="line">  &quot;kind&quot;: &quot;PodList&quot;,</span><br><span class="line">  &quot;apiVersion&quot;: &quot;v1&quot;,</span><br><span class="line">  &quot;metadata&quot;: &#123;</span><br><span class="line">    &quot;selfLink&quot;: &quot;/api/v1/namespaces/default/pods&quot;,</span><br><span class="line">    &quot;resourceVersion&quot;: &quot;1084093&quot;</span><br><span class="line">  &#125;,</span><br><span class="line">  &quot;items&quot;: [</span><br><span class="line">    &#123;</span><br><span class="line">      &quot;metadata&quot;: &#123;</span><br></pre></td></tr></table></figure> 指定resourceVersionMatch=Exact时，返回了410，是因为1084093这个资源版本的变更时间在5分钟以前。 <figure class="highlight plain hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"># curl -s &quot;http://127.0.0.1:8001/api/v1/namespaces/default/pods?resourceVersion=1083300&amp;resourceVersionMatch=Exact&quot; 2&gt;&amp;1 | head</span><br><span class="line">&#123;</span><br><span class="line">  &quot;kind&quot;: &quot;Status&quot;,</span><br><span class="line">  &quot;apiVersion&quot;: &quot;v1&quot;,</span><br><span class="line">  &quot;metadata&quot;: &#123;&#125;,</span><br><span class="line">  &quot;status&quot;: &quot;Failure&quot;,</span><br><span class="line">  &quot;message&quot;: &quot;The resourceVersion for the provided list is too old.&quot;,</span><br><span class="line">  &quot;reason&quot;: &quot;Expired&quot;,</span><br><span class="line">  &quot;code&quot;: 410</span><br></pre></td></tr></table></figure> 用watch获取某个资源版本之后的变更记录，这里先看看数据结构， <figure class="highlight plain hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"># curl -s &quot;http://127.0.0.1:8001/api/v1/namespaces/default/pods?watch=1&amp;resourceVersion=1075698&quot; 2&gt;&amp;1 | jq | head -n 15</span><br><span class="line">&#123;</span><br><span class="line">  &quot;type&quot;: &quot;MODIFIED&quot;,</span><br><span class="line">  &quot;object&quot;: &#123;</span><br><span class="line">    &quot;kind&quot;: &quot;Pod&quot;,</span><br><span class="line">    &quot;apiVersion&quot;: &quot;v1&quot;,</span><br><span class="line">    &quot;metadata&quot;: &#123;</span><br><span class="line">      &quot;name&quot;: &quot;centos&quot;,</span><br><span class="line">      &quot;namespace&quot;: &quot;default&quot;,</span><br><span class="line">      &quot;selfLink&quot;: &quot;/api/v1/namespaces/default/pods/centos&quot;,</span><br><span class="line">      &quot;uid&quot;: &quot;2c357511-a557-4246-b77c-4ffc5d8efcb4&quot;,</span><br><span class="line">      &quot;resourceVersion&quot;: &quot;1075702&quot;,</span><br><span class="line">      &quot;creationTimestamp&quot;: &quot;2021-08-14T09:36:26Z&quot;,</span><br></pre></td></tr></table></figure> 这里只打印他们的resourceVersion， <figure class="highlight plain hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"># curl -s &quot;http://127.0.0.1:8001/api/v1/namespaces/default/pods?watch=1&amp;resourceVersion=1075698&quot; 2&gt;&amp;1 | jq .object.metadata.resourceVersion</span><br><span class="line">&quot;1075702&quot;</span><br><span class="line">&quot;1075740&quot;</span><br><span class="line">&quot;1075774&quot;</span><br><span class="line">&quot;1083264&quot;</span><br><span class="line">&quot;1083273&quot;</span><br></pre></td></tr></table></figure></p>
+<h3 id="informer">Informer</h3>
+<p>Informer的意思是通知器，内部会以list和watch形式请求API Server，来监控对应资源，当资源有更新时就会调用对应处理函数。一个Informer只处理一种资源类型。 <figure class="highlight go hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">podListWatcher := cache.NewListWatchFromClient(clientset.CoreV1().RESTClient(), <span class="hljs-string">"pods"</span>, v1.NamespaceAll, fields.Everything())</span><br><span class="line"></span><br><span class="line">store, controller := cache.NewInformer(podListWatcher, &amp;v1.Pod&#123;&#125;, <span class="hljs-number">0</span>, </span><br><span class="line">        cache.ResourceEventHandlerFuncs&#123;</span><br><span class="line">            AddFunc:    <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(obj <span class="hljs-keyword">interface</span>&#123;&#125;)</span></span> &#123;&#125;,</span><br><span class="line">            UpdateFunc: <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(old <span class="hljs-keyword">interface</span>&#123;&#125;, <span class="hljs-built_in">new</span> <span class="hljs-keyword">interface</span>&#123;&#125;)</span></span> &#123;&#125;,</span><br><span class="line">            DeleteFunc: <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(obj <span class="hljs-keyword">interface</span>&#123;&#125;)</span></span> &#123;&#125;,</span><br><span class="line">        &#125;)</span><br><span class="line"></span><br><span class="line">controller.Run(stopCh)</span><br></pre></td></tr></table></figure> 会返回一个store和controller，store等下再讲。这个controller其实就是informer，我也不知道为什么官方要这么定义名字，命名调用了NewInformer()，结果却返回的是一个controller结构体。</p>
+<p><code>controller.Run()</code>之后就会阻塞协程，一直等到回调处理函数。</p>
+<h3 id="store">Store</h3>
+<p>NewInformer时返回了一个store，顾名思义就是存储了资源信息的存储器， <figure class="highlight go hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">type</span> Store <span class="hljs-keyword">interface</span> &#123;</span><br><span class="line">    Add(obj <span class="hljs-keyword">interface</span>&#123;&#125;) error</span><br><span class="line">    Update(obj <span class="hljs-keyword">interface</span>&#123;&#125;) error</span><br><span class="line">    Delete(obj <span class="hljs-keyword">interface</span>&#123;&#125;) error</span><br><span class="line">    List() []<span class="hljs-keyword">interface</span>&#123;&#125;</span><br><span class="line">    ListKeys() []<span class="hljs-keyword">string</span></span><br><span class="line">    Get(obj <span class="hljs-keyword">interface</span>&#123;&#125;) (item <span class="hljs-keyword">interface</span>&#123;&#125;, exists <span class="hljs-keyword">bool</span>, err error)</span><br><span class="line">    GetByKey(key <span class="hljs-keyword">string</span>) (item <span class="hljs-keyword">interface</span>&#123;&#125;, exists <span class="hljs-keyword">bool</span>, err error)</span><br><span class="line">    Replace([]<span class="hljs-keyword">interface</span>&#123;&#125;, <span class="hljs-keyword">string</span>) error</span><br><span class="line">    Resync() error</span><br></pre></td></tr></table></figure> 内部Reflector执行list和watch更新的数据都会放到存储器里面。Store在Reflector的实现是一个DeltaFIFO，队列数据会被定时消费并传入处理函数中。Store在Informer里面的实现是一个threadSafeMap，每当有更新，对象从Reflector传入到Informer，Informer会将其更新至threadSafeMap中 <a href="https://github.com/kubernetes/client-go/blob/release-14.0/tools/cache/controller.go#L356" target="_blank" rel="noopener">[src]</a>。</p>
+<h3 id="deltafifo">DeltaFIFO</h3>
+<p>这个结构体由两部分组成，一个是Delta，所有更新的对象都会包装到这个结构里面，并被DeltaFIFO用一个Map存储 <a href="https://github.com/kubernetes/client-go/blob/release-14.0/tools/cache/delta_fifo.go#L104" target="_blank" rel="noopener">[src]</a>， <figure class="highlight go hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">type</span> Delta <span class="hljs-keyword">struct</span> &#123;</span><br><span class="line">    Type   DeltaType    <span class="hljs-comment">// Delta类型，增、删、减、同步</span></span><br><span class="line">    Object <span class="hljs-keyword">interface</span>&#123;&#125;  <span class="hljs-comment">// 对象</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="hljs-keyword">type</span> DeltaType <span class="hljs-keyword">string</span>              <span class="hljs-comment">// Delta的类型用字符串表达</span></span><br><span class="line"><span class="hljs-keyword">const</span> ( </span><br><span class="line">    Added   DeltaType = <span class="hljs-string">"Added"</span>    <span class="hljs-comment">// 增加</span></span><br><span class="line">    Updated DeltaType = <span class="hljs-string">"Updated"</span>  <span class="hljs-comment">// 更新</span></span><br><span class="line">    Deleted DeltaType = <span class="hljs-string">"Deleted"</span>  <span class="hljs-comment">// 删除</span></span><br><span class="line">    Sync DeltaType = <span class="hljs-string">"Sync"</span>        <span class="hljs-comment">// 同步</span></span><br><span class="line">)</span><br></pre></td></tr></table></figure> 另一个是Queue， <figure class="highlight go hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="hljs-keyword">type</span> Queue <span class="hljs-keyword">interface</span> &#123;</span><br><span class="line">    Store</span><br><span class="line">    Pop(PopProcessFunc) (<span class="hljs-keyword">interface</span>&#123;&#125;, error)</span><br><span class="line">    AddIfNotPresent(<span class="hljs-keyword">interface</span>&#123;&#125;) error</span><br><span class="line">    HasSynced() <span class="hljs-keyword">bool</span></span><br><span class="line">    Close()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure> DeltaFIFO的结构提如下，这里我只标出三个成员变量，</p>
+<ul>
+<li>items的值Deltas本质上是一个Delta数组，为什么是数组后面再解释；items的key则是对象的一个字符串表示，是通过另一个成员keyFunc算出来的，具体视传进来的函数是什么。</li>
+<li>queue是用一个字符串数组模拟队列，装的是对象的key。</li>
+</ul>
+<p><figure class="highlight go hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">type</span> DeltaFIFO <span class="hljs-keyword">struct</span> &#123;</span><br><span class="line">    <span class="hljs-comment">// ...</span></span><br><span class="line">    items <span class="hljs-keyword">map</span>[<span class="hljs-keyword">string</span>]Deltas</span><br><span class="line">    keyFunc KeyFunc</span><br><span class="line">    queue []<span class="hljs-keyword">string</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="hljs-keyword">type</span> Deltas []Delta</span><br></pre></td></tr></table></figure></p>
+<h4 id="threadsafemap">threadSafeMap</h4>
+<p>Informer的threadSafeMap会被DeltaFIFO所持有，成员变量是knownObjects，每次Resync时都会顺便遍历threadSafeMap，把它和最新的list作比较，已经不存在的对象会调用<code>queueActionLocked()</code>触发一次<code>Deleted</code>事件，以便于将其从threadSafeMap删除 <a href="https://github.com/kubernetes/client-go/blob/release-14.0/tools/cache/delta_fifo.go#L483" target="_blank" rel="noopener">[src]</a>。其中，删除时并不是马上删除，而是在原本的对象上套一个<code>DeletedFinalStateUnknown</code>结构体 <a href="https://github.com/kubernetes/client-go/blob/release-14.0/tools/cache/delta_fifo.go#L497" target="_blank" rel="noopener">[src]</a>。</p>
+<h4 id="pop">Pop</h4>
+<p>DeltaFIFO的关键方法<code>Pop()</code>会被controller调用 <a href="https://github.com/kubernetes/client-go/blob/release-14.0/tools/cache/controller.go#L153" target="_blank" rel="noopener">[src]</a>，Pop函数会调用一个信号量一直阻塞 <a href="https://github.com/kubernetes/client-go/blob/release-14.0/tools/cache/delta_fifo.go#L409" target="_blank" rel="noopener">[src]</a>，直到队里中有元素，所有尝试往队列添加元素的操作后面都会用该信号量发起广播，来唤醒阻塞。Pop内部会调用传进来的process方法进行回调处理对象 <a href="https://github.com/kubernetes/client-go/blob/release-14.0/tools/cache/delta_fifo.go#L422" target="_blank" rel="noopener">[src]</a>，这个process方法的主体在<a href="https://github.com/kubernetes/client-go/blob/release-14.0/tools/cache/controller.go#L356" target="_blank" rel="noopener">这里</a>可以看到，当尝试往threadSafeMap更新值失败时就会返回err，DeltaFIFO发现是ErrRequeue则会重新加入队列。</p>
+<h4 id="hassynced">HasSynced</h4>
+<p>HasSynced()方法会检查第一次list资源后是否全部Pop出来 <a href="https://github.com/kubernetes/client-go/blob/release-14.0/tools/cache/delta_fifo.go#L165" target="_blank" rel="noopener">[src]</a>，Controller的HasSynced()其实就是调用了这个HasSynced() <a href="https://github.com/kubernetes/client-go/blob/release-14.0/tools/cache/controller.go#L129" target="_blank" rel="noopener">[src]</a>。</p>
+<p>官方的 client-go/examples/workqueue 例子里面，会一直等待这个函数返回true，才开始runWorker <a href="https://github.com/kubernetes/client-go/blob/release-14.0/examples/workqueue/main.go#L126" target="_blank" rel="noopener">[src]</a>，再说具体一点就是，第一次list资源后，等到所有资源都从DeltaFIFO中pop出来，并且全部回调处理函数，例子中的处理函数就是把对象都放进workqueue里面，然后才开始从workqueue里面消费数据。</p>
+<h4 id="resync">Resync</h4>
+<p>Resync()做的事情就是把threadSafeMap里面的所有对象都触发一次Sync事件 <a href="https://github.com/kubernetes/client-go/blob/release-14.0/tools/cache/delta_fifo.go#L511" target="_blank" rel="noopener">[src]</a>，很多Controller会定时调用以便于把资源同步到期望状态。理论上，如果你的资源的更新逻辑处理得足够好，其实是不用Resync的，Resync更像是一种弥补逻辑处理漏掉的万金油。还是要强调一下Resync不会访问apiserver，下面提到的ReList才会。</p>
+<h4 id="deltas">Deltas</h4>
+<p>Deltas作为一个数组其实是为了处理多时间内同一个对象被多次操作的情况。比如新增对象时产生一个Added Delta，然后短时间内又删除该对象，又产生了一个Deleted Delta；通过对象的key，如果发现队列中已经有这个对象，那么会把Delta插入它的Deltas数组里 <a href="https://github.com/kubernetes/client-go/blob/release-14.0/tools/cache/delta_fifo.go#L306" target="_blank" rel="noopener">[src]</a>。</p>
+<p>一个新Delta插入Deltas数组后会有一个合并操作，当数组最后两个元素都是Deleted Delta，意味着一个对象被连续执行两次删除操作，这是多余的，所以会去掉后面那个Delta。而为什么Add Delta不需要处理合并，是因为资源的namespace/name的唯一性由apiserver保证，如果namespace/name冲突，apiserver层面就会返回错误，轮不到client-go去处理。这里额外提一句，成员变量keyFunc大部分情况下都会传入<code>cache.MetaNamespaceKeyFunc()</code>函数，它算出来的key的格式就是<code>{namespace}/{name}</code>。</p>
+<h3 id="indexer">Indexer</h3>
+<p>Indexer就是索引器，是为Store建立索引的。 <figure class="highlight go hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">type</span> Indexer <span class="hljs-keyword">interface</span> &#123;</span><br><span class="line">    Store</span><br><span class="line">    Index(indexName <span class="hljs-keyword">string</span>, obj <span class="hljs-keyword">interface</span>&#123;&#125;) ([]<span class="hljs-keyword">interface</span>&#123;&#125;, error)</span><br><span class="line">    IndexKeys(indexName, indexKey <span class="hljs-keyword">string</span>) ([]<span class="hljs-keyword">string</span>, error)</span><br><span class="line">    ListIndexFuncValues(indexName <span class="hljs-keyword">string</span>) []<span class="hljs-keyword">string</span></span><br><span class="line">    ByIndex(indexName, indexKey <span class="hljs-keyword">string</span>) ([]<span class="hljs-keyword">interface</span>&#123;&#125;, error)</span><br><span class="line">    GetIndexers() Indexers</span><br><span class="line">    AddIndexers(newIndexers Indexers) error</span><br></pre></td></tr></table></figure> 你会发现它继承了Store然后提供了一堆通过索引查询的函数。举个例子，下面这么写，可以把namespace=default的所有资源对象查出来。不过因为Informer只处理一种资源，所以本质上这里返回的是这种资源在default namespace下的所有实例， <figure class="highlight go hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">items, err := indexer.Index(<span class="hljs-string">"namespace"</span>, &amp;metav1.ObjectMeta&#123;Namespace: <span class="hljs-string">"default"</span>&#125;)</span><br></pre></td></tr></table></figure> threadSafeMap实现了Indexer的接口。你不需要手动创建它，可以用<code>NewIndexerInformer()</code>顺便创建出来。</p>
+<p>threadSafeMap实现了一套比较复杂的索引分类，它支持外部用户通过<code>AddIndexers()</code>接口传入计算索引key的函数，然后每次更新数据都会更新其索引，简单的说就是一个用若干Map实现的小型索引数据库。但目前K8s的所有使用场景下，只有两种索引Key计算函数，一个是<code>cache.MetaNamespaceKeyFunc()</code> <a href="https://github.com/kubernetes/client-go/blob/release-14.0/tools/cache/store.go#L76" target="_blank" rel="noopener">[src]</a>，以namespace建立索引，使得我们可以通过namespace获取其所有资源；另一种是<code>indexByPodNodeName()</code>，只在deamon controller里面使用，以nodeName建立索引 <a href="https://github.com/kubernetes/kubernetes/blob/v1.22.0/pkg/controller/daemon/daemon_controller.go#L212" target="_blank" rel="noopener">[src]</a>。</p>
+<h3 id="indexerinformer">IndexerInformer</h3>
+<p>IndexerInformer与Informer不同的是，它需要在最后传入一个indexers，这个可以用默认的那个<code>cache.Indexers{}</code>，其实它本质上就是一个Map，只是建了一个别名而已。IndexerInformer返回的是indexer而非store，但其实从源码看来，构造的时候都会构造一个threadSafeMap，只是返回了不同的抽象类型而已 <a href="https://github.com/kubernetes/client-go/blob/release-14.0/tools/cache/store.go#L231" target="_blank" rel="noopener">[src]</a>。 <figure class="highlight go hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">indexer, controller := cache.NewIndexerInformer(podListWatcher, &amp;v1.Pod&#123;&#125;, <span class="hljs-number">0</span>,</span><br><span class="line">        cache.ResourceEventHandlerFuncs&#123;</span><br><span class="line">            AddFunc:    <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(obj <span class="hljs-keyword">interface</span>&#123;&#125;)</span></span> &#123;&#125;,</span><br><span class="line">            UpdateFunc: <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(old <span class="hljs-keyword">interface</span>&#123;&#125;, <span class="hljs-built_in">new</span> <span class="hljs-keyword">interface</span>&#123;&#125;)</span></span> &#123;&#125;,</span><br><span class="line">            DeleteFunc: <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(obj <span class="hljs-keyword">interface</span>&#123;&#125;)</span></span> &#123;&#125;,</span><br><span class="line">        &#125;, cache.Indexers&#123;&#125;)</span><br><span class="line"></span><br><span class="line">controller.Run(stopCh)</span><br></pre></td></tr></table></figure></p>
+<h3 id="reflector">Reflector</h3>
+<p>Reflector的工作就是通过Lister和Watcher得到的数据放进DeltaFIFO里。Reflector的数据类型如下，只保留几个关键的， <figure class="highlight go hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">type</span> Reflector <span class="hljs-keyword">struct</span> &#123;</span><br><span class="line">    expectedType reflect.Type</span><br><span class="line">    store Store</span><br><span class="line">    listerWatcher ListerWatcher</span><br><span class="line">    resyncPeriod time.Duration</span><br><span class="line">    <span class="hljs-comment">// ...</span></span><br></pre></td></tr></table></figure> - expectedType 就是希望反射出来的类型，具体一点就是K8s里面的资源类型，比如<code>v1.Pod{}</code>等。 - store 这里将传入DeltaFIFO - listerWatcher Lister和Watcher的结合体，负责从apiserver拉取列表和监听资源变化，这个结构具体后面再讲。 - resyncPeriod 全量同步的时间间隔</p>
+<h4 id="listandwatch">ListAndWatch</h4>
+<p>Reflector中的一个函数ListAndWatch()会负责三件事情，一件是list资源（从apiserver获取资源列表，并全量同步），第二件是开一个协程去定时resync（全量同步），第三件是watch监听资源。</p>
+<p>第一次list资源会设置资源版本号为空 <a href="https://github.com/kubernetes/client-go/blob/release-1.20/tools/cache/reflector.go#L258" target="_blank" rel="noopener">[src]</a>，旧版会设为0 <a href="https://github.com/kubernetes/client-go/blob/release-14.0/tools/cache/reflector.go#L191" target="_blank" rel="noopener">[src]</a>，拉完后就更新资源版本 <a href="https://github.com/kubernetes/client-go/blob/release-14.0/tools/cache/reflector.go#L233" target="_blank" rel="noopener">[src]</a>，后面watch的时候只要关心比这个资源版本大的资源。list的时候会把ListWatch对象包裹在pager对象里 <a href="https://github.com/kubernetes/client-go/blob/release-14.0/tools/cache/reflector.go#L215" target="_blank" rel="noopener">[src]</a>，这个对象的作用是控制分页查询，比如资源对象太多时，为了防止过大的网络IO，pager可以通过控制url的limit和continue参数来指定一次请求获取的资源数量 <a href="https://github.com/kubernetes/client-go/blob/release-14.0/tools/pager/pager.go#L78" target="_blank" rel="noopener">[src]</a>。</p>
+<p>Resync的时候实际上会调用DeltaFIFO的Resync函数 <a href="https://github.com/kubernetes/client-go/blob/release-14.0/tools/cache/reflector.go#L275" target="_blank" rel="noopener">[src]</a>，这个上面说过了。</p>
+<p>watch的时候会开启一个死循环 <a href="https://github.com/kubernetes/client-go/blob/release-14.0/tools/cache/reflector.go#L279" target="_blank" rel="noopener">[src]</a>，ListerWatcher会返回要一个watch对象及其内部的一条channel，没有数据时则一直阻塞监听channel，只要有新资源变化就会停止阻塞 <a href="https://github.com/kubernetes/client-go/blob/release-14.0/tools/cache/reflector.go#L360" target="_blank" rel="noopener">[src]</a>，然后就根据事件类型往DeltaFIFO里面更新数据 <a href="https://github.com/kubernetes/client-go/blob/release-14.0/tools/cache/reflector.go#L385" target="_blank" rel="noopener">[src]</a>，最后会更新最新资源版本。</p>
+<p>每次向apiserver发起watch请求，如果大概8分钟内都没有任何事件，则apiserver会主动断开连接，断开连接则会关闭watch对象的channel <a href="https://github.com/kubernetes/apimachinery/blob/master/pkg/watch/streamwatcher.go#L108" target="_blank" rel="noopener">[src]</a>，Reflector监听channel结束，然后会再次构建watch对象并发起watch请求。</p>
+<p>ListAndWatch()会被Run()调用。Run()里面把ListAndWatch()包裹在了一个重试函数wait.Until()里面，ListAndWatch()正常情况下是死循环，一旦ListAndWatch()发送错误就会返回，wait.Until()在指定时间后又会重新执行ListAndWatch() <a href="https://github.com/kubernetes/client-go/blob/release-14.0/tools/cache/reflector.go#L151" target="_blank" rel="noopener">[src]</a>。这一步也叫所谓的ReList。再一次list资源时会尝试传入一个上次list到或最新watch到的资源版本，但并不保证可以成功list，比如watch到的Pod的资源版本和PodList的资源版本没有任何关联，Pod的更新不代表PodList的更新，这里只是尝试一下而已，如果list失败了就把url参数resourceVersion置为空 <a href="https://github.com/kubernetes/client-go/blob/release-1.20/tools/cache/reflector.go#L304" target="_blank" rel="noopener">[src]</a>，这样就能拉最新的列表。</p>
+<h4 id="类型检查">类型检查</h4>
+<p>Reflector是反射器的意思，Reflector确实做了反射，它把ListerWatcher得到的对象反射出具体对象，然后与成员期望对象expectedType进行比较 <a href="https://github.com/kubernetes/client-go/blob/release-14.0/tools/cache/reflector.go#L368" target="_blank" rel="noopener">[src]</a>，若类型不符则不放入DeltaFIFO里。</p>
+<h3 id="listerwatcher">ListerWatcher</h3>
+<p>ListerWatcher分别继承了Lister和Watcher的接口，而ListWatch结构体则实现了ListerWatcher接口， <figure class="highlight go hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">type</span> Lister <span class="hljs-keyword">interface</span> &#123;</span><br><span class="line">    List(options metav1.ListOptions) (runtime.Object, error)</span><br><span class="line">&#125;</span><br><span class="line"><span class="hljs-keyword">type</span> Watcher <span class="hljs-keyword">interface</span> &#123;</span><br><span class="line">    Watch(options metav1.ListOptions) (watch.Interface, error)</span><br><span class="line">&#125;</span><br><span class="line"><span class="hljs-keyword">type</span> ListerWatcher <span class="hljs-keyword">interface</span> &#123;</span><br><span class="line">    Lister</span><br><span class="line">    Watcher</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="hljs-comment">// 结构体</span></span><br><span class="line"><span class="hljs-keyword">type</span> ListWatch <span class="hljs-keyword">struct</span> &#123;</span><br><span class="line">    ListFunc  ListFunc</span><br><span class="line">    WatchFunc WatchFunc</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="hljs-comment">// 仅调用成员函数变量</span></span><br><span class="line"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(lw *ListWatch)</span> <span class="hljs-title">List</span><span class="hljs-params">(options metav1.ListOptions)</span> <span class="hljs-params">(runtime.Object, error)</span></span> &#123;</span><br><span class="line">    <span class="hljs-keyword">return</span> lw.ListFunc(options)</span><br><span class="line">&#125;</span><br><span class="line"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(lw *ListWatch)</span> <span class="hljs-title">Watch</span><span class="hljs-params">(options metav1.ListOptions)</span> <span class="hljs-params">(watch.Interface, error)</span></span> &#123;</span><br><span class="line">    <span class="hljs-keyword">return</span> lw.WatchFunc(options)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>ListWatch可以通过<code>cache.NewListWatchFromClient()</code>构建 <a href="https://github.com/kubernetes/client-go/blob/release-14.0/tools/cache/listwatch.go#L71" target="_blank" rel="noopener">[src]</a>， <figure class="highlight go hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">podListWatcher := cache.NewListWatchFromClient(clientset.CoreV1().RESTClient(), <span class="hljs-string">"pods"</span>, v1.NamespaceDefault, fields.Everything())</span><br></pre></td></tr></table></figure> 但核心是通过<code>cache.NewFilteredListWatchFromClient()</code>构建的 <a href="https://github.com/kubernetes/client-go/blob/release-14.0/tools/cache/listwatch.go#L81" target="_blank" rel="noopener">[src]</a>，所谓的ListFunc和WatchFunc，内部其实是发起http请求，请求是由RestClient发起的。</p>
+<p>注意的是<code>cache.NewListWatchFromClient()</code>这个接口只是cache包里面提供的接口，但到了后面讲到SharedIndexInformerFactory的时候，内部资源接口都被封装好了，其内部不会用这个。</p>
+<h3 id="restclient和restclient.request">RestClient和restclient.Request</h3>
+<p>RestClient继承了http.Client，下面是其结构体，保留部分重要参数， <figure class="highlight go hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">type</span> RESTClient <span class="hljs-keyword">struct</span> &#123;</span><br><span class="line">    base *url.URL</span><br><span class="line">    versionedAPIPath <span class="hljs-keyword">string</span></span><br><span class="line"></span><br><span class="line">    createBackoffMgr <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span> <span class="hljs-title">BackoffManager</span></span></span><br><span class="line"> </span><br><span class="line">    rateLimiter flowcontrol.RateLimiter</span><br><span class="line"></span><br><span class="line">    Client *http.Client</span><br><span class="line">    <span class="hljs-comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<ul>
+<li>base：APIServer的地址，比如https://192.168.1.2:6443</li>
+<li>versionedAPIPath：资源访问路径，比如/apis/apps/v1</li>
+<li>createBackoffMgr：退避管理器的构造函数，这部分在workqueuq那里再详细讲</li>
+<li>rateLimiter：限速器，这部分在workqueuq那里再详细讲</li>
+<li>Client：标准库http客户端</li>
+</ul>
+<p>RESTClient其实特别简单，最终还是会传入<code>restclient.Request</code>结构体体里面，</p>
+<p><figure class="highlight go hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">type</span> Request <span class="hljs-keyword">struct</span> &#123;</span><br><span class="line">    c *RESTClient</span><br><span class="line">    pathPrefix <span class="hljs-keyword">string</span></span><br><span class="line">    <span class="hljs-comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure> pathPrefix是base与versionedAPIPath的结合，比如https://192.168.1.2:6443/apis/apps/v1 <a href="https://github.com/kubernetes/client-go/blob/release-14.0/rest/request.go#L124" target="_blank" rel="noopener">[src]</a>。</p>
+<p>Request通过函数式编程来构造最终的请求url，参考NewFilteredListWatchFromClient里面的实现： <figure class="highlight go hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">c.Get().Namespace(namespace).Resource(resource).VersionedParams(&amp;options, metav1.ParameterCodec).Do(context.TODO()).Get()</span><br><span class="line"></span><br><span class="line">c.Get().Namespace(namespace).Resource(resource).VersionedParams(&amp;options, metav1.ParameterCodec).Watch(context.TODO())</span><br></pre></td></tr></table></figure> <code>RESTClient.Get()</code>之后就返回一个<code>restclient.Request</code>。对于Get请求，在<code>Do()</code>内部会发起http请求，然后返回一个Result的结构体，<a href="https://github.com/kubernetes/client-go/blob/release-14.0/rest/request.go#L879" target="_blank" rel="noopener">[src]</a>，后面的Get()方法不是发起请求而是把得到的对象返回。</p>
+<p>对于Watch，在<code>Watch()</code>里面，还是发起http请求，只不过它是一个长连接，可以持续从http.Response读取数据 <a href="https://github.com/kubernetes/client-go/blob/release-14.0/rest/request.go#L594" target="_blank" rel="noopener">[src]</a>，这时会构造一个StreamWatcher对象 <a href="https://github.com/kubernetes/client-go/blob/release-14.0/rest/request.go#L632" target="_blank" rel="noopener">[src]</a>，它通过<code>NewStreamWatcher()</code>方法构造，方法内部会开启一个协程无限循环并阻塞读取数据 <a href="https://github.com/kubernetes/apimachinery/blob/master/pkg/watch/streamwatcher.go#L76" target="_blank" rel="noopener">[src]</a>，然后把读取的数据放入channel，提供给外部读取。</p>
+<p>额外提一句，StreamWatcher的定义不在client-go里，而是在apimachinery这个仓库里，有兴趣的话可以了解一下这个仓库。</p>
+<h3 id="controller">Controller</h3>
+<p>Controller的结构如下： <figure class="highlight go hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">type</span> controller <span class="hljs-keyword">struct</span> &#123;</span><br><span class="line">    config         Config</span><br><span class="line">    reflector      *Reflector</span><br><span class="line">    <span class="hljs-comment">// ..</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="hljs-keyword">type</span> Config <span class="hljs-keyword">struct</span> &#123;</span><br><span class="line">    Queue</span><br><span class="line">    ListerWatcher</span><br><span class="line">    Process ProcessFunc</span><br><span class="line">    ObjectType runtime.Object</span><br><span class="line">    FullResyncPeriod time.Duration</span><br><span class="line">    <span class="hljs-comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure> 你会发现它持有了DeltaFIFO (Queue), ListerWatcher, Reflector，可以说是把功能都整合进来了。它的功能特别简单，就是在Run函数里不断地调用DeltaFIFO的Pop并把对象传进<code>Process</code>函数里面。这一点在DeltaFIFO章节有提过，就不多说了。</p>
+<p>上面提到的Informer和IndexInformer本质上就是一个Controller <a href="https://github.com/kubernetes/client-go/blob/release-14.0/tools/cache/controller.go#L282" target="_blank" rel="noopener">[src]</a>。</p>
+<h3 id="sharedindexinformer">SharedIndexInformer</h3>
+<p>SharedIndexInformer在IndexInformer基础上又加了一个Shared，我的理解是他把Controller和indexer整合在一起，并且可以传入多个handler，所以就叫SharedIndexInformer。</p>
+<p>使用如下，只返回一个SharedIndexInformer。 <figure class="highlight go hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">s := cache.NewSharedIndexInformer(podListWatcher, &amp;v1.Pod&#123;&#125;, <span class="hljs-number">0</span>, cache.Indexers&#123;&#125;)</span><br><span class="line"></span><br><span class="line">s.AddEventHandler(cache.ResourceEventHandlerFuncs&#123;</span><br><span class="line">    AddFunc: <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(obj <span class="hljs-keyword">interface</span>&#123;&#125;)</span></span> &#123;&#125;,</span><br><span class="line">    UpdateFunc: <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(old <span class="hljs-keyword">interface</span>&#123;&#125;, <span class="hljs-built_in">new</span> <span class="hljs-keyword">interface</span>&#123;&#125;)</span></span> &#123;&#125;,</span><br><span class="line">    DeleteFunc: <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(obj <span class="hljs-keyword">interface</span>&#123;&#125;)</span></span> &#123;&#125;,</span><br><span class="line">&#125;)</span><br><span class="line"></span><br><span class="line">s.Run(stopCh)</span><br></pre></td></tr></table></figure></p>
+<p>结构如下： <figure class="highlight go hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">type</span> sharedIndexInformer <span class="hljs-keyword">struct</span> &#123;</span><br><span class="line">    indexer    Indexer</span><br><span class="line">    controller Controller</span><br><span class="line">    processor  *sharedProcessor</span><br><span class="line">    <span class="hljs-comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure> 主要接口有以下，我保留了一些重点的函数， <figure class="highlight go hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">type</span> SharedInformer <span class="hljs-keyword">interface</span> &#123;</span><br><span class="line">    AddEventHandler(handler ResourceEventHandler)</span><br><span class="line">    GetStore() Store</span><br><span class="line">    GetController() Controller</span><br><span class="line">    Run(stopCh &lt;-<span class="hljs-keyword">chan</span> <span class="hljs-keyword">struct</span>&#123;&#125;)</span><br><span class="line">    HasSynced() <span class="hljs-keyword">bool</span></span><br><span class="line">    <span class="hljs-comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure> 其中<code>AddEventHandler()</code>说明可以添加多个handler，每个handler会被一个ProcessListener结构包裹 <a href="https://github.com/kubernetes/client-go/blob/release-14.0/tools/cache/shared_informer.go#L427" target="_blank" rel="noopener">[src]</a>，所有ProcessListener最终会放入成员变量processor里 <a href="https://github.com/kubernetes/client-go/blob/release-14.0/tools/cache/shared_informer.go#L430" target="_blank" rel="noopener">[src]</a>。如果SharedInformer已经Run()起来后，再给它新增handler，则会把indexer的所有对象都给该handler处理一次 <a href="https://github.com/kubernetes/client-go/blob/release-14.0/tools/cache/shared_informer.go#L443" target="_blank" rel="noopener">[src]</a>。</p>
+<p>在Run()函数的工作就是构造controller并调用其Run()而已，controller的关键函数Process传进的是HandleDeltas() <a href="https://github.com/kubernetes/client-go/blob/release-14.0/tools/cache/shared_informer.go#L306" target="_blank" rel="noopener">[src]</a>。该函数会调用processor的distribute()函数，把对象分发给所有ProcessListener，并调用相关处理函数 <a href="https://github.com/kubernetes/client-go/blob/release-14.0/tools/cache/shared_informer.go#L448" target="_blank" rel="noopener">[src]</a>。</p>
+<p>ProcessListener里面有个比较有意思的缓冲实现，当外部加入对象是会放进addCh，当外部处理时会从nextCh取，那么理论上只要弄一个channel就好了呀？但问题在于nextCh和用户自定义的handler是同一协程下执行的，用户可能写了效率很差的代码，导致从nextCh读取速度比写入速度慢，进而导致nextCh空间占满，最终导致阻塞。 <figure class="highlight go hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">type</span> processorListener <span class="hljs-keyword">struct</span> &#123;</span><br><span class="line">    nextCh <span class="hljs-keyword">chan</span> <span class="hljs-keyword">interface</span>&#123;&#125;</span><br><span class="line">    addCh  <span class="hljs-keyword">chan</span> <span class="hljs-keyword">interface</span>&#123;&#125;</span><br><span class="line">    pendingNotifications buffer.RingGrowing</span><br><span class="line">    <span class="hljs-comment">// ...</span></span><br></pre></td></tr></table></figure></p>
+<p>ProcessListener使用了一个pendingNotifications无限缓冲区，先把addCh得到的对象写入pendingNotifications，再把对象从pendingNotifications取出存入nextCh，源码里把这部分转换写得非常精妙，可以参考一下 <a href="https://github.com/kubernetes/client-go/blob/release-14.0/tools/cache/shared_informer.go#L614" target="_blank" rel="noopener">[src]</a>。</p>
+<h3 id="sharedinformerfactory">SharedInformerFactory</h3>
+<p>SharedInformerFactory可以说是k8s资源访问的完全集合体，它能访问所有官方的API资源。可以先看看SharedInformerFactory的接口 <a href="https://github.com/kubernetes/client-go/blob/release-14.0/informers/factory.go#L188" target="_blank" rel="noopener">[src]</a>： <figure class="highlight go hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">type</span> SharedInformerFactory <span class="hljs-keyword">interface</span> &#123;</span><br><span class="line">    internalinterfaces.SharedInformerFactory</span><br><span class="line">    ForResource(resource schema.GroupVersionResource) (GenericInformer, error)</span><br><span class="line">    WaitForCacheSync(stopCh &lt;-<span class="hljs-keyword">chan</span> <span class="hljs-keyword">struct</span>&#123;&#125;) <span class="hljs-keyword">map</span>[reflect.Type]<span class="hljs-keyword">bool</span></span><br><span class="line"></span><br><span class="line">    Admissionregistration() admissionregistration.Interface</span><br><span class="line">    Internal() apiserverinternal.Interface</span><br><span class="line">    Apps() apps.Interface</span><br><span class="line">    Autoscaling() autoscaling.Interface</span><br><span class="line">    Batch() batch.Interface</span><br><span class="line">    Certificates() certificates.Interface</span><br><span class="line">    Coordination() coordination.Interface</span><br><span class="line">    Core() core.Interface</span><br><span class="line">    Discovery() discovery.Interface</span><br><span class="line">    Events() events.Interface</span><br><span class="line">    Extensions() extensions.Interface</span><br><span class="line">    Flowcontrol() flowcontrol.Interface</span><br><span class="line">    Networking() networking.Interface</span><br><span class="line">    Node() node.Interface</span><br><span class="line">    Policy() policy.Interface</span><br><span class="line">    Rbac() rbac.Interface</span><br><span class="line">    Scheduling() scheduling.Interface</span><br><span class="line">    Storage() storage.Interface</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure> Apps, Core, Batch之类的方法能明显知道它可以访问对应的API Group的资源。</p>
+<p>还有一个同名接口 <a href="https://github.com/kubernetes/client-go/blob/release-14.0/informers/internalinterfaces/factory_interfaces.go#L34" target="_blank" rel="noopener">[src]</a>： <figure class="highlight go hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-comment">// client-go/informers/internalinterfaces/factory_interfaces.go</span></span><br><span class="line"><span class="hljs-keyword">type</span> SharedInformerFactory <span class="hljs-keyword">interface</span> &#123;</span><br><span class="line">    Start(stopCh &lt;-<span class="hljs-keyword">chan</span> <span class="hljs-keyword">struct</span>&#123;&#125;)</span><br><span class="line">    InformerFor(obj runtime.Object, newFunc NewInformerFunc) cache.SharedIndexInformer</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<ul>
+<li>Start() 很明显就是用来启动的</li>
+<li>InformerFor() 可以看出是用来构造SharedIndexInformer的</li>
+</ul>
+<p>看一下结构体，这里只保留重要的参数： <figure class="highlight go hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">type</span> sharedInformerFactory <span class="hljs-keyword">struct</span> &#123;</span><br><span class="line">    client           kubernetes.Interface</span><br><span class="line">    </span><br><span class="line">    defaultResync    time.Duration</span><br><span class="line">    informers <span class="hljs-keyword">map</span>[reflect.Type]cache.SharedIndexInformer</span><br><span class="line">    startedInformers <span class="hljs-keyword">map</span>[reflect.Type]<span class="hljs-keyword">bool</span></span><br><span class="line">    <span class="hljs-comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<ul>
+<li>client: kubeernetes的clientset，它是一个包装了各种RestClient的结合 <a href="https://github.com/kubernetes/client-go/blob/release-14.0/kubernetes/clientset.go#L115" target="_blank" rel="noopener">[src]</a>，client-go里面把所有官方API Group及其资源类型都做了RestClient包装，省去了自己从头构造RestClient。</li>
+<li>defaultResync: resync的时间间隔</li>
+<li>informers: 资源类型 到 其Informer的映射</li>
+<li>startedInformers: 记录informer是否已经启动的Map</li>
+</ul>
+<p>构造函数特别简单，只要传入clientset即可和一个resync的时间间隔， <figure class="highlight go hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">kubeClient, err := kubernetes.NewForConfig(cfg)</span><br><span class="line">kubeInformerFactory := informers.NewSharedInformerFactory(kubeClient, time.Second*<span class="hljs-number">30</span>)</span><br></pre></td></tr></table></figure></p>
+<p>其实构造一个SharedInformerFactory基本没有做什么工作，只有当你尝试获取某种资源的时候，才会开始构造Informer，比如我们需要一个访问deployment的Informer，就这么调用， <figure class="highlight go hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">deploymentInformer := kubeInformerFactory.Apps().V1().Deployments()</span><br><span class="line">informer := deploymentInformer.Informer()</span><br></pre></td></tr></table></figure> 看一下<code>Deployments()</code>干了什么 <a href="https://github.com/kubernetes/client-go/blob/release-14.0/informers/apps/v1/interface.go#L61" target="_blank" rel="noopener">[src]</a>， <figure class="highlight go hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(v *version)</span> <span class="hljs-title">Deployments</span><span class="hljs-params">()</span> <span class="hljs-title">DeploymentInformer</span></span> &#123;</span><br><span class="line">    <span class="hljs-keyword">return</span> &amp;deploymentInformer&#123;factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure> 里面在构造一个DeploymentInformer结构体，看一下它的接口： <figure class="highlight go hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">type</span> DeploymentInformer <span class="hljs-keyword">interface</span> &#123;</span><br><span class="line">    Informer() cache.SharedIndexInformer</span><br><span class="line">    Lister() v1.DeploymentLister</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure> 你只能调用两个方法，Informer()获得一个SharedIndexInformer，Lister()获得一个DeploymentLister，DeploymentLister大概能猜出是一个通过indexer获取数据的接口，不纠结，关键在于Informer()，看一下实现方法 <a href="https://github.com/kubernetes/client-go/blob/release-14.0/informers/apps/v1/deployment.go#L83" target="_blank" rel="noopener">[src]</a>： <figure class="highlight go hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(f *deploymentInformer)</span> <span class="hljs-title">Informer</span><span class="hljs-params">()</span> <span class="hljs-title">cache</span>.<span class="hljs-title">SharedIndexInformer</span></span> &#123;</span><br><span class="line">    <span class="hljs-keyword">return</span> f.factory.InformerFor(&amp;appsv1.Deployment&#123;&#125;, f.defaultInformer)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure> 可以看到，其调用了factory的InformerFor方法，并传入了资源类型和一个构造函数defaultInformer()，defaultInformer()内部就是调用了cache.NewSharedIndexInformer()而已 <a href="https://github.com/kubernetes/client-go/blob/release-14.0/informers/apps/v1/deployment.go#L57" target="_blank" rel="noopener">[src]</a>，这个前面有说过，就不多解释了。关键是factory的InformerFor做了什么。</p>
+<p>InformerFor的实现有点长，我就不贴代码了，主要就是先判断一下成员变量informers里面有没有这个资源对应的Informer存在，如果不存在，就利用传进来的构造函数构造一个并存起来 <a href="https://github.com/kubernetes/client-go/blob/release-14.0/informers/factory.go#L165" target="_blank" rel="noopener">[src]</a>，最后返回构造出来的informer。</p>
+<p>这时候就都串起来了，SharedInformerFactory在你调用到对应资源时，会先检查一下自己的缓存里是否已经创建了该资源对应的informer，如果创建了就直接返回informer；如果没有创建则用预先定义好的构造函数创建一个并存起来，也会返回这个informer。</p>
+<p>这里之所以把整个流程捋一遍，是为了明白SharedInformerFactory是如何做资源访问集合的，了解这一点后你就能明白官方的代码生成工具code-generator生成的东西是干什么用的。看到这里就知道了生成的generated下的三个目录clientset, informers, listers的代码分别在哪里被使用。</p>
+<p>SharedInformerFactory还有一个Start()接口，内部实现就是遍历成员informers列表，然后为每一个informer开一个协程去执行它的Run()方法 <a href="https://github.com/kubernetes/client-go/blob/release-14.0/informers/factory.go#L129" target="_blank" rel="noopener">[src]</a>。</p>
+<h3 id="workqueue-和-ratelimiting">Workqueue 和 RateLimiting</h3>
+<p>如果有看过官方的例子，就会发现用一个Workqueue把从Informer获取到的对象缓存起来是常规做法，然后会开若干线程去消费Workqueue队列。 <figure class="highlight go hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">deploymentInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs&#123;</span><br><span class="line">        AddFunc: <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(obj <span class="hljs-keyword">interface</span>&#123;&#125;)</span></span> &#123;</span><br><span class="line">            key, _ := cache.MetaNamespaceKeyFunc(obj)</span><br><span class="line">            workqueue.Add(key)</span><br><span class="line">        &#125;,</span><br><span class="line">        UpdateFunc: <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(old, <span class="hljs-built_in">new</span> <span class="hljs-keyword">interface</span>&#123;&#125;)</span></span> &#123;</span><br><span class="line">            key, _ := cache.MetaNamespaceKeyFunc(<span class="hljs-built_in">new</span>)</span><br><span class="line">            controller.handleObject(key)</span><br><span class="line">        &#125;,</span><br><span class="line">        DeleteFunc: <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(obj <span class="hljs-keyword">interface</span>&#123;&#125;)</span></span> &#123;</span><br><span class="line">            key, _ := cache.MetaNamespaceKeyFunc(obj)</span><br><span class="line">            workqueue.Add(key)</span><br><span class="line">        &#125;,</span><br><span class="line">    &#125;)</span><br></pre></td></tr></table></figure> 这里就简单讲讲Workqueue加上RateLimiting（限速器）的实现。底层队列的类型实现可以看这里 <a href="https://github.com/kubernetes/client-go/blob/release-14.0/util/workqueue/queue.go#L65" target="_blank" rel="noopener">[src]</a>，Kubernetes很喜欢用数组来当队列。而带有限速器的实现可以看这里 <a href="https://github.com/kubernetes/client-go/blob/release-14.0/util/workqueue/rate_limiting_queue.go#L52" target="_blank" rel="noopener">[src]</a>。</p>
+<p>插入时会调用<code>Add(item)</code>。还有一个插入接口是<code>AddRateLimited(item)</code>，主要用于延迟对象的插入，在controller里面主要是用来延迟多次插入的对象。主循环可能处理某个对象失败了，可能是因为闪断等不可抗因素，为了不影响处理后面的对象，这时会再插到队列最后，但这可能会导致不断插入又不断取出的死循环，所以对于再次插入的对象会给予一定延迟，延迟时间随插入次数不断增大。</p>
+<p>要记录对象的延迟就需要Map缓存，所以需要一个额外的接口去清理缓存，需要用接口<code>Forget(item)</code>。</p>
+<p>获取数据时会调用<code>Get()</code>，队列内部还一个正在处理的processing缓存，每当你Get出这个对象时，就会把对象插入processing缓存中，如果要清理缓存，必须调用<code>Done(item)</code>接口。你不能往队列插入一个已经存在于processing缓存的对象。</p>
+<p>因为队列会被多线程消费，可能导致同一个对象重复加入队列又同时被多个线程处理，所以在<code>Add(item)</code>时，如果发现一个对象已经存在队里中，需要用一个脏数据缓存dirty先存起来，在<code>Done(item)</code>函数中，把对象从队列移除后，会把该对象从dirty缓存取出再加入队列。</p>
+<h4 id="构造">构造</h4>
+<p>构造方法有两种，一种是不指定名称，一种是指定名称 <a href="https://github.com/kubernetes/client-go/blob/release-14.0/util/workqueue/rate_limiting_queue.go#L44" target="_blank" rel="noopener">[src]</a>， <figure class="highlight go hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())</span><br><span class="line">workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), <span class="hljs-string">"Foos"</span>)</span><br></pre></td></tr></table></figure></p>
+<h4 id="addratelimited">AddRateLimited</h4>
+<p>内部调用了AddAfter，即延迟多少时间后再插入队列。 <figure class="highlight go hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(q *rateLimitingType)</span> <span class="hljs-title">AddRateLimited</span><span class="hljs-params">(item <span class="hljs-keyword">interface</span>&#123;&#125;)</span></span> &#123;</span><br><span class="line">    q.DelayingInterface.AddAfter(item, q.rateLimiter.When(item))</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure> <figure class="highlight go hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-comment">// AddAfter adds the given item to the work queue after the given delay</span></span><br><span class="line"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(q *delayingType)</span> <span class="hljs-title">AddAfter</span><span class="hljs-params">(item <span class="hljs-keyword">interface</span>&#123;&#125;, duration time.Duration)</span></span> &#123;</span><br><span class="line">    <span class="hljs-comment">// don't add if we're already shutting down</span></span><br><span class="line">    <span class="hljs-keyword">if</span> q.ShuttingDown() &#123;</span><br><span class="line">        <span class="hljs-keyword">return</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    q.metrics.retry()</span><br><span class="line"></span><br><span class="line">    <span class="hljs-comment">// immediately add things with no delay</span></span><br><span class="line">    <span class="hljs-keyword">if</span> duration &lt;= <span class="hljs-number">0</span> &#123;</span><br><span class="line">        q.Add(item)</span><br><span class="line">        <span class="hljs-keyword">return</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="hljs-keyword">select</span> &#123;</span><br><span class="line">    <span class="hljs-keyword">case</span> &lt;-q.stopCh:</span><br><span class="line">        <span class="hljs-comment">// unblock if ShutDown() is called</span></span><br><span class="line">    <span class="hljs-keyword">case</span> q.waitingForAddCh &lt;- &amp;waitFor&#123;data: item, readyAt: q.clock.Now().Add(duration)&#125;:</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure> 这里数据会插入一个channel中，会有一个单独的协程监听waitingForAddCh，取出对象后插入一个优先队列里面，一个无限循环尝试从优先队列里面取出对象然后加入队列，和计时器的实现类似。这部分代码可以在<code>func (q *delayingType) waitingLoop()</code>看到，</p>
+<p>关键在于<code>rateLimiter.When</code>如何计算时间， <figure class="highlight go hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(r *ItemExponentialFailureRateLimiter)</span> <span class="hljs-title">When</span><span class="hljs-params">(item <span class="hljs-keyword">interface</span>&#123;&#125;)</span> <span class="hljs-title">time</span>.<span class="hljs-title">Duration</span></span> &#123;</span><br><span class="line">    r.failuresLock.Lock()</span><br><span class="line">    <span class="hljs-keyword">defer</span> r.failuresLock.Unlock()</span><br><span class="line"></span><br><span class="line">    exp := r.failures[item]</span><br><span class="line">    r.failures[item] = r.failures[item] + <span class="hljs-number">1</span></span><br><span class="line"></span><br><span class="line">    <span class="hljs-comment">// The backoff is capped such that 'calculated' value never overflows.</span></span><br><span class="line">    backoff := <span class="hljs-keyword">float64</span>(r.baseDelay.Nanoseconds()) * math.Pow(<span class="hljs-number">2</span>, <span class="hljs-keyword">float64</span>(exp))</span><br><span class="line">    <span class="hljs-keyword">if</span> backoff &gt; math.MaxInt64 &#123;</span><br><span class="line">        <span class="hljs-keyword">return</span> r.maxDelay</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    calculated := time.Duration(backoff)</span><br><span class="line">    <span class="hljs-keyword">if</span> calculated &gt; r.maxDelay &#123;</span><br><span class="line">        <span class="hljs-keyword">return</span> r.maxDelay</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="hljs-keyword">return</span> calculated</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure> 可以发现，rateLimiter会有Map缓存<code>failures</code>，对象第一次进来时获取空对象exp=0，以后每次进来exp+1，延迟时间的公式是<code>delay = base * 2 ^ exp</code>。</p>
+<h3 id="discovery">Discovery</h3>
+<p>Discovery的作用其实用来发现集群中的一些版本、API组和资源。 <figure class="highlight go hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">type</span> DiscoveryInterface <span class="hljs-keyword">interface</span> &#123;</span><br><span class="line">    RESTClient() restclient.Interface</span><br><span class="line">    ServerGroupsInterface</span><br><span class="line">    ServerResourcesInterface</span><br><span class="line">    ServerVersionInterface</span><br><span class="line">    OpenAPISchemaInterface</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<ul>
+<li>ServerGroupsInterface：获取所有API组metav1.APIGroupList</li>
+<li>ServerResourcesInterface：用于获取某个组的资源列表metav1.APIResourceList</li>
+<li>ServerVersionInterface：用于获取集群版本</li>
+<li>OpenAPISchemaInterface：用于获取所有API的语法文档</li>
+</ul>
+<p>如果想知道，OpenAPISchemaInterface获取的是什么东西，可以尝试把apiserver代理到8080端口，然后访问下面的url，看看test.log里面输出了什么。 <figure class="highlight plain hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">kubectl proxy --port=8080</span><br><span class="line">curl &quot;http://localhost:8080/openapi/v2&quot; | jq . &gt; test.log</span><br></pre></td></tr></table></figure></p>
+<p>看看具体实现： <figure class="highlight plain hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">type DiscoveryClient struct &#123;</span><br><span class="line">    restClient restclient.Interface</span><br><span class="line">    LegacyPrefix string</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<ul>
+<li>restClient：http客户端</li>
+<li>LegacyPrefix：核心API的前缀，默认就是/api。k8s默认核心api的前缀是/api/{version}，而非核心的则是/apis/{group}/{version} <a href="https://kubernetes.io/docs/reference/using-api/#api-groups" target="_blank" rel="noopener">[src]</a></li>
+</ul>
+<p>具体方法就是实现了DiscoveryInterface的方法，其实就是url的拼接，然后访问apiserver获取数据 <a href="https://github.com/kubernetes/client-go/blob/release-14.0/discovery/discovery_client.go#L130" target="_blank" rel="noopener">[src]</a>。构造可以调用NewDiscoveryClient() <a href="https://github.com/kubernetes/client-go/blob/release-14.0/discovery/discovery_client.go#L504" target="_blank" rel="noopener">[src]</a>。</p>
+<p>还有一个带缓存的接口： <figure class="highlight go hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">type</span> CachedDiscoveryInterface <span class="hljs-keyword">interface</span> &#123;</span><br><span class="line">    DiscoveryInterface</span><br><span class="line">    Fresh() <span class="hljs-keyword">bool</span></span><br><span class="line">    Invalidate()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<ul>
+<li>Fresh()：用于判断是否需要重新获取数据</li>
+<li>Invalidate()：设置需要重新获取数据</li>
+</ul>
+<p>Fresh()这个函数名看起来是动词，像是用来重新拉取数据的接口，但在官方的实现里面这个只是一个返回布尔值的判断。</p>
+<p>可以参考memCacheClient的实现 <a href="https://github.com/kubernetes/client-go/blob/release-14.0/discovery/cached/memory/memcache.go#L47" target="_blank" rel="noopener">[src]</a>。内部有一个变量cacheValid用来记录数据是否合法，当你通过DiscoveryInterface的接口获取数据时，若发现cacheValid=false，则重新拉取数据，拉完后把cacheValid设为true。而Invalidate()函数则负责把cacheValid设为false和清理缓存。</p>
+<h3 id="restmapper">RESTMapper</h3>
+<p>RESTMapper这个接口会时常用到，虽然不在client-go包里，而是在apimachinery包里，但还是拿出来说一下： <figure class="highlight go hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">type</span> RESTMapper <span class="hljs-keyword">interface</span> &#123;</span><br><span class="line">    KindFor(resource schema.GroupVersionResource) (schema.GroupVersionKind, error)</span><br><span class="line"></span><br><span class="line">    KindsFor(resource schema.GroupVersionResource) ([]schema.GroupVersionKind, error)</span><br><span class="line"></span><br><span class="line">    ResourceFor(input schema.GroupVersionResource) (schema.GroupVersionResource, error)</span><br><span class="line"></span><br><span class="line">    ResourcesFor(input schema.GroupVersionResource) ([]schema.GroupVersionResource, error)</span><br><span class="line"></span><br><span class="line">    RESTMapping(gk schema.GroupKind, versions ...<span class="hljs-keyword">string</span>) (*RESTMapping, error)</span><br><span class="line"></span><br><span class="line">    RESTMappings(gk schema.GroupKind, versions ...<span class="hljs-keyword">string</span>) ([]*RESTMapping, error)</span><br><span class="line">    <span class="hljs-comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<ul>
+<li>KindFor: 通过一个可能残缺的GroupVersionResource获取一个具体的GroupVersionKind，如果有多个就error</li>
+<li>KindsFor：通过一个可能残缺的GroupVersionResource获取可能的GroupVersionKind列表</li>
+<li>ResourceFor和ResourcesFor和上面相似。</li>
+<li>RESTMapping：指定group, kind和version，获取一个对应的RESTMapping</li>
+<li>RESTMappings：指定group, kind和version，获取一个对应的RESTMapping列表</li>
+</ul>
+<p>既然它叫REST，可以想象它的实现可以通过RESTClient从apiserver获取数据来组装这些接口，但官方的从来没有这么去实现，DefaultRESTMapper是需要通过Add()和AddSpecific()从外部手动添加的。而DeferredDiscoveryRESTMapper则是传进一个Discovery，从Discovery获取数据。</p>
+<p>RESTMapping的构造可以参考controller-manager源码 <a href="https://github.com/kubernetes/kubernetes/blob/v1.21.0/cmd/kube-controller-manager/app/controllermanager.go#L503" target="_blank" rel="noopener">[src]</a>。podautoscaler就是通过RESTMapper和配置里指定的Group和Kind来找到其指向的资源实例的 <a href="https://github.com/kubernetes/kubernetes/blob/v1.21.0/pkg/controller/podautoscaler/horizontal.go#L601" target="_blank" rel="noopener">[src]</a>。</p>
+
+    
+    </div>
+    
+    <div class="columns is-variable is-1 is-multiline is-mobile">
+    
+        <span class="column is-narrow"><a class="tag is-light article-tag" href="/tags/Kubernetes/">#Kubernetes</a></span>
+    
+    </div>
+    
+    <!-- 
+    <span id="post/k8s-client-go/" class="leancloud_visitors" data-flag-title="Kubernetes Client-go 源码解析">
+        <em class="post-meta-item-text">阅读量 </em>
+        <i class="leancloud-visitors-count">1000000</i>
+    </span>
+     -->
+    
+    <div class="go-next columns is-mobile is-multiline article-nav">
+        <span class="column is-12-mobile is-half-desktop is-hidden-mobile article-nav-prev">
+            
+        </span>
+        <span class="column is-12-mobile is-half-desktop  article-nav-next">
+            
+            <a href="/post/flannel/">Flannel网络虚拟化探究</a>
+            
+        </span>
+    </div>
+    
+</article>
+
+
+
+<div class="comments">
+    <h3 class="title is-4">Comments</h3>
+    
+<div id="valine-thread"></div>
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+<script>
+    new Valine({
+        el: '#valine-thread',
+        appId: 'DEXiOMuMN86LKmdUtJYX4FRL-MdYXbMMI',
+        appKey: 'tPt6E0GhkwXKEBUacbugDcWb',
+        notify: true,
+        verify: false,
+        avatar: '',
+        placeholder: 'Say something...',
+        meta: ['nick', 'mail'],
+        visitor: true,
+        lang: ''
+    })
+</script>
+
+
+</div>
+
+    </div>
+</section>
+    <footer class="footer">
+    <div class="container">
+        <div class="columns content">
+            <div class="column is-narrow has-text-centered">
+                &copy; 2021 Black Redscarf&nbsp;
+                Powered by <a href="http://hexo.io/" target="_blank">Hexo</a> & <a
+                        href="http://github.com/ppoffice/hexo-theme-minos">Minos</a>
+            </div>
+            <div class="column is-hidden-mobile"></div>
+
+            
+            <div class="column is-narrow">
+                <div class="columns is-mobile is-multiline is-centered">
+                
+                    
+                <a class="column is-narrow has-text-black" title="GitHub" href="https://github.com/blackredscarf" target="_blank" rel="noopener">
+                    
+                    GitHub
+                    
+                </a>
+                
+                </div>
+            </div>
+            
+            
+        </div>
+    </div>
+</footer>
+    <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/moment.js/2.22.2/moment-with-locales.min.js"></script>
+
+<!-- test if the browser is outdated -->
+<div id="outdated">
+    <h6>Your browser is out-of-date!</h6>
+    <p>Update your browser to view this website correctly. <a id="btnUpdateBrowser" href="http://outdatedbrowser.com/" target="_blank" rel="noopener">Update my browser now </a></p>
+    <p class="last"><a href="#" id="btnCloseUpdateBrowser" title="Close">&times;</a></p>
+</div>
+<script src="https://cdn.bootcdn.net/ajax/libs/outdated-browser/1.1.5/outdatedbrowser.min.css"></script>
+<script>
+    $(document).ready(function () {
+        // plugin function, place inside DOM ready function
+        outdatedBrowser({
+            bgColor: '#f25648',
+            color: '#ffffff',
+            lowerThan: 'flex'
+        })
+    });
+</script>
+
+<script>
+    window.FontAwesomeConfig = {
+        searchPseudoElements: true
+    }
+    moment.locale("en-AU");
+</script>
+
+
+    
+    
+<script src="https://cdn.bootcdn.net/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+<script>
+    MathJax.Hub.Config({
+        "HTML-CSS": {
+            matchFontHeight: false
+        },
+        SVG: {
+            matchFontHeight: false
+        },
+        CommonHTML: {
+            matchFontHeight: false
+        },
+        tex2jax: {
+            inlineMath: [ ['$','$'],['\\(','\\)'] ],
+            displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+            processEscapes: false
+        }
+    });
+</script>
+
+    
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/katex.min.css" integrity="sha384-9eLZqc9ds8eNjO3TmqPeYcDj8n+Qfa4nuSiGYa6DjLNcv9BtN69ZIulL9+8CqC9Y" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/katex.min.js" integrity="sha384-K3vbOmF2BtaVai+Qk37uypf7VrgBubhQreNQe9aGsz9lB63dIFiQVlJbr92dw2Lx" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/contrib/auto-render.min.js" integrity="sha384-kmZOZB5ObwgQnS/DuDg6TScgOiWWBiVt0plIRkZCmE6rDZGrEOQeHM5PcHi+nyqe" crossorigin="anonymous"
+        onload="renderMathInElement(document.body);"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    renderMathInElement(document.body, {
+        // ...options...
+    });
+});
+</script>
+
+    
+    
+<script src="https://cdn.bootcdn.net/ajax/libs/lightgallery/1.6.8/js/lightgallery-all.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/justifiedGallery/3.6.5/js/jquery.justifiedGallery.min.js"></script>
+<script>
+    (function ($) {
+        $(document).ready(function () {
+            if (typeof($.fn.lightGallery) === 'function') {
+                $('.article.gallery').lightGallery({ selector: '.gallery-item' });
+            }
+            if (typeof($.fn.justifiedGallery) === 'function') {
+                $('.justified-gallery').justifiedGallery();
+            }
+        });
+    })(jQuery);
+</script>
+
+    
+    
+    <script src="https://cdn.bootcdn.net/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script>
+    <style>
+        .hljs {
+            position: relative;
+        }
+
+        .hljs .clipboard-btn {
+            float: right;
+            color: #9a9a9a;
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+
+        .hljs .clipboard-btn:hover {
+          color: #8a8a8a;
+        }
+
+        .hljs > .clipboard-btn {
+            display: none;
+            position: absolute;
+            right: 4px;
+            top: 4px;
+        }
+
+        .hljs:hover > .clipboard-btn {
+            display: inline;
+        }
+
+        .hljs > figcaption > .clipboard-btn {
+            margin-right: 4px;
+        }
+    </style>
+    <script>
+      $(document).ready(function () {
+        $('figure.hljs').each(function(i, figure) {
+          var codeId = 'code-' + i;
+          var code = figure.querySelector('.code');
+          var copyButton = $('<button>Copy <i class="far fa-clipboard"></i></button>');
+          code.id = codeId;
+          copyButton.addClass('clipboard-btn');
+          copyButton.attr('data-clipboard-target-id', codeId);
+
+          var figcaption = figure.querySelector('figcaption');
+
+          if (figcaption) {
+            figcaption.append(copyButton[0]);
+          } else {
+            figure.prepend(copyButton[0]);
+          }
+        })
+
+        var clipboard = new ClipboardJS('.clipboard-btn', {
+          target: function(trigger) {
+            return document.getElementById(trigger.getAttribute('data-clipboard-target-id'));
+          }
+        });
+        clipboard.on('success', function(e) {
+          e.clearSelection();
+        })
+      })
+    </script>
+
+    
+    
+
+    
+
+
+<script src="/js/script.js"></script>
+
+    
+    <div class="searchbox ins-search">
+    <div class="searchbox-mask"></div>
+    <div class="searchbox-container ins-search-container">
+        <div class="searchbox-input-wrapper">
+            <input type="text" class="searchbox-input ins-search-input" placeholder="Type something..." />
+            <span class="searchbox-close ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="searchbox-result-wrapper ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+    (function (window) {
+        var INSIGHT_CONFIG = {
+            TRANSLATION: {
+                POSTS: 'Posts',
+                PAGES: 'Pages',
+                CATEGORIES: 'Categories',
+                TAGS: 'Tags',
+                UNTITLED: '(Untitled)',
+            },
+            CONTENT_URL: '/content.json',
+        };
+        window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+    })(window);
+</script>
+<script src="/js/insight.js"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    
+</body>
+</html>
