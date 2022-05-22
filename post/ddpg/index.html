@@ -5,7 +5,7 @@
 <title>深度确定性策略梯度 - 绯色的魔法世界</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
-<link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/outdated-browser/1.1.5/outdatedbrowser.min.css">
+<link rel="stylesheet" href="https://lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/outdated-browser/1.1.5/outdatedbrowser.min.css">
 
 
 
@@ -17,7 +17,7 @@
 
 
     <meta name="description" content="虽然DQN的表现很好，但它有一个致命的缺点是无法学习连续动作空间。回想一下，DQN 是根据greddy策略找到最大Q值对应的行为，即 \(\large a = \mathop{argmax}\limits_{a \in \mathcal{A}} Q(s)\)，也就说每一个行为对应一个Q值，当动作是高维度的或者是连续的，那么DQN的计算代价就很大，甚至无法进行学习。这时使用策略梯度就能很好解决这个问">
-<meta name="keywords" content="机器学习,深度学习,强化学习">
+<meta name="keywords" content="深度学习,机器学习,强化学习">
 <meta property="og:type" content="article">
 <meta property="og:title" content="深度确定性策略梯度">
 <meta property="og:url" content="http:&#x2F;&#x2F;blackredscarf.github.io&#x2F;post&#x2F;ddpg&#x2F;index.html">
@@ -39,18 +39,18 @@
 
 
 <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Ovo|Source+Code+Pro">
-<link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/bulma/0.6.2/css/bulma.min.css">
+<link rel="stylesheet" href="https://lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/bulma/0.6.2/css/bulma.min.css">
 
 
-<link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/lightgallery/1.6.8/css/lightgallery.min.css">
-<link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/justifiedGallery/3.6.5/css/justifiedGallery.min.css">
+<link rel="stylesheet" href="https://lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/lightgallery/1.6.8/css/lightgallery.min.css">
+<link rel="stylesheet" href="https://lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/justifiedGallery/3.6.5/css/justifiedGallery.min.css">
 
 
-<link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/highlight.js/10.1.1/styles/atom-one-light.min.css">
+<link rel="stylesheet" href="https://lf6-cdn-tos.bytecdntp.com/cdn/expire-1-M/highlight.js/10.1.1/styles/atom-one-light.min.css">
 
 <link rel="stylesheet" href="/css/style.css">
 
-<script defer src="https://cdn.bootcdn.net/ajax/libs/font-awesome/5.14.0/js/all.min.js"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+<script defer src="https://lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/font-awesome/5.14.0/js/all.min.js"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
 
 
     
@@ -161,7 +161,7 @@
         
         <span class="column is-narrow article-category">
             <i class="far fa-folder"></i>
-            <a class="article-category-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a><span>,</span><a class="article-category-link" href="/categories/%E5%BC%BA%E5%8C%96%E5%AD%A6%E4%B9%A0/">强化学习</a><span>,</span><a class="article-category-link" href="/categories/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/">深度学习</a>
+            <a class="article-category-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a><span>,</span><a class="article-category-link" href="/categories/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/">深度学习</a><span>,</span><a class="article-category-link" href="/categories/%E5%BC%BA%E5%8C%96%E5%AD%A6%E4%B9%A0/">强化学习</a>
         </span>
         
         <!--  -->
@@ -256,9 +256,9 @@ w^{\mu&#39;} &amp;= \tau \; w^{\mu} + (1-\tau)w^{\mu&#39;} \\
     
     <div class="columns is-variable is-1 is-multiline is-mobile">
     
-        <span class="column is-narrow"><a class="tag is-light article-tag" href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">#机器学习</a></span>
-    
         <span class="column is-narrow"><a class="tag is-light article-tag" href="/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/">#深度学习</a></span>
+    
+        <span class="column is-narrow"><a class="tag is-light article-tag" href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">#机器学习</a></span>
     
         <span class="column is-narrow"><a class="tag is-light article-tag" href="/tags/%E5%BC%BA%E5%8C%96%E5%AD%A6%E4%B9%A0/">#强化学习</a></span>
     
@@ -318,7 +318,7 @@ w^{\mu&#39;} &amp;= \tau \; w^{\mu} + (1-\tau)w^{\mu&#39;} \\
     <div class="container">
         <div class="columns content">
             <div class="column is-narrow has-text-centered">
-                &copy; 2021 Black Redscarf&nbsp;
+                &copy; 2022 Black Redscarf&nbsp;
                 Powered by <a href="http://hexo.io/" target="_blank">Hexo</a> & <a
                         href="http://github.com/ppoffice/hexo-theme-minos">Minos</a>
             </div>
@@ -342,8 +342,8 @@ w^{\mu&#39;} &amp;= \tau \; w^{\mu} + (1-\tau)w^{\mu&#39;} \\
         </div>
     </div>
 </footer>
-    <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-<script src="https://cdn.bootcdn.net/ajax/libs/moment.js/2.22.2/moment-with-locales.min.js"></script>
+    <script src="https://lf6-cdn-tos.bytecdntp.com/cdn/expire-1-M/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/moment.js/2.22.2/moment-with-locales.min.js"></script>
 
 <!-- test if the browser is outdated -->
 <div id="outdated">
@@ -351,7 +351,7 @@ w^{\mu&#39;} &amp;= \tau \; w^{\mu} + (1-\tau)w^{\mu&#39;} \\
     <p>Update your browser to view this website correctly. <a id="btnUpdateBrowser" href="http://outdatedbrowser.com/" target="_blank" rel="noopener">Update my browser now </a></p>
     <p class="last"><a href="#" id="btnCloseUpdateBrowser" title="Close">&times;</a></p>
 </div>
-<script src="https://cdn.bootcdn.net/ajax/libs/outdated-browser/1.1.5/outdatedbrowser.min.css"></script>
+<script src="https://lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/outdated-browser/1.1.5/outdatedbrowser.min.css"></script>
 <script>
     $(document).ready(function () {
         // plugin function, place inside DOM ready function
@@ -373,7 +373,7 @@ w^{\mu&#39;} &amp;= \tau \; w^{\mu} + (1-\tau)w^{\mu&#39;} \\
 
     
     
-<script src="https://cdn.bootcdn.net/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+<script src="https://lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/mathjax/2.7.4/MathJax.js?config=TeX-MML-AM_CHTML"></script>
 <script>
     MathJax.Hub.Config({
         "HTML-CSS": {
@@ -410,8 +410,8 @@ document.addEventListener("DOMContentLoaded", function() {
 
     
     
-<script src="https://cdn.bootcdn.net/ajax/libs/lightgallery/1.6.8/js/lightgallery-all.min.js"></script>
-<script src="https://cdn.bootcdn.net/ajax/libs/justifiedGallery/3.6.5/js/jquery.justifiedGallery.min.js"></script>
+<script src="https://lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/lightgallery/1.6.8/js/lightgallery-all.min.js"></script>
+<script src="https://lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/justifiedGallery/3.8.1/jsjustifiedGallery.min.js/jquery."></script>
 <script>
     (function ($) {
         $(document).ready(function () {
@@ -427,7 +427,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
     
     
-    <script src="https://cdn.bootcdn.net/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script>
+    <script src="https://lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/clipboard.js/2.0.0/clipboard.min.js"></script>
     <style>
         .hljs {
             position: relative;
