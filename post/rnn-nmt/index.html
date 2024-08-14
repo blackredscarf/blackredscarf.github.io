@@ -121,6 +121,9 @@
                href="/archives">归档</a>
             
             <a class="navbar-item "
+               href="/categories/%E6%B8%B8%E6%88%8F%E5%BC%80%E5%8F%91">游戏开发</a>
+            
+            <a class="navbar-item "
                href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F">操作系统</a>
             
             <a class="navbar-item "
@@ -133,13 +136,93 @@
                href="/categories/%E9%9A%8F%E8%AE%B0">随记</a>
             
             <a class="navbar-item "
-               href="/categories/NLP">NLP</a>
-            
-            <a class="navbar-item "
                href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0">机器学习</a>
             
         </div>
         
+        
+        <div class="navbar-menu navbar-end">
+            <!-- 
+            <a class="navbar-item search" title="Search" href="javascript:;" target="_blank" rel="noopener">
+                <i class="fas fa-search"></i>
+            </a>
+             -->
+            
+            <div class="navbar-item is-hoverable has-dropdown is-hidden-mobile is-hidden-tablet-only toc">
+                <a class="navbar-item" title="Table of Contents">
+                    <i class="fa fa-list"></i>
+                </a>
+                <div class="navbar-dropdown is-right">
+                    
+                    
+                    
+                    
+                    <a class="navbar-item" href="#编码和解码">1&nbsp;&nbsp;<b>编码和解码</b></a>
+                    
+                    
+                    <hr class="navbar-divider">
+                    
+                    
+                    <a class="navbar-item" href="#注意力机制attention-mechanism">2&nbsp;&nbsp;<b>注意力机制（Attention Mechanism）</b></a>
+                    
+                    
+                    
+                    <a class="navbar-item" href="#全局注意力global-attention">2.1&nbsp;&nbsp;全局注意力（Global Attention）</a>
+                    
+                    
+                    <hr class="navbar-divider">
+                    
+                    
+                    <a class="navbar-item" href="#input-feeding">3&nbsp;&nbsp;<b>Input-Feeding</b></a>
+                    
+                    
+                    <hr class="navbar-divider">
+                    
+                    
+                    <a class="navbar-item" href="#teacher-forcing">4&nbsp;&nbsp;<b>Teacher Forcing</b></a>
+                    
+                    
+                    <hr class="navbar-divider">
+                    
+                    
+                    <a class="navbar-item" href="#scheduled-sampling">5&nbsp;&nbsp;<b>Scheduled Sampling</b></a>
+                    
+                    
+                    <hr class="navbar-divider">
+                    
+                    
+                    <a class="navbar-item" href="#评估">6&nbsp;&nbsp;<b>评估</b></a>
+                    
+                    
+                    <hr class="navbar-divider">
+                    
+                    
+                    <a class="navbar-item" href="#束搜索-beam-search">7&nbsp;&nbsp;<b>束搜索 （Beam Search）</b></a>
+                    
+                    
+                    <hr class="navbar-divider">
+                    
+                    
+                    <a class="navbar-item" href="#卷积机器翻译">8&nbsp;&nbsp;<b>卷积机器翻译</b></a>
+                    
+                    
+                    <hr class="navbar-divider">
+                    
+                    
+                    <a class="navbar-item" href="#参考文献">9&nbsp;&nbsp;<b>参考文献</b></a>
+                    
+                </div>
+            </div>
+            
+            <!-- 
+            <a class="navbar-item" title="GitHub" href="https://github.com/blackredscarf" target="_blank" rel="noopener">
+                
+                <i class="fab fa-github"></i>
+                
+            </a>
+               
+             -->
+        </div>
         
     </div>
 </nav>
@@ -165,7 +248,7 @@
         
         <span class="column is-narrow article-category">
             <i class="far fa-folder"></i>
-            <a class="article-category-link" href="/categories/NLP/">NLP</a><span>,</span><a class="article-category-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a><span>,</span><a class="article-category-link" href="/categories/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/">深度学习</a>
+            <a class="article-category-link" href="/categories/NLP/">NLP</a><span>,</span><a class="article-category-link" href="/categories/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/">深度学习</a><span>,</span><a class="article-category-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a>
         </span>
         
         <!--  -->
@@ -363,7 +446,7 @@ F=log(softmax(Y))
     <div class="container">
         <div class="columns content">
             <div class="column is-narrow has-text-centered">
-                &copy; 2022 Black Redscarf&nbsp;
+                &copy; 2024 Black Redscarf&nbsp;
                 Powered by <a href="http://hexo.io/" target="_blank">Hexo</a> & <a
                         href="http://github.com/ppoffice/hexo-theme-minos">Minos</a>
             </div>

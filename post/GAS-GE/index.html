@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html class="has-navbar-fixed-top">
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="utf-8">
+<title>Unreal GameplayEffect 源码分析 - 绯色的魔法世界</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+<link rel="stylesheet" href="https://lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/outdated-browser/1.1.5/outdatedbrowser.min.css">
+
+
+
+
+<meta name="description" content="">
+
+
+
+
+
+    <meta name="description" content="GameplayEffect是GAS框架修改Tag和属性的关键工具。了解其工作原理能帮助我们更好的理解各个配置的功能与依赖关系，并且方便我们对其进行扩展。">
+<meta name="keywords" content="游戏开发,Unreal">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Unreal GameplayEffect 源码分析">
+<meta property="og:url" content="http:&#x2F;&#x2F;blackredscarf.github.io&#x2F;post&#x2F;GAS-GE&#x2F;index.html">
+<meta property="og:site_name" content="绯色的魔法世界">
+<meta property="og:description" content="GameplayEffect是GAS框架修改Tag和属性的关键工具。了解其工作原理能帮助我们更好的理解各个配置的功能与依赖关系，并且方便我们对其进行扩展。">
+<meta property="og:locale" content="en">
+<meta property="og:image" content="https:&#x2F;&#x2F;s21.ax1x.com&#x2F;2024&#x2F;08&#x2F;14&#x2F;pA9QBy6.png">
+<meta property="og:image" content="https:&#x2F;&#x2F;s21.ax1x.com&#x2F;2024&#x2F;08&#x2F;14&#x2F;pA9QseO.png">
+<meta property="og:image" content="https:&#x2F;&#x2F;s21.ax1x.com&#x2F;2024&#x2F;08&#x2F;14&#x2F;pA9QywD.png">
+<meta property="og:updated_time" content="2024-08-14T07:42:14.255Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https:&#x2F;&#x2F;s21.ax1x.com&#x2F;2024&#x2F;08&#x2F;14&#x2F;pA9QBy6.png">
+
+
+
+
+
+<link rel="icon" href="https://s1.ax1x.com/2020/07/25/aSC9Cn.png">
+
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Ovo|Source+Code+Pro">
+<link rel="stylesheet" href="https://lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/bulma/0.6.2/css/bulma.min.css">
+
+
+<link rel="stylesheet" href="https://lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/lightgallery/1.6.8/css/lightgallery.min.css">
+<link rel="stylesheet" href="https://lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/justifiedGallery/3.6.5/css/justifiedGallery.min.css">
+
+
+<link rel="stylesheet" href="https://lf6-cdn-tos.bytecdntp.com/cdn/expire-1-M/highlight.js/10.1.1/styles/atom-one-light.min.css">
+
+<link rel="stylesheet" href="/css/style.css">
+
+<script defer src="https://lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/font-awesome/5.14.0/js/all.min.js"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+    
+
+
+</head>
+<body>
+    
+
+<!-- hexo-inject:begin --><!-- hexo-inject:end --><nav class="navbar is-transparent is-fixed-top navbar-main" role="navigation" aria-label="main navigation">
+    <div class="top-title-line">
+        <div class="top-title">
+            <a href="/"><span>绯色的魔法世界</span></a>
+        </div>
+    </div>
+    <div class="nav-tool-line">
+        <div class="nav-tool">
+            
+            <a class="navbar-item search" title="Search" href="javascript:;" target="_blank" rel="noopener">
+                <i class="fas fa-search"></i>
+            </a>
+            
+            
+            <a class="navbar-item" title="GitHub" href="https://github.com/blackredscarf" target="_blank" rel="noopener">
+                
+                <i class="fab fa-github"></i>
+                
+            </a>
+               
+            
+        </div>    
+    </div>
+    <div class="container">
+        <div class="navbar-brand">
+            <!-- <a class="navbar-item navbar-logo" href="/">
+                
+                <img src="/images/logo.png" alt="" height="28">
+                
+            </a> -->
+            <div class="navbar-burger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+        
+        <div class="navbar-menu navbar-start">
+            
+            <a class="navbar-item "
+               href="/">Home</a>
+            
+            <a class="navbar-item "
+               href="/archives">归档</a>
+            
+            <a class="navbar-item "
+               href="/categories/%E6%B8%B8%E6%88%8F%E5%BC%80%E5%8F%91">游戏开发</a>
+            
+            <a class="navbar-item "
+               href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F">操作系统</a>
+            
+            <a class="navbar-item "
+               href="/categories/%E5%88%86%E5%B8%83%E5%BC%8F">分布式</a>
+            
+            <a class="navbar-item "
+               href="/categories/%E7%AE%97%E6%B3%95%E8%AE%BE%E8%AE%A1">算法设计</a>
+            
+            <a class="navbar-item "
+               href="/categories/%E9%9A%8F%E8%AE%B0">随记</a>
+            
+            <a class="navbar-item "
+               href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0">机器学习</a>
+            
+        </div>
+        
+        
+        <div class="navbar-menu navbar-end">
+            <!-- 
+            <a class="navbar-item search" title="Search" href="javascript:;" target="_blank" rel="noopener">
+                <i class="fas fa-search"></i>
+            </a>
+             -->
+            
+            <div class="navbar-item is-hoverable has-dropdown is-hidden-mobile is-hidden-tablet-only toc">
+                <a class="navbar-item" title="Table of Contents">
+                    <i class="fa fa-list"></i>
+                </a>
+                <div class="navbar-dropdown is-right">
+                    
+                    
+                    
+                    
+                    <a class="navbar-item" href="#应用ge">1&nbsp;&nbsp;<b>应用GE</b></a>
+                    
+                    
+                    
+                    <a class="navbar-item" href="#applygameplayeffectspec">1.1&nbsp;&nbsp;ApplyGameplayEffectSpec</a>
+                    
+                    
+                    <hr class="navbar-divider">
+                    
+                    
+                    <a class="navbar-item" href="#modifier">2&nbsp;&nbsp;<b>Modifier</b></a>
+                    
+                    
+                    <hr class="navbar-divider">
+                    
+                    
+                    <a class="navbar-item" href="#aggregator">3&nbsp;&nbsp;<b>Aggregator</b></a>
+                    
+                    
+                    
+                    <a class="navbar-item" href="#数据结构">3.1&nbsp;&nbsp;数据结构</a>
+                    
+                    
+                    
+                    <a class="navbar-item" href="#计算与监听属性">3.2&nbsp;&nbsp;计算与监听属性</a>
+                    
+                    
+                    
+                    <a class="navbar-item" href="#属性依赖更新">3.3&nbsp;&nbsp;属性依赖更新</a>
+                    
+                    
+                    
+                    <a class="navbar-item" href="#自定义channel">3.4&nbsp;&nbsp;自定义Channel</a>
+                    
+                    
+                    <hr class="navbar-divider">
+                    
+                    
+                    <a class="navbar-item" href="#预测">4&nbsp;&nbsp;<b>预测</b></a>
+                    
+                    
+                    
+                    <a class="navbar-item" href="#fpredictionkey">4.1&nbsp;&nbsp;FPredictionKey</a>
+                    
+                    
+                    
+                    <a class="navbar-item" href="#fpredictionkeydelegates">4.2&nbsp;&nbsp;FPredictionKeyDelegates</a>
+                    
+                    
+                    
+                    <a class="navbar-item" href="#fscopedpredictionwindow">4.3&nbsp;&nbsp;FScopedPredictionWindow</a>
+                    
+                    
+                    
+                    <a class="navbar-item" href="#ga的预测">4.4&nbsp;&nbsp;GA的预测</a>
+                    
+                    
+                    
+                    <a class="navbar-item" href="#ge的预测">4.5&nbsp;&nbsp;GE的预测</a>
+                    
+                    
+                    
+                    <a class="navbar-item" href="#客户端属性修正">4.6&nbsp;&nbsp;客户端属性修正</a>
+                    
+                    
+                    <hr class="navbar-divider">
+                    
+                    
+                    <a class="navbar-item" href="#堆叠">5&nbsp;&nbsp;<b>堆叠</b></a>
+                    
+                    
+                    <hr class="navbar-divider">
+                    
+                    
+                    <a class="navbar-item" href="#自定义属性计算的自定义依赖">6&nbsp;&nbsp;<b>自定义属性计算的自定义依赖</b></a>
+                    
+                    
+                    <hr class="navbar-divider">
+                    
+                    
+                    <a class="navbar-item" href="#gameplayeffect对cdo的修改">7&nbsp;&nbsp;<b>GameplayEffect对CDO的修改</b></a>
+                    
+                </div>
+            </div>
+            
+            <!-- 
+            <a class="navbar-item" title="GitHub" href="https://github.com/blackredscarf" target="_blank" rel="noopener">
+                
+                <i class="fab fa-github"></i>
+                
+            </a>
+               
+             -->
+        </div>
+        
+    </div>
+</nav>
+
+    <section class="section">
+    <div class="container">
+    
+<div class="article-cover">
+   <img class="article-cover-img" src="https://s21.ax1x.com/2024/08/14/pA9MvZD.jpg"> 
+</div>
+
+<article class="article content gallery" itemscope itemprop="blogPost">
+    <h1 class="article-title is-size-3 is-size-4-mobile" itemprop="name">
+        
+            Unreal GameplayEffect 源码分析
+        
+    </h1>
+    <div class="article-meta columns is-variable is-1 is-multiline is-mobile is-size-7-mobile">
+        <span class="column is-narrow">
+            2024-08-14
+            <!-- <time datetime="2024-08-13T16:00:00.000Z" itemprop="datePublished">Aug 14 2024</time> -->
+        </span>
+        
+        <span class="column is-narrow article-category">
+            <i class="far fa-folder"></i>
+            <a class="article-category-link" href="/categories/%E6%B8%B8%E6%88%8F%E5%BC%80%E5%8F%91/">游戏开发</a><span>,</span><a class="article-category-link" href="/categories/%E6%B8%B8%E6%88%8F%E5%BC%80%E5%8F%91/Unreal/">Unreal</a>
+        </span>
+        
+        <!--  -->
+    </div>
+    <div class="article-entry is-size-6-mobile" itemprop="articleBody">
+    
+        <p>GameplayEffect是GAS框架修改Tag和属性的关键工具。了解其工作原理能帮助我们更好的理解各个配置的功能与依赖关系，并且方便我们对其进行扩展。</p>
+<a id="more"></a>
+<h2 id="应用ge">应用GE</h2>
+<p>Duration Policy为<code>Instant</code>的GE会走<code>ExecuteGameplayEffect</code>函数， <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">void</span> FActiveGameplayEffectsContainer::ExecuteActiveEffectsFrom(FGameplayEffectSpec &amp;Spec, FPredictionKey PredictionKey)</span><br></pre></td></tr></table></figure> 非<code>Instant</code>的GE则走， <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">FActiveGameplayEffect* FActiveGameplayEffectsContainer::ApplyGameplayEffectSpec(<span class="hljs-keyword">const</span> FGameplayEffectSpec&amp; Spec, FPredictionKey&amp; InPredictionKey, <span class="hljs-keyword">bool</span>&amp; bFoundExistingStackableGE)</span><br></pre></td></tr></table></figure> ASC组件中有一个<code>FActiveGameplayEffectsContainer</code>，专门用来存激活中的GE以及激活GE相关功能，就是用他来调用上面两个方法， <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">UPROPERTY(Replicated)</span><br><span class="line">FActiveGameplayEffectsContainer ActiveGameplayEffects;</span><br></pre></td></tr></table></figure></p>
+<h3 id="applygameplayeffectspec">ApplyGameplayEffectSpec</h3>
+<p>从接口上看，我们会先构造一个<code>FGameplayEffectSpec</code>作为输入，然后激活的时候会再构造一个<code>FActiveGameplayEffect</code>，并在存进<code>GameplayEffects_Internal</code>这个TArray中， <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">AppliedActiveGE = <span class="hljs-keyword">new</span>(GameplayEffects_Internal) FActiveGameplayEffect(NewHandle, Spec, GetWorldTime(), GetServerWorldTime(), InPredictionKey);</span><br></pre></td></tr></table></figure> TArray重载了<code>operator new</code>使得上面的写法可以每次都把元素加到数组最后面。 <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">template</span> &lt;<span class="hljs-keyword">typename</span> T,<span class="hljs-keyword">typename</span> AllocatorType&gt; <span class="hljs-function"><span class="hljs-keyword">void</span>* <span class="hljs-keyword">operator</span> <span class="hljs-title">new</span><span class="hljs-params">( <span class="hljs-keyword">size_t</span> Size, TArray&lt;T,AllocatorType&gt;&amp; Array )</span></span></span><br><span class="line"><span class="hljs-function"></span>&#123;</span><br><span class="line">	check(Size == <span class="hljs-keyword">sizeof</span>(T));</span><br><span class="line">	<span class="hljs-keyword">const</span> <span class="hljs-keyword">auto</span> Index = Array.AddUninitialized();</span><br><span class="line">	<span class="hljs-keyword">return</span> &amp;Array[Index];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h2 id="modifier">Modifier</h2>
+<p>对于<code>ExecuteActiveEffectsFrom</code>来说，Modifier的调用栈如下， <img src="https://s21.ax1x.com/2024/08/14/pA9QBy6.png"></p>
+<p>ApplyGameplayEffectSpec则涉及到Aggregator，后面一节说明。</p>
+<h2 id="aggregator">Aggregator</h2>
+<p>Aggregator就是聚合器的意思，当你的GE是一个<code>Infinite</code>或者<code>Has Duration</code>，且其<code>Period=0</code>时，就会对同种属性的若干个Modifier进行一个聚合计算。（<code>Has Duration &amp;&amp; Period=0</code>的功能其实就等同于<code>Infinite</code>，即无限期生效）</p>
+<p>聚合计算即，先把所有加法算出一个结果<code>Additive</code>，然后再把所有乘法算出一个结果<code>Multiplicitive</code>，所有除法算出一个结果<code>Division</code>，然后再按照公式计算： <figure class="highlight plain hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">((X + Additive) * Multiplicitive) / Division</span><br></pre></td></tr></table></figure> 非常特别的是，乘法和除法计算都会先减1然后加起来， <figure class="highlight plain hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Multiplicitive = 1 + (Mod1.Magnitude - 1) + (Mod2.Magnitude - 1) + ...</span><br></pre></td></tr></table></figure> 比如你配了两个Mod，一个是乘1.2，另一个是乘1.4，那么结果就是乘<code>1+(0.2+0.4)=1.6</code>，而不是<code>1.2*1.4=1.68</code>。</p>
+<p>先把公式的源码列出来，后面会详细说说是如何运作的， <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">float</span> FAggregatorModChannel::EvaluateWithBase(<span class="hljs-keyword">float</span> InlineBaseValue, <span class="hljs-keyword">const</span> FAggregatorEvaluateParameters&amp; Parameters) <span class="hljs-keyword">const</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="hljs-keyword">for</span> (<span class="hljs-keyword">const</span> FAggregatorMod&amp; Mod : Mods[EGameplayModOp::Override])</span><br><span class="line">	&#123;</span><br><span class="line">		<span class="hljs-keyword">if</span> (Mod.Qualifies())</span><br><span class="line">		&#123;</span><br><span class="line">			<span class="hljs-keyword">return</span> Mod.EvaluatedMagnitude;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="hljs-keyword">float</span> Additive = SumMods(Mods[EGameplayModOp::Additive], GameplayEffectUtilities::GetModifierBiasByModifierOp(EGameplayModOp::Additive), Parameters);</span><br><span class="line">	<span class="hljs-keyword">float</span> Multiplicitive = SumMods(Mods[EGameplayModOp::Multiplicitive], GameplayEffectUtilities::GetModifierBiasByModifierOp(EGameplayModOp::Multiplicitive), Parameters);</span><br><span class="line">	<span class="hljs-keyword">float</span> Division = SumMods(Mods[EGameplayModOp::Division], GameplayEffectUtilities::GetModifierBiasByModifierOp(EGameplayModOp::Division), Parameters);</span><br><span class="line"></span><br><span class="line">	<span class="hljs-keyword">return</span> ((InlineBaseValue + Additive) * Multiplicitive) / Division;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure> 按照GASDocument里的说法是，这种做法是为了适应虚幻争霸的设计。RPG游戏里大部分情况下属性加成都是在同一乘区的。</p>
+<p>调用栈如下： <img src="https://s21.ax1x.com/2024/08/14/pA9QseO.png"></p>
+<p><code>Period != 0</code>则从定时器中触发，并且不会使用Aggregator， <img src="https://s21.ax1x.com/2024/08/14/pA9QywD.png"></p>
+<h3 id="数据结构">数据结构</h3>
+<p><code>FActiveGameplayEffectsContainer::AddActiveGameplayEffectGrantedTagsAndModifiers</code>会遍历GE所有Modifier。对于每一个Modifier，都通过<code>FindOrCreateAttributeAggregator</code>会查询和创建<code>Aggregator</code>并存入下面的TMap中，每种属性对应一个Aggregator， <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">GAMEPLAYABILITIES_API</span> <span class="hljs-title">FActiveGameplayEffectsContainer</span> :</span> <span class="hljs-keyword">public</span> FFastArraySerializer</span><br><span class="line">&#123;</span><br><span class="line">  TMap&lt;FGameplayAttribute, FAggregatorRef&gt; AttributeAggregatorMap;</span><br></pre></td></tr></table></figure> FAggregator结构中值得关注的是下面几个属性， <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">GAMEPLAYABILITIES_API</span> <span class="hljs-title">FAggregator</span> :</span> <span class="hljs-keyword">public</span> TSharedFromThis&lt;FAggregator&gt;</span><br><span class="line">&#123;</span><br><span class="line">	<span class="hljs-keyword">float</span> BaseValue;</span><br><span class="line">	FAggregatorModChannelContainer ModChannels;</span><br><span class="line">	TArray&lt;FActiveGameplayEffectHandle&gt; Dependents;</span><br><span class="line">	int32 BroadcastingDirtyCount;</span><br></pre></td></tr></table></figure> <code>FAggregatorModChannelContainer</code>是用于存储Channel的结果并进行计算的结构，Channel其实就是为了把这个属性的多个Modifier分开使用不同的计算公式进行计算。<code>BaseValue</code>是用来存储所计算出来的属性的BaseValue。<code>Dependents</code>是用来存储依赖这个属性的其他GE，若这个属性发生变化，则其他GE也要触发相应的更新，在<a href="#计算与监听属性">计算与监听属性</a>章节会讲到。<code>BroadcastingDirtyCount</code>则是为了防止属性之间循环依赖的计数器，循环10次之后就会终止（这是保底措施，设计上不应该产生循环）。</p>
+<p><code>FAggregatorModChannelContainer</code>套了<code>FAggregatorModChannel</code>，里面有个<code>FAggregatorMod</code>数组，表示这个Channel下包括的Modifiers， <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">GAMEPLAYABILITIES_API</span> <span class="hljs-title">FAggregatorModChannel</span></span></span><br><span class="line"><span class="hljs-class">&#123;</span></span><br><span class="line">  TArray&lt;FAggregatorMod&gt; Mods[EGameplayModOp::Max];</span><br></pre></td></tr></table></figure> 其中<code>EvaluatedMagnitude</code>就是这个Modifier计算所得。 <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">GAMEPLAYABILITIES_API</span> <span class="hljs-title">FAggregatorMod</span></span></span><br><span class="line"><span class="hljs-class">&#123;</span></span><br><span class="line">	<span class="hljs-keyword">const</span> FGameplayTagRequirements*	SourceTagReqs;</span><br><span class="line">	<span class="hljs-keyword">const</span> FGameplayTagRequirements*	TargetTagReqs;</span><br><span class="line">	<span class="hljs-keyword">float</span> EvaluatedMagnitude;</span><br><span class="line">	<span class="hljs-keyword">float</span> StackCount;</span><br></pre></td></tr></table></figure></p>
+<h3 id="计算与监听属性">计算与监听属性</h3>
+<p>前面提到的<code>FindOrCreateAttributeAggregator</code>，创建完后就会调<code>AddAggregatorMod</code>， <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">for</span> (int32 ModIdx = <span class="hljs-number">0</span>; ModIdx &lt; Effect.Spec.Modifiers.Num(); ++ModIdx)</span><br><span class="line">&#123;</span><br><span class="line">  FAggregator* Aggregator = FindOrCreateAttributeAggregator(Effect.Spec.Def-&gt;Modifiers[ModIdx].Attribute).Get();</span><br><span class="line">  <span class="hljs-keyword">if</span> (ensure(Aggregator))</span><br><span class="line">  &#123;</span><br><span class="line">    Aggregator-&gt;AddAggregatorMod(EvaluatedMagnitude, ModInfo.ModifierOp, ModInfo.EvaluationChannelSettings.GetEvaluationChannel(), &amp;ModInfo.SourceTags, &amp;ModInfo.TargetTags, Effect.PredictionKey.WasLocallyGenerated(), Effect.Handle);</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure> AddMod完之后就马上算出这个Mod的数值并存到<code>EvaluatedMagnitude</code>中，调用了<code>BroadcastOnDirty()</code>触发聚合计算。并且向其依赖发广播，使得这个聚合器中某个Modifer的数值发生了改变，对其整个GE乃至其他GE的最终数值都发生变化， <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">void</span> FAggregator::AddAggregatorMod(<span class="hljs-keyword">float</span> EvaluatedMagnitude, TEnumAsByte&lt;EGameplayModOp::Type&gt; ModifierOp, EGameplayModEvaluationChannel ModifierChannel, <span class="hljs-keyword">const</span> FGameplayTagRequirements* SourceTagReqs, <span class="hljs-keyword">const</span> FGameplayTagRequirements* TargetTagReqs, <span class="hljs-keyword">bool</span> IsPredicted, FActiveGameplayEffectHandle ActiveHandle)</span><br><span class="line">&#123;</span><br><span class="line">	FAggregatorModChannel&amp; ModChannelToAddTo = ModChannels.FindOrAddModChannel(ModifierChannel);</span><br><span class="line">	ModChannelToAddTo.AddMod(EvaluatedMagnitude, ModifierOp, SourceTagReqs, TargetTagReqs, IsPredicted, ActiveHandle);</span><br><span class="line">	BroadcastOnDirty();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure> 这里注意到，从前面代码可以看出，<code>AddAggregatorMod</code>是在循环里面调用的，意味着在这个GE的Mod还没遍历完的时候就已经开始发送广播事件了。</p>
+<p>那么这个广播事件会触发哪些回调呢？在<code>FindOrCreateAttributeAggregator</code>创建Aggregator之后会注册回调， <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">NewAttributeAggregator-&gt;OnDirty.AddUObject(Owner, &amp;UAbilitySystemComponent::OnAttributeAggregatorDirty, Attribute, <span class="hljs-literal">false</span>);</span><br></pre></td></tr></table></figure> 回调会一直调到下面这里， <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">void</span> FActiveGameplayEffectsContainer::OnAttributeAggregatorDirty(FAggregator* Aggregator, FGameplayAttribute Attribute, <span class="hljs-keyword">bool</span> bFromRecursiveCall)</span><br><span class="line">&#123;</span><br><span class="line">	<span class="hljs-keyword">float</span> NewValue = Aggregator-&gt;Evaluate(EvaluationParameters);</span><br><span class="line">	InternalUpdateNumericalAttribute(Attribute, NewValue, <span class="hljs-literal">nullptr</span>, bFromRecursiveCall);</span><br></pre></td></tr></table></figure> 然后就调到<code>ModChannels::EvaluateWithBase</code>，也就是我们一开始的聚合公式的那个函数， <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">float</span> FAggregator::Evaluate(<span class="hljs-keyword">const</span> FAggregatorEvaluateParameters&amp; Parameters) <span class="hljs-keyword">const</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="hljs-keyword">return</span> ModChannels.EvaluateWithBase(BaseValue, Parameters);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure> <code>InternalUpdateNumericalAttribute</code>里面就会对AttributeSet进行修改。</p>
+<h3 id="属性依赖更新">属性依赖更新</h3>
+<p>GESpec初始化函数会对本GE涉及的属性进行存储， <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">void</span> FGameplayEffectSpec::Initialize(<span class="hljs-keyword">const</span> UGameplayEffect* InDef, <span class="hljs-keyword">const</span> FGameplayEffectContextHandle&amp; InEffectContext, <span class="hljs-keyword">float</span> InLevel)</span><br><span class="line">&#123;</span><br><span class="line">	SetupAttributeCaptureDefinitions();</span><br></pre></td></tr></table></figure> 最终存到这个属性里， <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">UPROPERTY(NotReplicated)</span><br><span class="line">FGameplayEffectAttributeCaptureSpecContainer CapturedRelevantAttributes;</span><br></pre></td></tr></table></figure></p>
+<p>函数<code>ApplyGameplayEffectSpec</code>中如下代码调用，到应用GE时，需要对该GE涉及的属性进行监听， <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">AppliedEffectSpec.CapturedRelevantAttributes.RegisterLinkedAggregatorCallbacks(AppliedActiveGE-&gt;Handle);</span><br></pre></td></tr></table></figure> <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">void</span> FGameplayEffectAttributeCaptureSpecContainer::RegisterLinkedAggregatorCallbacks(FActiveGameplayEffectHandle Handle) <span class="hljs-keyword">const</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="hljs-keyword">for</span> (<span class="hljs-keyword">const</span> FGameplayEffectAttributeCaptureSpec&amp; CaptureSpec : SourceAttributes)</span><br><span class="line">	&#123;</span><br><span class="line">		CaptureSpec.RegisterLinkedAggregatorCallback(Handle);</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="hljs-keyword">void</span> FGameplayEffectAttributeCaptureSpec::RegisterLinkedAggregatorCallback(FActiveGameplayEffectHandle Handle) <span class="hljs-keyword">const</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="hljs-keyword">if</span> (BackingDefinition.bSnapshot == <span class="hljs-literal">false</span>)</span><br><span class="line">	&#123;</span><br><span class="line">		FAggregator* Agg = AttributeAggregator.Get();</span><br><span class="line">		Agg-&gt;AddDependent(Handle);</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure> 不是<code>Snapshot</code>的话，就会调用加入到Aggregator的<code>Dependents</code>属性中。虽然这里调用套了很多层，本质上就是为了把当前GE涉及的所有属性的Aggregator拿出来，然后把自己注册到属性依赖里。</p>
+<p>注意，虽然它在<code>FGameplayEffectAttributeCaptureSpec</code>里拿到Aggregator，但并不代表Aggregator的生命期属于<code>FGameplayEffectAttributeCaptureSpec</code>，实际上从前面源码分析可知，Aggregator的生命期是属于<code>FActiveGameplayEffectsContainer</code>的，所以不同GE的同一种属性拿到的Aggregator是同一个。</p>
+<p>当导致属性产生变化时，会调用<code>BroadcastOnDirty</code>。其中会先对自身属性进行聚合计算，然后遍历<code>Dependents</code>，使依赖该属性的GE重新计算。</p>
+<p>触发依赖重新计算时，会调到依赖属性的<code>FAggregator::UpdateAggregatorMod</code>，他采用的方法是重新构建一个<code>FAggregatorMod</code>。因其本身也会对其依赖产生影响，所以要继续调<code>BroadcastOnDirty</code>。 <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">FAggregatorModChannel&amp; ModChannel = ModChannels.FindOrAddModChannel(ModDef.EvaluationChannelSettings.GetEvaluationChannel());</span><br><span class="line">ModChannel.AddMod(Spec.GetModifierMagnitude(ModIdx, <span class="hljs-literal">true</span>), ModDef.ModifierOp, &amp;ModDef.SourceTags, &amp;ModDef.TargetTags, bWasLocallyGenerated, InHandle);</span><br><span class="line">BroadcastOnDirty();</span><br></pre></td></tr></table></figure> 补充一个细节，<code>SetAttributeBaseValue</code>在更新AttributeSet的属性后还给Aggregator更新其BaseValue。比如玩家先上了一个Infinite的依赖生命值的GE，然后又上了一个Instance的修改生命值的GE，修改生命值后就会在该处修改Aggregator中生命值的BaseValue，然后<code>SetBaseValue</code>中就会调用<code>BroadcastOnDirty</code>。 <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">void</span> FActiveGameplayEffectsContainer::SetAttributeBaseValue(FGameplayAttribute Attribute, <span class="hljs-keyword">float</span> NewBaseValue)</span><br><span class="line">&#123;</span><br><span class="line">	FAggregatorRef* RefPtr = AttributeAggregatorMap.Find(Attribute);</span><br><span class="line">	<span class="hljs-keyword">if</span> (RefPtr)</span><br><span class="line">	&#123;</span><br><span class="line">		FAggregator* Aggregator = RefPtr-&gt;Get();</span><br><span class="line">		Aggregator-&gt;SetBaseValue(NewBaseValue);</span><br><span class="line">	&#125;</span><br></pre></td></tr></table></figure></p>
+<h3 id="自定义channel">自定义Channel</h3>
+<p>前面提到<code>FAggregatorModChannelContainer</code>这个东西可以放多个Channel，而默认只会有一个Channel，想开多个可以在<code>DefaultGame.ini</code>中加入如下配置， <figure class="highlight ini hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-section">[/Script/GameplayAbilities.AbilitySystemGlobals]</span></span><br><span class="line"><span class="hljs-attr">bAllowGameplayModEvaluationChannels</span>=<span class="hljs-literal">true</span></span><br><span class="line"><span class="hljs-attr">GameplayModEvaluationChannelAliases[0]</span>=<span class="hljs-string">"Channel0"</span></span><br><span class="line"><span class="hljs-attr">GameplayModEvaluationChannelAliases[1]</span>=<span class="hljs-string">"Channel1"</span></span><br></pre></td></tr></table></figure> Infinite或Has Duration的GE中Modifier就可以选择Channel了。</p>
+<p>我猜测它的设计用途是用来分开乘区进行属性计算的。如过不想这么做可以考虑不同乘区定义不同的属性，最后计算时再汇总，比如有时多个GE会对同一个乘区造成贡献。</p>
+<h2 id="预测">预测</h2>
+<p>所谓预测就是客户端先执行，然后通知服务端，服务端检查，然后告诉客户端是否被认可。若没被认可则客户端回滚操作。</p>
+<p>UE有一个通用的预测框架，写在<code>GameplayPrediction.cpp</code>里。GA的预测就是用的他，如果你有自己需要预测的功能，也可以用他。</p>
+<h3 id="fpredictionkey">FPredictionKey</h3>
+<p><code>FPredictionKey</code>结构体内部属性没什么好讲的，你可以把他看作是一个Key的整体。使用默认构造函数出来的<code>FPredictionKey</code>是被视为无效Key，必须是<code>CreateNewPredictionKey</code>等方法构造出来的才是有效的。有效性可以通过<code>IsValidKey</code>来判断。这么做其实是为了应对空值处理。</p>
+<h3 id="fpredictionkeydelegates">FPredictionKeyDelegates</h3>
+<p>FPredictionKeyDelegates是一个用来维护代理的结构体。 <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">FPredictionKeyDelegates</span></span></span><br><span class="line"><span class="hljs-class">&#123;</span></span><br><span class="line">	<span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">FDelegates</span></span></span><br><span class="line"><span class="hljs-class">	&#123;</span></span><br><span class="line">		TArray&lt;FPredictionKeyEvent&gt; RejectedDelegates;</span><br><span class="line">		TArray&lt;FPredictionKeyEvent&gt; CaughtUpDelegates;</span><br><span class="line">	&#125;;</span><br><span class="line"></span><br><span class="line">	TMap&lt;FPredictionKey::KeyType, FDelegates&gt; DelegateMap;</span><br></pre></td></tr></table></figure> <code>RejectedDelegates</code>表示被服务端拒绝时触发的代理。 <code>CaughtUpDelegates</code>表示被服务端认可时触发的代理。 <code>FPredictionKey</code>会作为一个索引从<code>DelegateMap</code>中找到代理回调。</p>
+<p>FPredictionKey里面有个封装函数可以注册代理回调， <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">FPredictionKey::NewRejectOrCaughtUpDelegate(FPredictionKeyEvent Event)</span><br><span class="line">FPredictionKey::NewCaughtUpDelegate()</span><br><span class="line">FPredictionKey::NewRejectedDelegate()</span><br></pre></td></tr></table></figure> 实际调用例子如下， <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">InPredictionKey.NewRejectOrCaughtUpDelegate(FPredictionKeyEvent::CreateUObject(Owner, &amp;UAbilitySystemComponent::RemoveActiveGameplayEffect_NoReturn, AppliedActiveGE-&gt;Handle, <span class="hljs-number">-1</span>));</span><br><span class="line">ScopedPredictionKey.NewCaughtUpDelegate().BindUObject(<span class="hljs-keyword">this</span>, &amp;UAbilitySystemComponent::OnClientActivateAbilityCaughtUp, Handle, ScopedPredictionKey.Current);</span><br></pre></td></tr></table></figure> 注册回调有了，那么触发回调呢？下面两个静态方法分别对应拒绝和认可。 <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">FPredictionKeyDelegates::BroadcastRejectedDelegate(PredictionKey);</span><br><span class="line">FPredictionKeyDelegates::BroadcastCaughtUpDelegate(PredictionKey)</span><br></pre></td></tr></table></figure> 讲到这里，应该可以勾勒出这个预测框架的使用方法了。比如我们在客户端提前干事情，就先构造<code>PredictionKey</code>以及注册成功或失败时的回调，然后开始干事情，然后再把<code>PredictionKey</code>发送给服务端。服务端检查这事是否合法，若合法就发RPC给客户端，让它调用<code>BroadcastCaughtUpDelegate</code>，若非法则让它调用<code>BroadcastRejectedDelegate</code>。</p>
+<h3 id="fscopedpredictionwindow">FScopedPredictionWindow</h3>
+<p><code>FScopedPredictionWindow</code>结构体则是对<code>PredictionKey</code>生命期管理的包装，利用RAII特性干两件事情： 1. 服务端从客户端获取到<code>PredictionKey</code>时，将其放入该包装，然后马上对这个预测进行处理。最后利用自动变量的析构函数，在函数结束时将<code>PredictionKey</code>清理并发回客户端。确保不会在处理其他事情时误访问到这个<code>PredictionKey</code>。 2. 客户端利用该包装构造<code>PredictionKey</code>，然后马上将<code>PredictionKey</code>发给服务端。利用自动变量的析构函数，在函数结束时将<code>PredictionKey</code>清理。确保不会在干其他事情时误使用到这个<code>PredictionKey</code>。</p>
+<p>通过这种方式，我们可以确保<code>PredictionKey</code>只能被使用一次。上面两个特性分别对应两个构造函数以及一个析构函数。</p>
+<p>第一个构造函数，客户端把<code>PredictionKey</code>传给服务端时，服务端调用。它会把<code>InPredictionKey</code>存入<code>AbilitySystemComponent-&gt;ScopedPredictionKey</code>。 <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">FScopedPredictionWindow::FScopedPredictionWindow(UAbilitySystemComponent* AbilitySystemComponent, FPredictionKey InPredictionKey, <span class="hljs-keyword">bool</span> InSetReplicatedPredictionKey <span class="hljs-comment">/*=true*/</span>)</span><br><span class="line">&#123;</span><br><span class="line">	<span class="hljs-keyword">if</span> (AbilitySystemComponent-&gt;IsNetSimulating() == <span class="hljs-literal">false</span>)</span><br><span class="line">	&#123;</span><br><span class="line">		AbilitySystemComponent-&gt;ScopedPredictionKey = InPredictionKey;</span><br><span class="line">	&#125;</span><br></pre></td></tr></table></figure> 第二个构造函数，客户端需要做某件事情时，需要生成新的<code>PredictionKey</code>。注意新生成不代表会覆盖原来的，它有一个依赖的概念。如果原来的Key还没清理，那么可以认为我们需要连续预测多件事情。可以让新Key与旧Key连接。比如先后生成了三个Key，依赖关系是X-&gt;Y-&gt;Z，Y预测失败会同时将Y、Z两个预测操作拒绝/回退。 <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">FScopedPredictionWindow::FScopedPredictionWindow(UAbilitySystemComponent* InAbilitySystemComponent, <span class="hljs-keyword">bool</span> bCanGenerateNewKey)</span><br><span class="line">&#123;</span><br><span class="line">	InAbilitySystemComponent-&gt;ScopedPredictionKey.GenerateDependentPredictionKey();</span><br></pre></td></tr></table></figure> 析构函数，如果是在服务端调用，就会把<code>ASC-&gt;ScopedPredictionKey</code>发回客户端去（发回客户端这一步暂不清楚是否是多余的）。然后客户端和服务端都会还原或清理其<code>ScopedPredictionKey</code>。 <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">FScopedPredictionWindow::~FScopedPredictionWindow()</span><br><span class="line">&#123;</span><br><span class="line">	OwnerPtr-&gt;ReplicatedPredictionKeyMap.ReplicatePredictionKey(OwnerPtr-&gt;ScopedPredictionKey);</span><br><span class="line">	OwnerPtr-&gt;ScopedPredictionKey = RestoreKey;</span><br></pre></td></tr></table></figure></p>
+<h3 id="ga的预测">GA的预测</h3>
+<p>配置为<code>LocalPredicted</code>的GA在激活的时候就会构造<code>FScopedPredictionWindow</code>，构造函数第二个参数为True明确表示会创建<code>PredictionKey</code>。然后传进了<code>CallServerTryActivateAbility</code>发往服务端。然后继续在本地激活GA。 <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">bool</span> UAbilitySystemComponent::InternalTryActivateAbility(FGameplayAbilitySpecHandle Handle, FPredictionKey InPredictionKey, UGameplayAbility** OutInstancedAbility, FOnGameplayAbilityEnded::FDelegate* OnGameplayAbilityEndedDelegate, <span class="hljs-keyword">const</span> FGameplayEventData* TriggerEventData)</span><br><span class="line">&#123;</span><br><span class="line">	<span class="hljs-keyword">if</span> (Ability-&gt;GetNetExecutionPolicy() == EGameplayAbilityNetExecutionPolicy::LocalPredicted)</span><br><span class="line">	&#123;</span><br><span class="line">		<span class="hljs-function">FScopedPredictionWindow <span class="hljs-title">ScopedPredictionWindow</span><span class="hljs-params">(<span class="hljs-keyword">this</span>, <span class="hljs-literal">true</span>)</span></span>;</span><br><span class="line">		ActivationInfo.SetPredicting(ScopedPredictionKey);</span><br><span class="line">		CallServerTryActivateAbility(Handle, Spec-&gt;InputPressed, ScopedPredictionKey);</span><br></pre></td></tr></table></figure> 失败的时候就会通过RPC<code>ClientActivateAbilityFailed</code>通知客户端执行被拒绝的回调。（成功则不需要触发，因为没有需要在成功时执行的回调） <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">void</span> UAbilitySystemComponent::ClientActivateAbilityFailed_Implementation(FGameplayAbilitySpecHandle Handle, int16 PredictionKey)</span><br><span class="line">&#123;</span><br><span class="line">	FPredictionKeyDelegates::BroadcastRejectedDelegate(PredictionKey);</span><br></pre></td></tr></table></figure></p>
+<h3 id="ge的预测">GE的预测</h3>
+<p>如果你用GA里面的接口来执行Apply GE，会默认调用<code>GetPredictionKeyForNewAction</code>接口来获取<code>PredictionKey</code>。这个接口会获取<code>ScopedPredictionKey</code>，但如果你的执行不在GA的<code>ScopedPredictionWindow</code>的生命期内（比如异步了），它就是一个无效的Key。这种情况你必须Apply前手动构建<code>ScopedPredictionWindow</code>。 <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">TArray&lt;FActiveGameplayEffectHandle&gt; UGameplayAbility::ApplyGameplayEffectSpecToTarget(<span class="hljs-keyword">const</span> FGameplayAbilitySpecHandle AbilityHandle, <span class="hljs-keyword">const</span> FGameplayAbilityActorInfo* ActorInfo, <span class="hljs-keyword">const</span> FGameplayAbilityActivationInfo ActivationInfo, <span class="hljs-keyword">const</span> FGameplayEffectSpecHandle SpecHandle, <span class="hljs-keyword">const</span> FGameplayAbilityTargetDataHandle&amp; TargetData) <span class="hljs-keyword">const</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="hljs-keyword">for</span> (TSharedPtr&lt;FGameplayAbilityTargetData&gt; Data : TargetData.Data)</span><br><span class="line">	&#123;</span><br><span class="line">		Data-&gt;ApplyGameplayEffectSpec(*SpecHandle.Data.Get(), ActorInfo-&gt;AbilitySystemComponent-&gt;GetPredictionKeyForNewAction())</span><br></pre></td></tr></table></figure> 要注意ASC组件的Apply GE接口默认是不会传<code>PredictionKey</code>的，如果你直接调用它的接口，则无法具备预测功能。如果非要调用，你可以模仿GA手动调用<code>GetPredictionKeyForNewAction</code>传进去。</p>
+<p>ASC组件中的<code>HasNetworkAuthorityToApplyGameplayEffect</code>进行了检查，只有在<code>Authority</code>与传入有效<code>PredictionKey</code>才能执行。使用默认构造函数的<code>PredictionKey</code>是无效的。 <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">bool</span> UAbilitySystemComponent::HasNetworkAuthorityToApplyGameplayEffect(FPredictionKey PredictionKey) <span class="hljs-keyword">const</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="hljs-keyword">return</span> (IsOwnerActorAuthoritative() || PredictionKey.IsValidForMorePrediction());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure> Apply时，如果是客户端执行则会走下面else部分代码，注册好回调，手动调用<code>MarkArrayDirty()</code>以便于客户端本地能够修改<code>FActiveGameplayEffectsContainer</code>。如果是服务端则走if部分代码，<code>MarkItemDirty</code>使得<code>AppliedActiveGE</code>能够快速同步给客户端，这是<code>FFastArraySerializer</code>的功能。 <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">FActiveGameplayEffect* FActiveGameplayEffectsContainer::ApplyGameplayEffectSpec(<span class="hljs-keyword">const</span> FGameplayEffectSpec&amp; Spec, FPredictionKey&amp; InPredictionKey, <span class="hljs-keyword">bool</span>&amp; bFoundExistingStackableGE)</span><br><span class="line">&#123;</span><br><span class="line">	<span class="hljs-keyword">if</span> (InPredictionKey.IsLocalClientKey() == <span class="hljs-literal">false</span> || IsNetAuthority())</span><br><span class="line">	&#123;</span><br><span class="line">		MarkItemDirty(*AppliedActiveGE);</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="hljs-keyword">else</span></span><br><span class="line">	&#123;</span><br><span class="line">		MarkArrayDirty();</span><br><span class="line">		InPredictionKey.NewRejectOrCaughtUpDelegate(FPredictionKeyEvent::CreateUObject(Owner, &amp;UAbilitySystemComponent::RemoveActiveGameplayEffect_NoReturn, AppliedActiveGE-&gt;Handle, <span class="hljs-number">-1</span>));</span><br><span class="line">	&#125;</span><br></pre></td></tr></table></figure> AppliedActiveGE会被同步至客户端的<code>ActiveGameplayEffectsContainer</code>，然后在客户端执行<code>FActiveGameplayEffect::PostReplicatedAdd</code>，里面执行使GE生效的逻辑。</p>
+<p>对于GE来说，它会无条件用服务端的Active GE去覆盖客户端本地生成的Active GE。严格的讲不能叫覆盖，而是客户端会执行服务端下发的Active GE，然后把自己预测的GE移除。上面注册的回调<code>RemoveActiveGameplayEffect_NoReturn</code>就是干这个事情。 <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">RemoveActiveGameplayEffect_NoReturn</span><span class="hljs-params">(FActiveGameplayEffectHandle Handle, int32 StacksToRemove=<span class="hljs-number">-1</span>)</span></span></span><br><span class="line"><span class="hljs-function"></span>&#123;</span><br><span class="line">	RemoveActiveGameplayEffect(Handle, StacksToRemove);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h3 id="客户端属性修正">客户端属性修正</h3>
+<p>如果客户端存在预测GE，该GE可能会修改本地属性，如果该属性在服务端发生了变化，比如通过<code>SetXXX()</code>来修改，而没有通过GE，那么该属性同步到客户端后并不会产生依赖计算。这种情况，我们应该通知客户端GE更新其Aggregator里面的BaseValue。</p>
+<p>以<code>Level</code>属性为例，我们需要把属性标记为可复制。然后在<code>OnRep</code>函数中调用宏<code>GAMEPLAYATTRIBUTE_REPNOTIFY</code>，这个宏就是用来更新Aggregator的。 <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">UPROPERTY(ReplicatedUsing=OnRep_Level, EditAnywhere, BlueprintReadWrite, Category=Attributes)</span><br><span class="line">FGameplayAttributeData Level;</span><br><span class="line">ATTRIBUTE_ACCESSORS(UWrapAttributeSet, Level);</span><br><span class="line"></span><br><span class="line">UFUNCTION()</span><br><span class="line"><span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">OnRep_Level</span><span class="hljs-params">(<span class="hljs-keyword">const</span> FGameplayAttributeData&amp; OldValue)</span></span>;</span><br></pre></td></tr></table></figure> <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">void</span> UWrapAttributeSet::GetLifetimeReplicatedProps(TArray&lt;FLifetimeProperty&gt;&amp; OutLifetimeProps) <span class="hljs-keyword">const</span></span><br><span class="line">&#123;</span><br><span class="line">	Super::GetLifetimeReplicatedProps(OutLifetimeProps);</span><br><span class="line">	DOREPLIFETIME_CONDITION_NOTIFY(UWrapAttributeSet, Level, COND_None, REPNOTIFY_Always);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="hljs-keyword">void</span> UWrapAttributeSet::OnRep_Level(<span class="hljs-keyword">const</span> FGameplayAttributeData&amp; OldValue)</span><br><span class="line">&#123;</span><br><span class="line">	GAMEPLAYATTRIBUTE_REPNOTIFY(UWrapAttributeSet, Level, OldValue);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure> 里面调用了<code>SetBaseAttributeValueFromReplication</code>来更新属性， <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-meta">#<span class="hljs-meta-keyword">define</span> GAMEPLAYATTRIBUTE_REPNOTIFY(ClassName, PropertyName, OldValue) \</span></span><br><span class="line">&#123; \</span><br><span class="line">	<span class="hljs-keyword">static</span> FProperty* ThisProperty = FindFieldChecked&lt;FProperty&gt;(ClassName::StaticClass(), GET_MEMBER_NAME_CHECKED(ClassName, PropertyName)); \</span><br><span class="line">	GetOwningAbilitySystemComponentChecked()-&gt;SetBaseAttributeValueFromReplication(FGameplayAttribute(ThisProperty), PropertyName, OldValue); \</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h2 id="堆叠">堆叠</h2>
+<p>在Apply是会检查一次目标GE是否已经存在并可以堆叠。函数位置如下， <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">FActiveGameplayEffect* FActiveGameplayEffectsContainer::FindStackableActiveGameplayEffect(<span class="hljs-keyword">const</span> FGameplayEffectSpec&amp; Spec)</span><br></pre></td></tr></table></figure> <code>StackingType</code>不为None，且DurationPolicy不为Instant的时候，从所有Active Effect里查找，CDO为同一对象的，并且发起者为同一人时则认为可以堆叠。</p>
+<p>发现可堆叠后会检查一次是否达到堆叠上限<code>StackLimitCount</code>，若到了上限，再检查是否有需要Apply的<code>OverflowEffects</code>。以及若配置了<code>DenyOverflowApplication</code>，则还会清理掉堆叠的GE。 <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category=Overflow, meta=(EditCondition=<span class="hljs-string">"bDenyOverflowApplication"</span>))</span><br><span class="line"><span class="hljs-keyword">bool</span> bClearStackOnOverflow;</span><br></pre></td></tr></table></figure> 这个功能的场景就类似于上中毒BUFF，中毒到第5层就造成大量伤害，并清掉中毒BUFF。</p>
+<p><code>StackDurationRefreshPolicy</code>配置之后，若发生堆叠则更新该Active GE的开始时间之类的参数，以及重新计时。 <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">bool</span> bSetDuration = <span class="hljs-literal">true</span>;</span><br><span class="line"></span><br><span class="line"><span class="hljs-keyword">if</span> (GEDef-&gt;StackDurationRefreshPolicy == EGameplayEffectStackingDurationPolicy::NeverRefresh)</span><br><span class="line">&#123;</span><br><span class="line">	bSetDuration = <span class="hljs-literal">false</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="hljs-keyword">else</span></span><br><span class="line">&#123;</span><br><span class="line">	RestartActiveGameplayEffectDuration(*ExistingStackableGE);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="hljs-keyword">if</span> (Owner &amp;&amp; bSetDuration)</span><br><span class="line">&#123;</span><br><span class="line">	FTimerManager&amp; TimerManager = Owner-&gt;GetWorld()-&gt;GetTimerManager();</span><br><span class="line">	FTimerDelegate Delegate = FTimerDelegate::CreateUObject(Owner, &amp;UAbilitySystemComponent::CheckDurationExpired, AppliedActiveGE-&gt;Handle);</span><br><span class="line">	TimerManager.SetTimer(AppliedActiveGE-&gt;DurationHandle, Delegate, FinalDuration, <span class="hljs-literal">false</span>);</span><br><span class="line">	TimerManager.SetTimerForNextTick(Delegate);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure> <code>StackPeriodResetPolicy</code>与<code>StackDurationRefreshPolicy</code>类似，就不赘述了。</p>
+<p><code>StackExpirationPolicy</code>则定义GE的Duration到期后要如何处理。比如你中毒BUFF到期后是减一层呢还是整个BUFF去掉。 <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">switch</span>(Effect.Spec.Def-&gt;StackExpirationPolicy)</span><br><span class="line">&#123;</span><br><span class="line"><span class="hljs-keyword">case</span> EGameplayEffectStackingExpirationPolicy::ClearEntireStack:</span><br><span class="line">	StacksToRemove = <span class="hljs-number">-1</span>; <span class="hljs-comment">// Remove all stacks</span></span><br><span class="line">	CheckForFinalPeriodicExec = <span class="hljs-literal">true</span>;					</span><br><span class="line">	<span class="hljs-keyword">break</span>;</span><br><span class="line"><span class="hljs-keyword">case</span> EGameplayEffectStackingExpirationPolicy::RemoveSingleStackAndRefreshDuration:</span><br><span class="line">	StacksToRemove = <span class="hljs-number">1</span>;</span><br><span class="line">	CheckForFinalPeriodicExec = (Effect.Spec.StackCount == <span class="hljs-number">1</span>);</span><br><span class="line">	RefreshStartTime = <span class="hljs-literal">true</span>;</span><br><span class="line">	RefreshDurationTimer = <span class="hljs-literal">true</span>;</span><br><span class="line">	<span class="hljs-keyword">break</span>;</span><br><span class="line"><span class="hljs-keyword">case</span> EGameplayEffectStackingExpirationPolicy::RefreshDuration:</span><br><span class="line">	RefreshStartTime = <span class="hljs-literal">true</span>;</span><br><span class="line">	RefreshDurationTimer = <span class="hljs-literal">true</span>;</span><br><span class="line">	<span class="hljs-keyword">break</span>;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></p>
+<h2 id="自定义属性计算的自定义依赖">自定义属性计算的自定义依赖</h2>
+<p>自定义属性计算就是继承<code>UGameplayModMagnitudeCalculation</code>来实现自己的计算公式，本身流程有较多重复，这里就不赘述了。</p>
+<p>它有个特别的功能，除了默认的属性依赖外，它可以自定义依赖。实现方式是定义一个代理，然后需要重新计算时，就触发这个代理。</p>
+<p><code>AddCustomMagnitudeExternalDependencies</code>中有如下代码， <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">FOnExternalGameplayModifierDependencyChange* ExternalDelegate = ModCalcClassCDO-&gt;GetExternalModifierDependencyMulticast(Effect.Spec, World);</span><br><span class="line"><span class="hljs-keyword">if</span> (ExternalDelegate &amp;&amp; (bIsNetAuthority || ModCalcClassCDO-&gt;ShouldAllowNonNetAuthorityDependencyRegistration()))</span><br><span class="line">&#123;</span><br><span class="line">	FCustomModifierDependencyHandle&amp; NewDependencyHandle = CustomMagnitudeClassDependencies.Add(ModCalcClassKey);</span><br><span class="line">	NewDependencyHandle.ActiveDelegateHandle = ExternalDelegate-&gt;AddRaw(<span class="hljs-keyword">this</span>, &amp;FActiveGameplayEffectsContainer::OnCustomMagnitudeExternalDependencyFired, ModCalcClass);</span><br><span class="line">	NewDependencyHandle.ActiveEffectHandles.Add(Effect.Handle);</span><br></pre></td></tr></table></figure> 重写<code>GetExternalModifierDependencyMulticast</code>返回指定代理即可。</p>
+<h2 id="gameplayeffect对cdo的修改">GameplayEffect对CDO的修改</h2>
+<p>GE里面有个特性，你给GameplayEffectAssetTag里的Added增加一个Tag，编译之后CombinedTags配置也会自动新增这个Tag。这部分的代码位置如下， <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">void</span> UGameplayEffect::PostEditChangeProperty(FPropertyChangedEvent&amp; PropertyChangedEvent)</span><br></pre></td></tr></table></figure> <code>PostEditChangeProperty</code>是一个基类函数，可以监听所有配置的变化。里面的实现就是获取了CDO然后，然后修改CDO里面的CombinedTags。</p>
+<p>以后有类似修改一个配置就自动修改另一个配置的需求可以参考这个做法。但要注意一致性，有可能你自动修改后，又有人不小心改错了这个自动配置的参数。CombinedTags是一个只读参数所以不会有一致性问题。</p>
+
+    
+    </div>
+    
+    <div class="columns is-variable is-1 is-multiline is-mobile">
+    
+        <span class="column is-narrow"><a class="tag is-light article-tag" href="/tags/%E6%B8%B8%E6%88%8F%E5%BC%80%E5%8F%91/">#游戏开发</a></span>
+    
+        <span class="column is-narrow"><a class="tag is-light article-tag" href="/tags/Unreal/">#Unreal</a></span>
+    
+    </div>
+    
+    <!-- 
+    <span id="post/GAS-GE/" class="leancloud_visitors" data-flag-title="Unreal GameplayEffect 源码分析">
+        <em class="post-meta-item-text">阅读量 </em>
+        <i class="leancloud-visitors-count">1000000</i>
+    </span>
+     -->
+    
+    <div class="go-next columns is-mobile is-multiline article-nav">
+        <span class="column is-12-mobile is-half-desktop is-hidden-mobile article-nav-prev">
+            
+        </span>
+        <span class="column is-12-mobile is-half-desktop  article-nav-next">
+            
+            <a href="/post/k8s-client-go/">Kubernetes Client-go 源码解析</a>
+            
+        </span>
+    </div>
+    
+</article>
+
+
+
+<div class="comments">
+    <h3 class="title is-4">Comments</h3>
+    
+<div id="valine-thread"></div>
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+<script>
+    new Valine({
+        el: '#valine-thread',
+        appId: 'DEXiOMuMN86LKmdUtJYX4FRL-MdYXbMMI',
+        appKey: 'tPt6E0GhkwXKEBUacbugDcWb',
+        notify: true,
+        verify: false,
+        avatar: '',
+        placeholder: 'Say something...',
+        meta: ['nick', 'mail'],
+        visitor: true,
+        lang: ''
+    })
+</script>
+
+
+</div>
+
+    </div>
+</section>
+    <footer class="footer">
+    <div class="container">
+        <div class="columns content">
+            <div class="column is-narrow has-text-centered">
+                &copy; 2024 Black Redscarf&nbsp;
+                Powered by <a href="http://hexo.io/" target="_blank">Hexo</a> & <a
+                        href="http://github.com/ppoffice/hexo-theme-minos">Minos</a>
+            </div>
+            <div class="column is-hidden-mobile"></div>
+
+            
+            <div class="column is-narrow">
+                <div class="columns is-mobile is-multiline is-centered">
+                
+                    
+                <a class="column is-narrow has-text-black" title="GitHub" href="https://github.com/blackredscarf" target="_blank" rel="noopener">
+                    
+                    GitHub
+                    
+                </a>
+                
+                </div>
+            </div>
+            
+            
+        </div>
+    </div>
+</footer>
+    <script src="https://lf6-cdn-tos.bytecdntp.com/cdn/expire-1-M/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/moment.js/2.22.2/moment-with-locales.min.js"></script>
+
+<!-- test if the browser is outdated -->
+<div id="outdated">
+    <h6>Your browser is out-of-date!</h6>
+    <p>Update your browser to view this website correctly. <a id="btnUpdateBrowser" href="http://outdatedbrowser.com/" target="_blank" rel="noopener">Update my browser now </a></p>
+    <p class="last"><a href="#" id="btnCloseUpdateBrowser" title="Close">&times;</a></p>
+</div>
+<script src="https://lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/outdated-browser/1.1.5/outdatedbrowser.min.css"></script>
+<script>
+    $(document).ready(function () {
+        // plugin function, place inside DOM ready function
+        outdatedBrowser({
+            bgColor: '#f25648',
+            color: '#ffffff',
+            lowerThan: 'flex'
+        })
+    });
+</script>
+
+<script>
+    window.FontAwesomeConfig = {
+        searchPseudoElements: true
+    }
+    moment.locale("en-AU");
+</script>
+
+
+    
+    
+<script src="https://lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/mathjax/2.7.4/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+<script>
+    MathJax.Hub.Config({
+        "HTML-CSS": {
+            matchFontHeight: false
+        },
+        SVG: {
+            matchFontHeight: false
+        },
+        CommonHTML: {
+            matchFontHeight: false
+        },
+        tex2jax: {
+            inlineMath: [ ['$','$'],['\\(','\\)'] ],
+            displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+            processEscapes: false
+        }
+    });
+</script>
+
+    
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/katex.min.css" integrity="sha384-9eLZqc9ds8eNjO3TmqPeYcDj8n+Qfa4nuSiGYa6DjLNcv9BtN69ZIulL9+8CqC9Y" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/katex.min.js" integrity="sha384-K3vbOmF2BtaVai+Qk37uypf7VrgBubhQreNQe9aGsz9lB63dIFiQVlJbr92dw2Lx" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/contrib/auto-render.min.js" integrity="sha384-kmZOZB5ObwgQnS/DuDg6TScgOiWWBiVt0plIRkZCmE6rDZGrEOQeHM5PcHi+nyqe" crossorigin="anonymous"
+        onload="renderMathInElement(document.body);"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    renderMathInElement(document.body, {
+        // ...options...
+    });
+});
+</script>
+
+    
+    
+<script src="https://lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/lightgallery/1.6.8/js/lightgallery-all.min.js"></script>
+<script src="https://lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/justifiedGallery/3.8.1/jsjustifiedGallery.min.js/jquery."></script>
+<script>
+    (function ($) {
+        $(document).ready(function () {
+            if (typeof($.fn.lightGallery) === 'function') {
+                $('.article.gallery').lightGallery({ selector: '.gallery-item' });
+            }
+            if (typeof($.fn.justifiedGallery) === 'function') {
+                $('.justified-gallery').justifiedGallery();
+            }
+        });
+    })(jQuery);
+</script>
+
+    
+    
+    <script src="https://lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/clipboard.js/2.0.0/clipboard.min.js"></script>
+    <style>
+        .hljs {
+            position: relative;
+        }
+
+        .hljs .clipboard-btn {
+            float: right;
+            color: #9a9a9a;
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+
+        .hljs .clipboard-btn:hover {
+          color: #8a8a8a;
+        }
+
+        .hljs > .clipboard-btn {
+            display: none;
+            position: absolute;
+            right: 4px;
+            top: 4px;
+        }
+
+        .hljs:hover > .clipboard-btn {
+            display: inline;
+        }
+
+        .hljs > figcaption > .clipboard-btn {
+            margin-right: 4px;
+        }
+    </style>
+    <script>
+      $(document).ready(function () {
+        $('figure.hljs').each(function(i, figure) {
+          var codeId = 'code-' + i;
+          var code = figure.querySelector('.code');
+          var copyButton = $('<button>Copy <i class="far fa-clipboard"></i></button>');
+          code.id = codeId;
+          copyButton.addClass('clipboard-btn');
+          copyButton.attr('data-clipboard-target-id', codeId);
+
+          var figcaption = figure.querySelector('figcaption');
+
+          if (figcaption) {
+            figcaption.append(copyButton[0]);
+          } else {
+            figure.prepend(copyButton[0]);
+          }
+        })
+
+        var clipboard = new ClipboardJS('.clipboard-btn', {
+          target: function(trigger) {
+            return document.getElementById(trigger.getAttribute('data-clipboard-target-id'));
+          }
+        });
+        clipboard.on('success', function(e) {
+          e.clearSelection();
+        })
+      })
+    </script>
+
+    
+    
+
+    
+
+
+<script src="/js/script.js"></script>
+
+    
+    <div class="searchbox ins-search">
+    <div class="searchbox-mask"></div>
+    <div class="searchbox-container ins-search-container">
+        <div class="searchbox-input-wrapper">
+            <input type="text" class="searchbox-input ins-search-input" placeholder="Type something..." />
+            <span class="searchbox-close ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="searchbox-result-wrapper ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+    (function (window) {
+        var INSIGHT_CONFIG = {
+            TRANSLATION: {
+                POSTS: 'Posts',
+                PAGES: 'Pages',
+                CATEGORIES: 'Categories',
+                TAGS: 'Tags',
+                UNTITLED: '(Untitled)',
+            },
+            CONTENT_URL: '/content.json',
+        };
+        window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+    })(window);
+</script>
+<script src="/js/insight.js"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    
+</body>
+</html>

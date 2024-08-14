@@ -113,6 +113,9 @@
                href="/archives">归档</a>
             
             <a class="navbar-item "
+               href="/categories/%E6%B8%B8%E6%88%8F%E5%BC%80%E5%8F%91">游戏开发</a>
+            
+            <a class="navbar-item "
                href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F">操作系统</a>
             
             <a class="navbar-item "
@@ -125,13 +128,167 @@
                href="/categories/%E9%9A%8F%E8%AE%B0">随记</a>
             
             <a class="navbar-item "
-               href="/categories/NLP">NLP</a>
-            
-            <a class="navbar-item "
                href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0">机器学习</a>
             
         </div>
         
+        
+        <div class="navbar-menu navbar-end">
+            <!-- 
+            <a class="navbar-item search" title="Search" href="javascript:;" target="_blank" rel="noopener">
+                <i class="fas fa-search"></i>
+            </a>
+             -->
+            
+            <div class="navbar-item is-hoverable has-dropdown is-hidden-mobile is-hidden-tablet-only toc">
+                <a class="navbar-item" title="Table of Contents">
+                    <i class="fa fa-list"></i>
+                </a>
+                <div class="navbar-dropdown is-right">
+                    
+                    
+                    
+                    
+                    <a class="navbar-item" href="#resourceversion">1&nbsp;&nbsp;<b>ResourceVersion</b></a>
+                    
+                    
+                    <hr class="navbar-divider">
+                    
+                    
+                    <a class="navbar-item" href="#api访问例子">2&nbsp;&nbsp;<b>API访问例子</b></a>
+                    
+                    
+                    <hr class="navbar-divider">
+                    
+                    
+                    <a class="navbar-item" href="#informer">3&nbsp;&nbsp;<b>Informer</b></a>
+                    
+                    
+                    <hr class="navbar-divider">
+                    
+                    
+                    <a class="navbar-item" href="#store">4&nbsp;&nbsp;<b>Store</b></a>
+                    
+                    
+                    <hr class="navbar-divider">
+                    
+                    
+                    <a class="navbar-item" href="#deltafifo">5&nbsp;&nbsp;<b>DeltaFIFO</b></a>
+                    
+                    
+                    
+                    <a class="navbar-item" href="#threadsafemap">5.1&nbsp;&nbsp;threadSafeMap</a>
+                    
+                    
+                    
+                    <a class="navbar-item" href="#pop">5.2&nbsp;&nbsp;Pop</a>
+                    
+                    
+                    
+                    <a class="navbar-item" href="#hassynced">5.3&nbsp;&nbsp;HasSynced</a>
+                    
+                    
+                    
+                    <a class="navbar-item" href="#resync">5.4&nbsp;&nbsp;Resync</a>
+                    
+                    
+                    
+                    <a class="navbar-item" href="#deltas">5.5&nbsp;&nbsp;Deltas</a>
+                    
+                    
+                    <hr class="navbar-divider">
+                    
+                    
+                    <a class="navbar-item" href="#indexer">6&nbsp;&nbsp;<b>Indexer</b></a>
+                    
+                    
+                    <hr class="navbar-divider">
+                    
+                    
+                    <a class="navbar-item" href="#indexerinformer">7&nbsp;&nbsp;<b>IndexerInformer</b></a>
+                    
+                    
+                    <hr class="navbar-divider">
+                    
+                    
+                    <a class="navbar-item" href="#reflector">8&nbsp;&nbsp;<b>Reflector</b></a>
+                    
+                    
+                    
+                    <a class="navbar-item" href="#listandwatch">8.1&nbsp;&nbsp;ListAndWatch</a>
+                    
+                    
+                    
+                    <a class="navbar-item" href="#类型检查">8.2&nbsp;&nbsp;类型检查</a>
+                    
+                    
+                    <hr class="navbar-divider">
+                    
+                    
+                    <a class="navbar-item" href="#listerwatcher">9&nbsp;&nbsp;<b>ListerWatcher</b></a>
+                    
+                    
+                    <hr class="navbar-divider">
+                    
+                    
+                    <a class="navbar-item" href="#restclient和restclient.request">10&nbsp;&nbsp;<b>RestClient和restclient.Request</b></a>
+                    
+                    
+                    <hr class="navbar-divider">
+                    
+                    
+                    <a class="navbar-item" href="#controller">11&nbsp;&nbsp;<b>Controller</b></a>
+                    
+                    
+                    <hr class="navbar-divider">
+                    
+                    
+                    <a class="navbar-item" href="#sharedindexinformer">12&nbsp;&nbsp;<b>SharedIndexInformer</b></a>
+                    
+                    
+                    <hr class="navbar-divider">
+                    
+                    
+                    <a class="navbar-item" href="#sharedinformerfactory">13&nbsp;&nbsp;<b>SharedInformerFactory</b></a>
+                    
+                    
+                    <hr class="navbar-divider">
+                    
+                    
+                    <a class="navbar-item" href="#workqueue-和-ratelimiting">14&nbsp;&nbsp;<b>Workqueue 和 RateLimiting</b></a>
+                    
+                    
+                    
+                    <a class="navbar-item" href="#构造">14.1&nbsp;&nbsp;构造</a>
+                    
+                    
+                    
+                    <a class="navbar-item" href="#addratelimited">14.2&nbsp;&nbsp;AddRateLimited</a>
+                    
+                    
+                    <hr class="navbar-divider">
+                    
+                    
+                    <a class="navbar-item" href="#discovery">15&nbsp;&nbsp;<b>Discovery</b></a>
+                    
+                    
+                    <hr class="navbar-divider">
+                    
+                    
+                    <a class="navbar-item" href="#restmapper">16&nbsp;&nbsp;<b>RESTMapper</b></a>
+                    
+                </div>
+            </div>
+            
+            <!-- 
+            <a class="navbar-item" title="GitHub" href="https://github.com/blackredscarf" target="_blank" rel="noopener">
+                
+                <i class="fab fa-github"></i>
+                
+            </a>
+               
+             -->
+        </div>
         
     </div>
 </nav>
@@ -323,7 +480,9 @@
      -->
     
     <div class="go-next columns is-mobile is-multiline article-nav">
-        <span class="column is-12-mobile is-half-desktop is-hidden-mobile article-nav-prev">
+        <span class="column is-12-mobile is-half-desktop  article-nav-prev">
+            
+            <a href="/post/GAS-GE/">Unreal GameplayEffect 源码分析</a>
             
         </span>
         <span class="column is-12-mobile is-half-desktop  article-nav-next">
@@ -367,7 +526,7 @@
     <div class="container">
         <div class="columns content">
             <div class="column is-narrow has-text-centered">
-                &copy; 2022 Black Redscarf&nbsp;
+                &copy; 2024 Black Redscarf&nbsp;
                 Powered by <a href="http://hexo.io/" target="_blank">Hexo</a> & <a
                         href="http://github.com/ppoffice/hexo-theme-minos">Minos</a>
             </div>

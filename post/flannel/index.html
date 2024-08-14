@@ -117,6 +117,9 @@
                href="/archives">归档</a>
             
             <a class="navbar-item "
+               href="/categories/%E6%B8%B8%E6%88%8F%E5%BC%80%E5%8F%91">游戏开发</a>
+            
+            <a class="navbar-item "
                href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F">操作系统</a>
             
             <a class="navbar-item "
@@ -129,13 +132,109 @@
                href="/categories/%E9%9A%8F%E8%AE%B0">随记</a>
             
             <a class="navbar-item "
-               href="/categories/NLP">NLP</a>
-            
-            <a class="navbar-item "
                href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0">机器学习</a>
             
         </div>
         
+        
+        <div class="navbar-menu navbar-end">
+            <!-- 
+            <a class="navbar-item search" title="Search" href="javascript:;" target="_blank" rel="noopener">
+                <i class="fas fa-search"></i>
+            </a>
+             -->
+            
+            <div class="navbar-item is-hoverable has-dropdown is-hidden-mobile is-hidden-tablet-only toc">
+                <a class="navbar-item" title="Table of Contents">
+                    <i class="fa fa-list"></i>
+                </a>
+                <div class="navbar-dropdown is-right">
+                    
+                    
+                    
+                    
+                    <a class="navbar-item" href="#docker网络">1&nbsp;&nbsp;<b>Docker网络</b></a>
+                    
+                    
+                    <hr class="navbar-divider">
+                    
+                    
+                    <a class="navbar-item" href="#k8s网络">2&nbsp;&nbsp;<b>K8s网络</b></a>
+                    
+                    
+                    <hr class="navbar-divider">
+                    
+                    
+                    <a class="navbar-item" href="#flannel后端类型">3&nbsp;&nbsp;<b>Flannel后端类型</b></a>
+                    
+                    
+                    
+                    <a class="navbar-item" href="#vxlan">3.1&nbsp;&nbsp;VXLAN</a>
+                    
+                    
+                    
+                    <a class="navbar-item" href="#host-gw">3.2&nbsp;&nbsp;host-gw</a>
+                    
+                    
+                    
+                    <a class="navbar-item" href="#udp">3.3&nbsp;&nbsp;UDP</a>
+                    
+                    
+                    <hr class="navbar-divider">
+                    
+                    
+                    <a class="navbar-item" href="#flannel-udp的网络传输">4&nbsp;&nbsp;<b>Flannel UDP的网络传输</b></a>
+                    
+                    
+                    
+                    <a class="navbar-item" href="#情况1在容器内通过cluster-ip发送到另一台主机上">4.1.1&nbsp;&nbsp;情况1：在容器内通过Cluster-IP发送到另一台主机上</a>
+                    
+                    
+                    
+                    <a class="navbar-item" href="#情况2在主机通过cluster-ip发送到另一台主机上">4.1.2&nbsp;&nbsp;情况2：在主机通过Cluster-IP发送到另一台主机上</a>
+                    
+                    
+                    
+                    <a class="navbar-item" href="#情况3在容器内通过pod-ip发送到另一台主机上">4.1.3&nbsp;&nbsp;情况3：在容器内通过Pod-IP发送到另一台主机上</a>
+                    
+                    
+                    
+                    <a class="navbar-item" href="#情况4在主机通过pod-ip发送到另一台主机上">4.1.4&nbsp;&nbsp;情况4：在主机通过Pod-IP发送到另一台主机上</a>
+                    
+                    
+                    
+                    <a class="navbar-item" href="#情况5在容器内通过cluster-ip发送到自己主机上">4.1.5&nbsp;&nbsp;情况5：在容器内通过Cluster-IP发送到自己主机上</a>
+                    
+                    
+                    
+                    <a class="navbar-item" href="#情况6在主机通过cluster-ip发送到自己主机上">4.1.6&nbsp;&nbsp;情况6：在主机通过Cluster-IP发送到自己主机上</a>
+                    
+                    
+                    
+                    <a class="navbar-item" href="#情况7在容器内通过pod-ip发送到自己主机上">4.1.7&nbsp;&nbsp;情况7：在容器内通过Pod-IP发送到自己主机上</a>
+                    
+                    
+                    
+                    <a class="navbar-item" href="#情况8在主机通过pod-ip发送到自己主机上">4.1.8&nbsp;&nbsp;情况8：在主机通过Pod-IP发送到自己主机上</a>
+                    
+                    
+                    <hr class="navbar-divider">
+                    
+                    
+                    <a class="navbar-item" href="#flannel-host-gw的网络传输">5&nbsp;&nbsp;<b>Flannel host-gw的网络传输</b></a>
+                    
+                </div>
+            </div>
+            
+            <!-- 
+            <a class="navbar-item" title="GitHub" href="https://github.com/blackredscarf" target="_blank" rel="noopener">
+                
+                <i class="fab fa-github"></i>
+                
+            </a>
+               
+             -->
+        </div>
         
     </div>
 </nav>
@@ -326,7 +425,7 @@
     <div class="container">
         <div class="columns content">
             <div class="column is-narrow has-text-centered">
-                &copy; 2022 Black Redscarf&nbsp;
+                &copy; 2024 Black Redscarf&nbsp;
                 Powered by <a href="http://hexo.io/" target="_blank">Hexo</a> & <a
                         href="http://github.com/ppoffice/hexo-theme-minos">Minos</a>
             </div>
