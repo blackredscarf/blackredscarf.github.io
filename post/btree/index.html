@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html class="has-navbar-fixed-top">
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="utf-8">
+<title>Unreal BehaviorTree 源码分析 - 绯色的魔法世界</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+<link rel="stylesheet" href="https://lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/outdated-browser/1.1.5/outdatedbrowser.min.css">
+
+
+
+
+<meta name="description" content="">
+
+
+
+
+
+    <meta name="description" content="虚幻引擎的行为树不同于传统行为树，它新增了Decorator和Service两个功能组件，而且不再是每次都从根节点开始Tick。要搞懂它们内在执行逻辑需要从源码入手，从开始执行到搜索节点，再到各种节点的声明周期回调。">
+<meta name="keywords" content="游戏开发,Unreal">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Unreal BehaviorTree 源码分析">
+<meta property="og:url" content="http:&#x2F;&#x2F;blackredscarf.github.io&#x2F;post&#x2F;btree&#x2F;index.html">
+<meta property="og:site_name" content="绯色的魔法世界">
+<meta property="og:description" content="虚幻引擎的行为树不同于传统行为树，它新增了Decorator和Service两个功能组件，而且不再是每次都从根节点开始Tick。要搞懂它们内在执行逻辑需要从源码入手，从开始执行到搜索节点，再到各种节点的声明周期回调。">
+<meta property="og:locale" content="en">
+<meta property="og:updated_time" content="2024-08-23T10:01:25.627Z">
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+<link rel="icon" href="https://s1.ax1x.com/2020/07/25/aSC9Cn.png">
+
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Ovo|Source+Code+Pro">
+<link rel="stylesheet" href="https://lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/bulma/0.6.2/css/bulma.min.css">
+
+
+<link rel="stylesheet" href="https://lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/lightgallery/1.6.8/css/lightgallery.min.css">
+<link rel="stylesheet" href="https://lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/justifiedGallery/3.6.5/css/justifiedGallery.min.css">
+
+
+<link rel="stylesheet" href="https://lf6-cdn-tos.bytecdntp.com/cdn/expire-1-M/highlight.js/10.1.1/styles/atom-one-light.min.css">
+
+<link rel="stylesheet" href="/css/style.css">
+
+<script defer src="https://lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/font-awesome/5.14.0/js/all.min.js"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+    
+
+
+</head>
+<body>
+    
+
+<!-- hexo-inject:begin --><!-- hexo-inject:end --><nav class="navbar is-transparent is-fixed-top navbar-main" role="navigation" aria-label="main navigation">
+    <div class="top-title-line">
+        <div class="top-title">
+            <a href="/"><span>绯色的魔法世界</span></a>
+        </div>
+    </div>
+    <div class="nav-tool-line">
+        <div class="nav-tool">
+            
+            <a class="navbar-item search" title="Search" href="javascript:;" target="_blank" rel="noopener">
+                <i class="fas fa-search"></i>
+            </a>
+            
+            
+            <a class="navbar-item" title="GitHub" href="https://github.com/blackredscarf" target="_blank" rel="noopener">
+                
+                <i class="fab fa-github"></i>
+                
+            </a>
+               
+            
+        </div>    
+    </div>
+    <div class="container">
+        <div class="navbar-brand">
+            <!-- <a class="navbar-item navbar-logo" href="/">
+                
+                <img src="/images/logo.png" alt="" height="28">
+                
+            </a> -->
+            <div class="navbar-burger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+        
+        <div class="navbar-menu navbar-start">
+            
+            <a class="navbar-item "
+               href="/">Home</a>
+            
+            <a class="navbar-item "
+               href="/archives">归档</a>
+            
+            <a class="navbar-item "
+               href="/categories/%E6%B8%B8%E6%88%8F%E5%BC%80%E5%8F%91">游戏开发</a>
+            
+            <a class="navbar-item "
+               href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F">操作系统</a>
+            
+            <a class="navbar-item "
+               href="/categories/%E5%88%86%E5%B8%83%E5%BC%8F">分布式</a>
+            
+            <a class="navbar-item "
+               href="/categories/%E7%AE%97%E6%B3%95%E8%AE%BE%E8%AE%A1">算法设计</a>
+            
+            <a class="navbar-item "
+               href="/categories/%E9%9A%8F%E8%AE%B0">随记</a>
+            
+            <a class="navbar-item "
+               href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0">机器学习</a>
+            
+        </div>
+        
+        
+        <div class="navbar-menu navbar-end">
+            <!-- 
+            <a class="navbar-item search" title="Search" href="javascript:;" target="_blank" rel="noopener">
+                <i class="fas fa-search"></i>
+            </a>
+             -->
+            
+            <div class="navbar-item is-hoverable has-dropdown is-hidden-mobile is-hidden-tablet-only toc">
+                <a class="navbar-item" title="Table of Contents">
+                    <i class="fa fa-list"></i>
+                </a>
+                <div class="navbar-dropdown is-right">
+                    
+                    
+                    
+                    
+                    <a class="navbar-item" href="#开始行为树">1&nbsp;&nbsp;<b>开始行为树</b></a>
+                    
+                    
+                    <hr class="navbar-divider">
+                    
+                    
+                    <a class="navbar-item" href="#检查">2&nbsp;&nbsp;<b>检查</b></a>
+                    
+                    
+                    <hr class="navbar-divider">
+                    
+                    
+                    <a class="navbar-item" href="#加载资源">3&nbsp;&nbsp;<b>加载资源</b></a>
+                    
+                    
+                    <hr class="navbar-divider">
+                    
+                    
+                    <a class="navbar-item" href="#静态初始化">4&nbsp;&nbsp;<b>静态初始化</b></a>
+                    
+                    
+                    <hr class="navbar-divider">
+                    
+                    
+                    <a class="navbar-item" href="#节点的自定义内存结构">5&nbsp;&nbsp;<b>节点的自定义内存结构</b></a>
+                    
+                    
+                    <hr class="navbar-divider">
+                    
+                    
+                    <a class="navbar-item" href="#实例初始化">6&nbsp;&nbsp;<b>实例初始化</b></a>
+                    
+                    
+                    <hr class="navbar-divider">
+                    
+                    
+                    <a class="navbar-item" href="#栈">7&nbsp;&nbsp;<b>栈</b></a>
+                    
+                    
+                    <hr class="navbar-divider">
+                    
+                    
+                    <a class="navbar-item" href="#执行service">8&nbsp;&nbsp;<b>执行Service</b></a>
+                    
+                    
+                    <hr class="navbar-divider">
+                    
+                    
+                    <a class="navbar-item" href="#发起执行任务节点的请求">9&nbsp;&nbsp;<b>发起执行任务节点的请求</b></a>
+                    
+                    
+                    <hr class="navbar-divider">
+                    
+                    
+                    <a class="navbar-item" href="#tick">10&nbsp;&nbsp;<b>Tick</b></a>
+                    
+                    
+                    <hr class="navbar-divider">
+                    
+                    
+                    <a class="navbar-item" href="#执行辅助节点的tick">11&nbsp;&nbsp;<b>执行辅助节点的Tick</b></a>
+                    
+                    
+                    <hr class="navbar-divider">
+                    
+                    
+                    <a class="navbar-item" href="#处理请求">12&nbsp;&nbsp;<b>处理请求</b></a>
+                    
+                    
+                    <hr class="navbar-divider">
+                    
+                    
+                    <a class="navbar-item" href="#备份">13&nbsp;&nbsp;<b>备份</b></a>
+                    
+                    
+                    <hr class="navbar-divider">
+                    
+                    
+                    <a class="navbar-item" href="#反激活">14&nbsp;&nbsp;<b>反激活</b></a>
+                    
+                    
+                    <hr class="navbar-divider">
+                    
+                    
+                    <a class="navbar-item" href="#决定搜索范围">15&nbsp;&nbsp;<b>决定搜索范围</b></a>
+                    
+                    
+                    <hr class="navbar-divider">
+                    
+                    
+                    <a class="navbar-item" href="#搜索">16&nbsp;&nbsp;<b>搜索</b></a>
+                    
+                    
+                    <hr class="navbar-divider">
+                    
+                    
+                    <a class="navbar-item" href="#搜索过程中的装饰器检查和回调触发">17&nbsp;&nbsp;<b>搜索过程中的装饰器检查和回调触发</b></a>
+                    
+                    
+                    <hr class="navbar-divider">
+                    
+                    
+                    <a class="navbar-item" href="#校验nexttask">18&nbsp;&nbsp;<b>校验NextTask</b></a>
+                    
+                    
+                    <hr class="navbar-divider">
+                    
+                    
+                    <a class="navbar-item" href="#处理搜索结果">19&nbsp;&nbsp;<b>处理搜索结果</b></a>
+                    
+                    
+                    <hr class="navbar-divider">
+                    
+                    
+                    <a class="navbar-item" href="#调用缓存的回调">20&nbsp;&nbsp;<b>调用缓存的回调</b></a>
+                    
+                    
+                    <hr class="navbar-divider">
+                    
+                    
+                    <a class="navbar-item" href="#执行任务">21&nbsp;&nbsp;<b>执行任务</b></a>
+                    
+                    
+                    <hr class="navbar-divider">
+                    
+                    
+                    <a class="navbar-item" href="#流程总结">22&nbsp;&nbsp;<b>流程总结</b></a>
+                    
+                    
+                    <hr class="navbar-divider">
+                    
+                    
+                    <a class="navbar-item" href="#激活与反激活">23&nbsp;&nbsp;<b>激活与反激活</b></a>
+                    
+                    
+                    <hr class="navbar-divider">
+                    
+                    
+                    <a class="navbar-item" href="#service的回调总结">24&nbsp;&nbsp;<b>Service的回调总结</b></a>
+                    
+                    
+                    <hr class="navbar-divider">
+                    
+                    
+                    <a class="navbar-item" href="#decorator的回调总结">25&nbsp;&nbsp;<b>Decorator的回调总结</b></a>
+                    
+                </div>
+            </div>
+            
+            <!-- 
+            <a class="navbar-item" title="GitHub" href="https://github.com/blackredscarf" target="_blank" rel="noopener">
+                
+                <i class="fab fa-github"></i>
+                
+            </a>
+               
+             -->
+        </div>
+        
+    </div>
+</nav>
+
+    <section class="section">
+    <div class="container">
+    
+<div class="article-cover">
+   <img class="article-cover-img" src="https://s21.ax1x.com/2024/08/23/pAFmmAe.jpg"> 
+</div>
+
+<article class="article content gallery" itemscope itemprop="blogPost">
+    <h1 class="article-title is-size-3 is-size-4-mobile" itemprop="name">
+        
+            Unreal BehaviorTree 源码分析
+        
+    </h1>
+    <div class="article-meta columns is-variable is-1 is-multiline is-mobile is-size-7-mobile">
+        <span class="column is-narrow">
+            2024-08-23
+            <!-- <time datetime="2024-08-22T16:00:00.000Z" itemprop="datePublished">Aug 23 2024</time> -->
+        </span>
+        
+        <span class="column is-narrow article-category">
+            <i class="far fa-folder"></i>
+            <a class="article-category-link" href="/categories/%E6%B8%B8%E6%88%8F%E5%BC%80%E5%8F%91/">游戏开发</a><span>,</span><a class="article-category-link" href="/categories/%E6%B8%B8%E6%88%8F%E5%BC%80%E5%8F%91/Unreal/">Unreal</a>
+        </span>
+        
+        <!--  -->
+    </div>
+    <div class="article-entry is-size-6-mobile" itemprop="articleBody">
+    
+        <p>虚幻引擎的行为树不同于传统行为树，它新增了Decorator和Service两个功能组件，而且不再是每次都从根节点开始Tick。要搞懂它们内在执行逻辑需要从源码入手，从开始执行到搜索节点，再到各种节点的声明周期回调。</p>
+<a id="more"></a>
+<h2 id="开始行为树">开始行为树</h2>
+<p>开始时主要做两件事情：</p>
+<ul>
+<li>构建Blackboard组件</li>
+<li>构建BehaviorTree组件</li>
+</ul>
+<p><figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">bool</span> AAIController::RunBehaviorTree(UBehaviorTree* BTAsset)</span><br><span class="line">&#123;</span><br><span class="line">  UseBlackboard(BTAsset-&gt;BlackboardAsset, BlackboardComp);</span><br><span class="line"></span><br><span class="line">  BTComp = NewObject&lt;UBehaviorTreeComponent&gt;(<span class="hljs-keyword">this</span>, TEXT(<span class="hljs-string">"BTComponent"</span>));</span><br><span class="line">  BTComp-&gt;RegisterComponent();</span><br><span class="line">  BrainComponent = BTComp;</span><br><span class="line">  BTComp-&gt;StartTree(*BTAsset, EBTExecutionMode::Looped);</span><br></pre></td></tr></table></figure> 从<code>StartTree</code>开始，调几层后，走到下面这里，<code>BehaviorTreeManager</code>后面再讲，然后核心是<code>PushInstance</code>。 <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">void</span> UBehaviorTreeComponent::ProcessPendingInitialize()</span><br><span class="line">&#123;</span><br><span class="line">  UBehaviorTreeManager* BTManager = UBehaviorTreeManager::GetCurrent(GetWorld());</span><br><span class="line">  <span class="hljs-keyword">if</span> (BTManager)</span><br><span class="line">  &#123;</span><br><span class="line">    BTManager-&gt;AddActiveComponent(*<span class="hljs-keyword">this</span>);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="hljs-keyword">const</span> <span class="hljs-keyword">bool</span> bPushed = PushInstance(*TreeStartInfo.Asset);</span><br></pre></td></tr></table></figure> 为啥名字叫<code>PushInstance</code>那么怪？因为这个函数不只是用来在开始行为树的时候跑的，而是在一棵树里执行另一棵子树的时候也会跑到。每棵树执行的时候都是一个Instance，而同一时间只能执行一棵树，一棵树执行完又会返回上一棵树。执行一棵新树就像往栈新增元素一样，所以就称之为<code>PushInstance</code>。</p>
+<h2 id="检查">检查</h2>
+<p>加载资源之前，主要有两个检查，一个是规定Blackboard必须是同一种资源。另一个是要检查父节点。</p>
+<p>如上面所说，执行子树的时候也会跑进来，所以要检查一下执行子树的父节点是否允许执行子树。调用父节点的<code>CanPushSubtree</code>。 <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">bool</span> UBehaviorTreeComponent::PushInstance(UBehaviorTree&amp; TreeAsset)</span><br><span class="line">&#123;</span><br><span class="line">  <span class="hljs-keyword">if</span> (TreeAsset.BlackboardAsset &amp;&amp; BlackboardComp &amp;&amp; !BlackboardComp-&gt;IsCompatibleWith(TreeAsset.BlackboardAsset))</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="hljs-keyword">const</span> UBTNode* ActiveNode = GetActiveNode();</span><br><span class="line">  <span class="hljs-keyword">const</span> UBTCompositeNode* ActiveParent = ActiveNode ? ActiveNode-&gt;GetParentNode() : <span class="hljs-literal">NULL</span>;</span><br><span class="line">  <span class="hljs-keyword">const</span> <span class="hljs-keyword">bool</span> bIsAllowed = ActiveParent-&gt;CanPushSubtree(*<span class="hljs-keyword">this</span>, ParentMemory, ChildIdx);</span><br><span class="line">  <span class="hljs-keyword">if</span> (!bIsAllowed)</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure> <code>CanPushSubtree</code>默认返回true，只有并行节点<code>SimpleParallel</code>进行了重写，规定其主任务不能够执行子树。</p>
+<h2 id="加载资源">加载资源</h2>
+<p><code>UBehaviorTreeManager</code>就是专门用来加载资源的。之所以专门搞一个全局Manager，就是为了能缓存资源的template，以便于下次加载直接读template。所谓的template就是名为<code>FBehaviorTreeTemplateInfo</code>的结构。 <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">bool</span> UBehaviorTreeComponent::PushInstance(UBehaviorTree&amp; TreeAsset)</span><br><span class="line">&#123;</span><br><span class="line">  UBTCompositeNode* RootNode = <span class="hljs-literal">NULL</span>;</span><br><span class="line">  uint16 InstanceMemorySize = <span class="hljs-number">0</span>;</span><br><span class="line">  UBehaviorTreeManager* BTManager = UBehaviorTreeManager::GetCurrent(GetWorld());</span><br><span class="line">  <span class="hljs-keyword">const</span> <span class="hljs-keyword">bool</span> bLoaded = BTManager-&gt;LoadTree(TreeAsset, RootNode, InstanceMemorySize);</span><br></pre></td></tr></table></figure> 加载完资源后，就会返回行为树的根节点到<code>RootNode</code>。</p>
+<p>从下面的代码可以看出，<code>RootNode</code>其实是从template里面拿出来的，说明它作为一个单例对象来使用。其实也意味着所有Node其实都是单例对象的。但作为单例，它又怎么存数据呢，这个后面会讲到。 <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">bool</span> UBehaviorTreeManager::LoadTree(UBehaviorTree&amp; Asset, UBTCompositeNode*&amp; Root, uint16&amp; InstanceMemorySize)</span><br><span class="line">&#123;</span><br><span class="line">  FBehaviorTreeTemplateInfo TemplateInfo;</span><br><span class="line">  TemplateInfo.Asset = &amp;Asset;</span><br><span class="line">  TemplateInfo.Template = Cast&lt;UBTCompositeNode&gt;(StaticDuplicateObject(Asset.RootNode, <span class="hljs-keyword">this</span>));</span><br><span class="line"></span><br><span class="line">  LoadedTemplates.Add(TemplateInfo);</span><br><span class="line">  Root = TemplateInfo.Template;</span><br></pre></td></tr></table></figure></p>
+<h2 id="静态初始化">静态初始化</h2>
+<p><code>LoadTree</code>里面还有些逻辑是用来做初始化的，主要干几件事情：</p>
+<ul>
+<li>InitializeNodeHelper 构造Service、Decorator等对象</li>
+<li>InitializeExecutionOrder 预先算好每个节点的下一个节点是谁</li>
+<li>InitializeNode 存几个信息变量</li>
+</ul>
+<p>代码有点多，其实不需要全部搞懂，就简单的认为是对所有节点进行预计算和初始化的。之所以叫静态初始化是它对静态资源做初始化，每一种行为树资源只要第一次加载时做一次即可。 <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">bool</span> UBehaviorTreeManager::LoadTree(UBehaviorTree&amp; Asset, UBTCompositeNode*&amp; Root, uint16&amp; InstanceMemorySize)</span><br><span class="line">&#123;</span><br><span class="line">  InitializeNodeHelper(<span class="hljs-literal">NULL</span>, TemplateInfo.Template, <span class="hljs-number">0</span>, ExecutionIndex, InitList, Asset, <span class="hljs-keyword">this</span>);</span><br><span class="line"></span><br><span class="line">  <span class="hljs-keyword">for</span> (int32 Index = <span class="hljs-number">0</span>; Index &lt; InitList.Num() - <span class="hljs-number">1</span>; Index++)</span><br><span class="line">  &#123;</span><br><span class="line">    InitList[Index].Node-&gt;InitializeExecutionOrder(InitList[Index + <span class="hljs-number">1</span>].Node);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  InitList.Sort(FNodeInitializationData::FMemorySort());</span><br><span class="line">  <span class="hljs-keyword">for</span> (int32 Index = <span class="hljs-number">0</span>; Index &lt; InitList.Num(); Index++)</span><br><span class="line">  &#123;</span><br><span class="line">    InitList[Index].Node-&gt;InitializeNode(InitList[Index].ParentNode, InitList[Index].ExecutionIndex, InitList[Index].SpecialDataSize + MemoryOffset, InitList[Index].TreeDepth);</span><br><span class="line">    MemoryOffset += InitList[Index].DataSize;   <span class="hljs-comment">// 每个节点的自定义内存偏移，后面讲</span></span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure></p>
+<h2 id="节点的自定义内存结构">节点的自定义内存结构</h2>
+<p>前面说过，节点默认是单例的。意味着你往单例里面存储的东西会一直留着，比如说有三个角色的行为树都用了同一种节点，那么这种节点里面的类成员属性是所有角色共享的。所以虚幻引擎提供了一个自定义结构体的方式，让你能够给每个角色都存点自己的东西。</p>
+<p>注意，如果你用的是蓝图节点，那么不需要担心单例问题，因为暴露到蓝图里的类通过<code>bCreateNodeInstance</code>属性强行不使用单例。 <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">UBTService_BlueprintBase::UBTService_BlueprintBase(<span class="hljs-keyword">const</span> FObjectInitializer&amp; ObjectInitializer) : Super(ObjectInitializer)</span><br><span class="line">&#123;</span><br><span class="line">  bCreateNodeInstance = <span class="hljs-literal">true</span>;</span><br></pre></td></tr></table></figure> 我们说回C++，假设我们要使用自定义结构，使用方法会类似于下面这样， <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line">FSTRUCT()</span><br><span class="line"><span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">FMyTaskMemory</span></span></span><br><span class="line"><span class="hljs-class">&#123;</span></span><br><span class="line">  GENERATED_BODY()</span><br><span class="line">  UPROPERTY()</span><br><span class="line">  AMyCharacter* ControlledCharactor = <span class="hljs-literal">nullptr</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">UCLASS()</span><br><span class="line"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">UBTMyTask</span></span></span><br><span class="line"><span class="hljs-class">&#123;</span></span><br><span class="line">  GENERATAED_BODY()</span><br><span class="line"></span><br><span class="line">  <span class="hljs-function"><span class="hljs-keyword">virtual</span> uint16 <span class="hljs-title">GetInstanceMemorySize</span><span class="hljs-params">()</span> <span class="hljs-keyword">const</span> override</span></span><br><span class="line"><span class="hljs-function">  </span>&#123;</span><br><span class="line">      <span class="hljs-keyword">return</span> <span class="hljs-keyword">sizeof</span>(FMyTaskMemory);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="hljs-function"><span class="hljs-keyword">virtual</span> <span class="hljs-keyword">void</span> <span class="hljs-title">InitializeMemory</span><span class="hljs-params">(UBehaviorTreeComponent&amp; OwnerComp, uint8* NodeMemory, EBTMemoryInit::Type InitType)</span> <span class="hljs-keyword">const</span> override</span></span><br><span class="line"><span class="hljs-function">  </span>&#123;</span><br><span class="line">      FMyTaskMemory* MemberMemory = CastInstanceNodeMemory&lt;FMyTaskMemory&gt;(NodeMemory);</span><br><span class="line">      MemberMemory-&gt;ControlledCharactor = StaticCast&lt;AMyCharacter&gt;(OwnerComp-&gt;GetOwner()-&gt;GetControlledPawn());</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="hljs-function"><span class="hljs-keyword">virtual</span> <span class="hljs-keyword">void</span> <span class="hljs-title">TickTask</span><span class="hljs-params">(UBehaviorTreeComponent&amp; OwnerComp, uint8* NodeMemory, <span class="hljs-keyword">float</span> DeltaSeconds)</span> override</span></span><br><span class="line"><span class="hljs-function">  </span>&#123;</span><br><span class="line">      FMyTaskMemory* MemberMemory = CastInstanceNodeMemory&lt;FMyTaskMemory&gt;(NodeMemory);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure> <code>NodeMemory</code>是一个指针，它将指向一块<code>GetInstanceMemorySize()</code>返回的大小的内存块。至于内存块是什么时候构建的，存到哪里，下一节说明。</p>
+<h2 id="实例初始化">实例初始化</h2>
+<p>不同Controller加载同一种行为树，除了静态部分外，肯定有动态的部分。<code>PushInstance</code>会构造一个<code>FBehaviorTreeInstance</code>结构。记录一些基本信息。然后调用<code>Initialize</code>。 <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">FBehaviorTreeInstance NewInstance;</span><br><span class="line">NewInstance.InstanceIdIndex = UpdateInstanceId(&amp;TreeAsset, ActiveNode, InstanceStack.Num() - <span class="hljs-number">1</span>);</span><br><span class="line">NewInstance.RootNode = RootNode;</span><br><span class="line">NewInstance.ActiveNode = <span class="hljs-literal">NULL</span>;</span><br><span class="line">NewInstance.ActiveNodeType = EBTActiveNode::Composite;</span><br><span class="line"></span><br><span class="line">NewInstance.Initialize(*<span class="hljs-keyword">this</span>, *RootNode, NodeInstanceIndex, bFirstTime ? EBTMemoryInit::Initialize : EBTMemoryInit::RestoreSubtree);</span><br></pre></td></tr></table></figure> <code>Initialize</code>里面会调每个节点的初始化函数。具体有哪些功能后面在讲。</p>
+<p>然后就是构建树实例的中每个节点的自定义内存块，其中<code>InstanceMemorySize</code>就是<code>LoadTree</code>返回的那个，表示这棵树所有内存块的大小总和。 <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-comment">// initialize memory and node instances</span></span><br><span class="line">FBehaviorTreeInstanceId&amp; InstanceInfo = KnownInstances[NewInstance.InstanceIdIndex];</span><br><span class="line"><span class="hljs-keyword">const</span> <span class="hljs-keyword">bool</span> bFirstTime = (InstanceInfo.InstanceMemory.Num() != InstanceMemorySize);</span><br><span class="line"><span class="hljs-keyword">if</span> (bFirstTime)</span><br><span class="line">&#123;</span><br><span class="line">  InstanceInfo.InstanceMemory.AddZeroed(InstanceMemorySize);</span><br><span class="line">  InstanceInfo.RootNode = RootNode;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure> 上面提到又是单例，又是实例的，可能有点晕。这里补充说明一下，执行一棵树的时候，树是一个新的实例，而节点则是不一定，节点默认是单例的，所有树共享同一个对象。所以<code>InstanceInfo</code>指的是树的实例信息。</p>
+<p>这个内存块还有个有意思的点是，它是一棵树的所有节点内存块是连续的，因为它是一次性申请的。而当想找到属于它自己节点的内存块时，则是通过<code>UBTNode::MemoryOffset</code>属性进行偏移的。 <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">template</span>&lt;<span class="hljs-keyword">typename</span> T&gt;</span><br><span class="line">T* UBTNode::GetNodeMemory(FBehaviorTreeInstance&amp; BTInstance) <span class="hljs-keyword">const</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="hljs-keyword">return</span> (T*)(BTInstance.GetInstanceMemory().GetData() + MemoryOffset);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure> 给MemoryOffset赋值的地方上面的<a href="#静态初始化">静态初始化</a>章节就已经透露过了。</p>
+<h2 id="栈">栈</h2>
+<p>因为你可能会递归执行多棵行为树，比如树A执行树B，树B再执行树C，树C执行完又回到树B。就像一个栈，所以就用<code>InstanceStack</code>存起来。 <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">InstanceStack.Push(NewInstance);</span><br><span class="line">ActiveInstanceIdx = InstanceStack.Num() - <span class="hljs-number">1</span>;</span><br></pre></td></tr></table></figure></p>
+<h2 id="执行service">执行Service</h2>
+<p>从这一步开始，就是开始执行树的逻辑了。首先是执行当前节点的所有Service。<code>NotifyParentActivation</code>会启动Service的Tick。 <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">for</span> (int32 ServiceIndex = <span class="hljs-number">0</span>; ServiceIndex &lt; RootNode-&gt;Services.Num(); ServiceIndex++)</span><br><span class="line">&#123;</span><br><span class="line">  UBTService* ServiceNode = RootNode-&gt;Services[ServiceIndex];</span><br><span class="line">  uint8* NodeMemory = (uint8*)ServiceNode-&gt;GetNodeMemory&lt;uint8&gt;(InstanceStack[ActiveInstanceIdx]);</span><br><span class="line"></span><br><span class="line">  ServiceNode-&gt;NotifyParentActivation(SearchData);</span><br><span class="line"></span><br><span class="line">  InstanceStack[ActiveInstanceIdx].AddToActiveAuxNodes(ServiceNode);</span><br><span class="line">  ServiceNode-&gt;WrappedOnBecomeRelevant(*<span class="hljs-keyword">this</span>, NodeMemory);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure> 广播代理，通知其他系统自己开始执行一棵新的行为树。 <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">FBehaviorTreeDelegates::OnTreeStarted.Broadcast(*<span class="hljs-keyword">this</span>, TreeAsset);</span><br></pre></td></tr></table></figure></p>
+<h2 id="发起执行任务节点的请求">发起执行任务节点的请求</h2>
+<p><code>RequestExecution</code>找到该子树的当前需要执行的任务节点，然后发起请求。注意我的用词，是发起请求，而不是正式执行。 <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">RequestExecution(RootNode, ActiveInstanceIdx, RootNode, <span class="hljs-number">0</span>, EBTNodeResult::InProgress);</span><br></pre></td></tr></table></figure></p>
+<p>这个函数有三个重载，其实最终还是会调到第一个去， <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">RequestExecution</span><span class="hljs-params">(<span class="hljs-keyword">const</span> UBTCompositeNode* RequestedOn, int32 InstanceIdx, </span></span></span><br><span class="line"><span class="hljs-function"><span class="hljs-params">  <span class="hljs-keyword">const</span> UBTNode* RequestedBy, int32 RequestedByChildIndex,</span></span></span><br><span class="line"><span class="hljs-function"><span class="hljs-params">  EBTNodeResult::Type ContinueWithResult, <span class="hljs-keyword">bool</span> bStoreForDebugger = <span class="hljs-literal">true</span>)</span></span>;</span><br><span class="line"><span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">RequestExecution</span><span class="hljs-params">(<span class="hljs-keyword">const</span> UBTDecorator* RequestedBy)</span> </span>&#123; check(RequestedBy); RequestBranchEvaluation(*RequestedBy); &#125;</span><br><span class="line"><span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">RequestExecution</span><span class="hljs-params">(EBTNodeResult::Type ContinueWithResult)</span> </span>&#123; RequestBranchEvaluation(ContinueWithResult); &#125;</span><br></pre></td></tr></table></figure></p>
+<p>这个函数参数很多，且理解参数的含义是重要的。 <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">void</span> UBehaviorTreeComponent::RequestExecution(</span><br><span class="line">  <span class="hljs-keyword">const</span> UBTCompositeNode* RequestedOn,</span><br><span class="line">  int32 InstanceIdx,</span><br><span class="line">  <span class="hljs-keyword">const</span> UBTNode* RequestedBy,</span><br><span class="line">  int32 RequestedByChildIndex,</span><br><span class="line">  EBTNodeResult::Type ContinueWithResult,</span><br><span class="line">  <span class="hljs-keyword">bool</span> bStoreForDebugger)</span><br></pre></td></tr></table></figure></p>
+<ul>
+<li>RequestedOn 要求传入一个组合节点。因为任务节点肯定是在组合节点下的，告诉代码你要找的是哪个组合节点下的任务节点。</li>
+<li>InstanceIdx 树在<code>InstanceStack</code>中的下标。</li>
+<li>RequestedBy 可以传入一个<code>UBTNode</code>，表示发起者。可能是组合节点或者修饰器(Decorator)。</li>
+<li>RequestedByChildIndex 传入发起者是第几个子节点。</li>
+<li>ContinueWithResult 表示任务节点执行完后，应该怎么办。看源码的话会发现它的作用很窄，可以先不深究。</li>
+<li>bStoreForDebugger 用来debug的，也可以先不管。</li>
+</ul>
+<p>这个函数逻辑很长。总结起来就是给名为<code>ExecutionRequest</code>的成员属性填充信息。 <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">AIMODULE_API</span> <span class="hljs-title">UBehaviorTreeComponent</span> :</span> <span class="hljs-keyword">public</span> UBrainComponent</span><br><span class="line">&#123;</span><br><span class="line">  <span class="hljs-comment">/** execution request, search will be performed when current task finish execution/aborting */</span></span><br><span class="line">  FBTNodeExecutionInfo ExecutionRequest;</span><br></pre></td></tr></table></figure> <code>FBTNodeExecutionInfo</code>结构如下， <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">FBTNodeExecutionInfo</span></span></span><br><span class="line"><span class="hljs-class">&#123;</span></span><br><span class="line">  <span class="hljs-comment">/** index of first task allowed to be executed */</span></span><br><span class="line">  FBTNodeIndex SearchStart;</span><br><span class="line">  <span class="hljs-comment">/** index of last task allowed to be executed */</span></span><br><span class="line">  FBTNodeIndex SearchEnd;</span><br><span class="line">  <span class="hljs-comment">/** node to be executed */</span></span><br><span class="line">  <span class="hljs-keyword">const</span> UBTCompositeNode* ExecuteNode;</span><br><span class="line">  <span class="hljs-comment">/** subtree index */</span></span><br><span class="line">  uint16 ExecuteInstanceIdx;</span><br><span class="line">  <span class="hljs-comment">/** result used for resuming execution */</span></span><br><span class="line">  TEnumAsByte&lt;EBTNodeResult::Type&gt; ContinueWithResult;</span><br><span class="line">  <span class="hljs-comment">/** if set, tree will try to execute next child of composite instead of forcing branch containing SearchStart */</span></span><br><span class="line">  uint8 bTryNextChild : <span class="hljs-number">1</span>;</span><br><span class="line">  <span class="hljs-comment">/** if set, request was not instigated by finishing task/initialization but is a restart (e.g. decorator) */</span></span><br><span class="line">  uint8 bIsRestart : <span class="hljs-number">1</span>;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure> 最后的<code>bIsRestart</code>看起来有点难理解，但其实没有用到，可以先不管。<code>ContinueWithResult</code>也有点难理解，它是分了多个使用场景的，后面再细讲。</p>
+<p><code>SearchStart</code>和<code>SearchEnd</code>在不同的调用情况下传值是不同的。它规定了一个范围。一般情况是不需要范围的，因为组合节点本身的规则已经足够你找到下一个节点了。</p>
+<p>而组合节点本身无法知道的规则，就是Decorator的<code>Observer Aborts</code>了，它可以在设置终止自身或低优先级节点，所以需要通过范围来限制。</p>
+<h2 id="tick">Tick</h2>
+<p>执行任务节点是在Tick里面做的，但Tick里面也做了很多事情，所以先讲讲Tick。</p>
+<p>尽管是Tick，但也不是每帧都执行的，它有自己的执行时间间隔，没到时间的时候就之间return掉。 <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">void</span> UBehaviorTreeComponent::TickComponent(<span class="hljs-keyword">float</span> DeltaTime, <span class="hljs-keyword">enum</span> ELevelTick TickType, FActorComponentTickFunction *ThisTickFunction)</span><br><span class="line">&#123;</span><br><span class="line">  NextTickDeltaTime -= DeltaTime;</span><br><span class="line">  <span class="hljs-keyword">if</span> (NextTickDeltaTime &gt; <span class="hljs-number">0.0f</span>)</span><br><span class="line">  &#123;</span><br><span class="line">    AccumulatedTickDeltaTime += DeltaTime;</span><br><span class="line">    ScheduleNextTick(NextTickDeltaTime);</span><br><span class="line">    <span class="hljs-keyword">return</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  DeltaTime += AccumulatedTickDeltaTime;</span><br><span class="line">  AccumulatedTickDeltaTime = <span class="hljs-number">0.0f</span>;</span><br></pre></td></tr></table></figure></p>
+<h2 id="执行辅助节点的tick">执行辅助节点的Tick</h2>
+<p>Unreal把装饰节点(Decorator)和服务节点(Service)定义为辅助节点(Auxiliary)。<code>TickComponent</code>每次到时间后都会把所有子树的所有辅助节点的Tick逻辑。 <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">void</span> UBehaviorTreeComponent::TickComponent(<span class="hljs-keyword">float</span> DeltaTime, <span class="hljs-keyword">enum</span> ELevelTick TickType, FActorComponentTickFunction *ThisTickFunction)</span><br><span class="line">&#123;</span><br><span class="line">  <span class="hljs-function">FBTSuspendBranchActionsScoped <span class="hljs-title">ScopedSuspend</span><span class="hljs-params">(*<span class="hljs-keyword">this</span>, EBTBranchAction::Changing_Topology_Actions)</span></span>;</span><br><span class="line">  <span class="hljs-keyword">for</span> (int32 InstanceIndex = <span class="hljs-number">0</span>; InstanceIndex &lt; InstanceStack.Num(); InstanceIndex++)</span><br><span class="line">  &#123;</span><br><span class="line">    FBehaviorTreeInstance&amp; InstanceInfo = InstanceStack[InstanceIndex];</span><br><span class="line">    InstanceInfo.ExecuteOnEachAuxNode([&amp;InstanceInfo, <span class="hljs-keyword">this</span>, &amp;bDoneSomething, DeltaTime, &amp;NextNeededDeltaTime](<span class="hljs-keyword">const</span> UBTAuxiliaryNode&amp; AuxNode)</span><br><span class="line">      &#123;</span><br><span class="line">        uint8* NodeMemory = AuxNode.GetNodeMemory&lt;uint8&gt;(InstanceInfo);</span><br><span class="line">        SCOPE_CYCLE_UOBJECT(AuxNode, &amp;AuxNode);</span><br><span class="line">        bDoneSomething |= AuxNode.WrappedTickNode(*<span class="hljs-keyword">this</span>, NodeMemory, DeltaTime, NextNeededDeltaTime);</span><br><span class="line">      &#125;);</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure> <code>AuxNode.WrappedTickNode</code>执行逻辑就会执行到蓝图里面的<code>UBTService_BlueprintBase::ReceiveTick</code>事件。</p>
+<p>这个执行阶段需要领会，这意味着辅助节点的Tick是在处理请求之前完成的。把握这一点将有助于解决实际开发中遇到的时序问题。</p>
+<h2 id="处理请求">处理请求</h2>
+<p>然后就开始执行<code>ProcessExecutionRequest</code>来处理请求。 <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">void</span> UBehaviorTreeComponent::TickComponent(<span class="hljs-keyword">float</span> DeltaTime, <span class="hljs-keyword">enum</span> ELevelTick TickType, FActorComponentTickFunction *ThisTickFunction)</span><br><span class="line">&#123;</span><br><span class="line">  ProcessExecutionRequest();</span><br></pre></td></tr></table></figure></p>
+<h2 id="备份">备份</h2>
+<p>处理请求过程中，有一个名为<code>SearchData</code>的结构体成员属性，会存储搜索过程中的一些信息。搜索过程中会改变其中的字段，如果搜索失败，则需要回滚这些字段，所以使用了几个<code>Rollback</code>开头的字段来备份。 <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">void</span> UBehaviorTreeComponent::ProcessExecutionRequest()</span><br><span class="line">&#123;</span><br><span class="line">  SearchData.RollbackInstanceIdx = ActiveInstanceIdx;</span><br><span class="line">  SearchData.RollbackDeactivatedBranchStart = SearchData.DeactivatedBranchStart;</span><br><span class="line">  SearchData.RollbackDeactivatedBranchEnd = SearchData.DeactivatedBranchEnd;</span><br><span class="line"></span><br><span class="line">  CopyInstanceMemoryToPersistent();</span><br></pre></td></tr></table></figure> <code>CopyInstanceMemoryToPersistent</code>则是对节点的自定义内存数据进行备份。</p>
+<h2 id="反激活">反激活</h2>
+<p>正式搜索前，还会有一个反激活逻辑，将调用<code>DeactivateUpTo</code>函数。当我们要找下一个任务节点时，说明当前节点即将执行完毕。而所谓反激活就是指当前节点执行完毕之后需要做一些事情，所以有了这个反激活的阶段。 <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">void</span> UBehaviorTreeComponent::ProcessExecutionRequest()</span><br><span class="line">&#123;</span><br><span class="line">  <span class="hljs-keyword">if</span> (InstanceStack[ActiveInstanceIdx].ActiveNode != ExecutionRequest.ExecuteNode)</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="hljs-keyword">const</span> <span class="hljs-keyword">bool</span> bDeactivated = DeactivateUpTo(ExecutionRequest.ExecuteNode, ExecutionRequest.ExecuteInstanceIdx, NodeResult, LastDeactivatedChildIndex);</span><br></pre></td></tr></table></figure> <code>DeactivateUpTo</code>该函数内部会向上进行父节点链路遍历，每个父节点都调用它的<code>UBTCompositeNode::OnChildDeactivation</code>函数。函数本身的功能是这样，但实际上根据传入参数，调用起来的结果就只是反激活了当前活跃的任务节点。</p>
+<p><code>OnChildDeactivation</code>其内部又会找到其指定子节点，然后触发子节点的Service、本身、以及Decorator的反激活逻辑。</p>
+<p>如果该子节点是一个Task节点，则会先将其附带的Service存起来，然后在应用新的任务节点的时候才执行。至于为什么要特别进行这种设计，个人感觉是Epic自己的需求导致的，旁人没有遇到这样的需求，很难解释为什么要这么设计。</p>
+<p>当执行反激活时，会调用到蓝图的相关事件。 对于Service是<code>ReceiveDeactivation</code>事件，对于Decorator是<code>ReceiveExecutionFinish</code>事件。</p>
+<p>目前我还没用过这个反激活功能，也没想到有什么使用场景，所以暂不能举出实际的使用例子。</p>
+<h2 id="决定搜索范围">决定搜索范围</h2>
+<p>虽然我们的<code>FBTNodeExecutionInfo</code>已经计算出了<code>SearchStart</code>和<code>SearchEnd</code>。但其<code>bTryNextChild</code>将决定我们能否按照这个范围来搜索。</p>
+<p>看看<code>bTryNextChild</code>这个属性是怎么赋值的， <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">const</span> <span class="hljs-keyword">bool</span> bSwitchToHigherPriority = (ContinueWithResult == EBTNodeResult::Aborted);</span><br><span class="line">ExecutionRequest.bTryNextChild = !bSwitchToHigherPriority;</span><br></pre></td></tr></table></figure> 然后是使用的地方， <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">void</span> UBehaviorTreeComponent::ProcessExecutionRequest()</span><br><span class="line">&#123;</span><br><span class="line">  <span class="hljs-keyword">if</span> (!ExecutionRequest.bTryNextChild)</span><br><span class="line">  &#123;</span><br><span class="line">    SearchData.SearchStart = ExecutionRequest.SearchStart;</span><br><span class="line">    SearchData.SearchEnd = ExecutionRequest.SearchEnd;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="hljs-keyword">else</span></span><br><span class="line">  &#123;</span><br><span class="line">    SearchData.SearchStart = FBTNodeIndex();</span><br><span class="line">    SearchData.SearchEnd = FBTNodeIndex();</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure> 顾名思义，<code>ContinueWithResult</code>被设置为<code>Aborted</code>，意味着当前节点是被中断的，我们的搜索范围可能是受到限制的。否则，就是搜索没有被限制，可以单纯按照组合节点本身的规则去搜索。</p>
+<h2 id="搜索">搜索</h2>
+<p><code>TestNode</code>表示当前搜索到的节点，<code>NextTask</code>表示目标任务节点，不为NULL说明搜索成功了。其中<code>BTSpecialChild::ReturnToParent</code>表示找不到子节点，需要回到父节点找的意思。 <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">void</span> UBehaviorTreeComponent::ProcessExecutionRequest()</span><br><span class="line">&#123;</span><br><span class="line">  <span class="hljs-keyword">while</span> (TestNode &amp;&amp; NextTask == <span class="hljs-literal">NULL</span>)</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="hljs-keyword">const</span> int32 ChildBranchIdx = TestNode-&gt;FindChildToExecute(SearchData, NodeResult);</span><br><span class="line">    <span class="hljs-keyword">const</span> UBTNode* StoreNode = TestNode;</span><br><span class="line"></span><br><span class="line">    <span class="hljs-keyword">if</span> (SearchData.bPostponeSearch)</span><br><span class="line">    &#123;</span><br><span class="line">      TestNode = <span class="hljs-literal">NULL</span>;</span><br><span class="line">      bIsSearchValid = <span class="hljs-literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (ChildBranchIdx == BTSpecialChild::ReturnToParent)</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="hljs-keyword">const</span> UBTCompositeNode* ChildNode = TestNode;</span><br><span class="line">      TestNode = TestNode-&gt;GetParentNode();</span><br><span class="line"></span><br><span class="line">      <span class="hljs-comment">// does it want to move up the tree?</span></span><br><span class="line">      <span class="hljs-keyword">if</span> (TestNode == <span class="hljs-literal">NULL</span>)</span><br><span class="line">      &#123;</span><br><span class="line">        <span class="hljs-comment">// special case for leaving instance: deactivate root manually</span></span><br><span class="line">        ChildNode-&gt;OnNodeDeactivation(SearchData, NodeResult);</span><br><span class="line"></span><br><span class="line">        <span class="hljs-comment">// don't remove top instance from stack, so it could be looped</span></span><br><span class="line">        <span class="hljs-keyword">if</span> (ActiveInstanceIdx &gt; <span class="hljs-number">0</span>)</span><br><span class="line">        &#123;</span><br><span class="line">          SearchData.PendingNotifies.Add(FBehaviorTreeSearchUpdateNotify(ActiveInstanceIdx, NodeResult));</span><br><span class="line"></span><br><span class="line">          <span class="hljs-comment">// and leave subtree</span></span><br><span class="line">          ActiveInstanceIdx--;</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line">      <span class="hljs-keyword">if</span> (TestNode)</span><br><span class="line">      &#123;</span><br><span class="line">        TestNode-&gt;OnChildDeactivation(SearchData, *ChildNode, NodeResult, ActiveInstanceIdx == ExecutionRequest.ExecuteInstanceIdx);</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (TestNode-&gt;Children.IsValidIndex(ChildBranchIdx))</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="hljs-comment">// was new task found?</span></span><br><span class="line">      NextTask = TestNode-&gt;Children[ChildBranchIdx].ChildTask;</span><br><span class="line"></span><br><span class="line">      <span class="hljs-comment">// or it wants to move down the tree?</span></span><br><span class="line">      TestNode = TestNode-&gt;Children[ChildBranchIdx].ChildComposite;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure> <code>FindChildToExecute</code>里调用了<code>GetNextChild</code>来获取下一个子节点，其中调用了组合节点的<code>GetNextChildHandler</code>，这是一个虚函数，Sequence和Selector都在其中实现了自己的逻辑，如果你要自定义组合节点，也可以去实现它。 <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">int32 UBTCompositeNode::FindChildToExecute(FBehaviorTreeSearchData&amp; SearchData, EBTNodeResult::Type&amp; LastResult) <span class="hljs-keyword">const</span></span><br><span class="line">&#123;</span><br><span class="line">  int32 ChildIdx = GetNextChild(SearchData, NodeMemory-&gt;CurrentChild, LastResult);</span><br></pre></td></tr></table></figure> <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">int32 UBTCompositeNode::GetNextChild(FBehaviorTreeSearchData&amp; SearchData, int32 LastChildIdx, EBTNodeResult::Type LastResult) <span class="hljs-keyword">const</span></span><br><span class="line">&#123;</span><br><span class="line">  NextChildIndex = GetNextChildHandler(SearchData, LastChildIdx, LastResult);</span><br></pre></td></tr></table></figure></p>
+<h2 id="搜索过程中的装饰器检查和回调触发">搜索过程中的装饰器检查和回调触发</h2>
+<p>搜索过程中会对每个节点进行装饰器检查，即<code>DoDecoratorsAllowExecution</code>。会调用<code>UBTDecorator::WrappedCanExecute</code>，然后是<code>CalculateRawConditionValue</code>，它是一个虚函数，自定义的装饰器可以重写它。 <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">int32 UBTCompositeNode::FindChildToExecute(FBehaviorTreeSearchData&amp; SearchData, EBTNodeResult::Type&amp; LastResult) <span class="hljs-keyword">const</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="hljs-keyword">while</span> (Children.IsValidIndex(ChildIdx) &amp;&amp; !SearchData.bPostponeSearch)</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="hljs-keyword">if</span> (DoDecoratorsAllowExecution(SearchData.OwnerComp, SearchData.OwnerComp.ActiveInstanceIdx, ChildIdx))</span><br><span class="line">    &#123;</span><br><span class="line">      OnChildActivation(SearchData, ChildIdx);</span><br><span class="line">      RetIdx = ChildIdx;</span><br><span class="line">      <span class="hljs-keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    ChildIdx = GetNextChild(SearchData, ChildIdx, LastResult);</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure> 蓝图<code>UBTDecorator_BlueprintBase</code>对其进行了重写并调用了事件<code>PerformConditionCheckAI</code>和<code>PerformConditionCheck</code>。带AI后缀的是当Controller是一个AIController时执行的。</p>
+<p>检查成功后会调用<code>OnChildActivation</code>，它会调用子节点的所有装饰器的<code>OnNodeActivation</code>。如果本身是组合节点(Composite)，还会调其 <code>OnNodeActivation</code>。</p>
+<p>组合节点的<code>OnNodeActivation</code>内部会调用所有Service的<code>NotifyParentActivation</code>，然后其内部又会产生调用<code>UBTService::OnSearchStart</code>。说明它是是一个搜索过程中触发的回调，蓝图类会进一步调用事件<code>ReceiveSearchStart</code>。</p>
+<h2 id="校验nexttask">校验NextTask</h2>
+<p>主要有两个校验：</p>
+<ol type="1">
+<li>检查NextTask的优先级是否大于<code>SearchEnd</code>，否则就不能继续执行。<code>SearchEnd</code>无限制时它是一个超大值，任何节点的优先级都大于它。</li>
+<li>检查NextTask是否开启了<code>IgnoreRestartSelf</code>，这个配置在蓝图里面就能找到，表示如果当前节点是正在激活的，就不再执行。</li>
+</ol>
+<p><figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">if</span> (NextTask)</span><br><span class="line">&#123;</span><br><span class="line">  <span class="hljs-function"><span class="hljs-keyword">const</span> FBTNodeIndex <span class="hljs-title">NextTaskIdx</span><span class="hljs-params">(ActiveInstanceIdx, NextTask-&gt;GetExecutionIndex())</span></span>;</span><br><span class="line">  bIsSearchValid = NextTaskIdx.TakesPriorityOver(ExecutionRequest.SearchEnd);</span><br><span class="line">  </span><br><span class="line">  <span class="hljs-keyword">if</span> (bIsSearchValid &amp;&amp; NextTask-&gt;ShouldIgnoreRestartSelf())</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="hljs-keyword">const</span> <span class="hljs-keyword">bool</span> bIsTaskRunning = InstanceStack[ActiveInstanceIdx].HasActiveNode(NextTaskIdx.ExecutionIndex);</span><br><span class="line">    <span class="hljs-keyword">if</span> (bIsTaskRunning)</span><br><span class="line">    &#123;</span><br><span class="line">      bIsSearchValid = <span class="hljs-literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h2 id="处理搜索结果">处理搜索结果</h2>
+<p>失败时，会调用<code>RollbackSearchChanges</code>回滚SearchData的相关修改。 成功时，会终止当前活跃Task，然后把数据存到<code>PendingExecution</code>，然后调用<code>ProcessPendingExecution</code>对其进行处理。 <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">if</span> (!bIsSearchValid || SearchData.bPostponeSearch)</span><br><span class="line">&#123;</span><br><span class="line">  RollbackSearchChanges();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="hljs-keyword">if</span> (bIsSearchValid)</span><br><span class="line">&#123;</span><br><span class="line">  <span class="hljs-keyword">if</span> (InstanceStack.Last().ActiveNodeType == EBTActiveNode::ActiveTask)</span><br><span class="line">  &#123;</span><br><span class="line">    AbortCurrentTask();</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="hljs-keyword">if</span> (!PendingExecution.IsLocked())</span><br><span class="line">  &#123;</span><br><span class="line">    PendingExecution.NextTask = NextTask;</span><br><span class="line">    PendingExecution.bOutOfNodes = (NextTask == <span class="hljs-literal">NULL</span>);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line">ProcessPendingExecution();</span><br></pre></td></tr></table></figure></p>
+<h2 id="调用缓存的回调">调用缓存的回调</h2>
+<p>但一个新任务节点被激活，自然旧任务节点应该反激活，前面提到，很多反激活函数其实都存到这个阶段去调用了。 <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">void</span> UBehaviorTreeComponent::ProcessPendingExecution()</span><br><span class="line">&#123;</span><br><span class="line">  ApplySearchData(SavedInfo.NextTask);</span><br></pre></td></tr></table></figure> 首先是如果新任务节点离开了旧任务节点所在的树，就要触发树的对应代理， <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">void</span> UBehaviorTreeComponent::ApplySearchData(UBTNode* NewActiveNode)</span><br><span class="line">&#123;</span><br><span class="line">  <span class="hljs-keyword">for</span> (int32 Idx = <span class="hljs-number">0</span>; Idx &lt; SearchData.PendingNotifies.Num(); Idx++)</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="hljs-keyword">const</span> FBehaviorTreeSearchUpdateNotify&amp; NotifyInfo = SearchData.PendingNotifies[Idx];</span><br><span class="line">    <span class="hljs-keyword">if</span> (InstanceStack.IsValidIndex(NotifyInfo.InstanceIndex))</span><br><span class="line">    &#123;</span><br><span class="line">      InstanceStack[NotifyInfo.InstanceIndex].DeactivationNotify.ExecuteIfBound(*<span class="hljs-keyword">this</span>, NotifyInfo.NodeResult);</span><br><span class="line">    &#125;	</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure> 然后就是执行<code>PendingUpdates</code>里面存下来的回调。第三个参数为<code>bPostUpdate</code>，表明这种回调还分了次序，哪些先调用，哪些后调用。可能给是后调用的会依赖先调用的计算结果。 <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">void</span> UBehaviorTreeComponent::ApplySearchData(UBTNode* NewActiveNode)</span><br><span class="line">&#123;</span><br><span class="line">  ApplySearchUpdates(SearchData.PendingUpdates, NewNodeExecutionIndex);</span><br><span class="line">  ApplySearchUpdates(SearchData.PendingUpdates, NewNodeExecutionIndex, <span class="hljs-literal">true</span>);</span><br></pre></td></tr></table></figure> 每个Update还分了<code>Remove</code>和<code>Add</code>两种情况。标记为<code>Remove</code>的时候会调用其辅助节点的<code>WrappedOnCeaseRelevant</code>，<code>Add</code>的时候会调用<code>WrappedOnBecomeRelevant</code>。 <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">void</span> UBehaviorTreeComponent::ApplySearchUpdates(<span class="hljs-keyword">const</span> TArray&lt;FBehaviorTreeSearchUpdate&gt;&amp; UpdateList, int32 NewNodeExecutionIndex, <span class="hljs-keyword">bool</span> bPostUpdate)</span><br><span class="line">&#123;</span><br><span class="line">  uint8* NodeMemory = (uint8*)UpdateNode-&gt;GetNodeMemory&lt;uint8&gt;(UpdateInstance);</span><br><span class="line">  <span class="hljs-keyword">if</span> (UpdateInfo.Mode == EBTNodeUpdateMode::Remove)</span><br><span class="line">  &#123;</span><br><span class="line">    UpdateInstance.RemoveFromActiveAuxNodes(UpdateInfo.AuxNode);</span><br><span class="line">    UpdateInfo.AuxNode-&gt;WrappedOnCeaseRelevant(*<span class="hljs-keyword">this</span>, NodeMemory);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="hljs-keyword">else</span></span><br><span class="line">  &#123;</span><br><span class="line">    UpdateInstance.AddToActiveAuxNodes(UpdateInfo.AuxNode);</span><br><span class="line">    UpdateInfo.AuxNode-&gt;WrappedOnBecomeRelevant(*<span class="hljs-keyword">this</span>, NodeMemory);</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure> 这个两个词看起来很高大上，其实就是停止关联和开始关联的意思，是Unreal提供的两个生命期钩子，怎么使用取决于你的需求。比如对于监听BlackBoard的装饰器，开始关联的时候，我可以注册对BlackBoard的监听回调；而停止关联的时候就取消注册。</p>
+<h2 id="执行任务">执行任务</h2>
+<p><figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">void</span> UBehaviorTreeComponent::ProcessPendingExecution()</span><br><span class="line">&#123;</span><br><span class="line">  ExecuteTask(SavedInfo.NextTask);</span><br></pre></td></tr></table></figure> 执行任务前，会执行该节点上所有Service的<code>WrappedOnBecomeRelevant</code>和<code>WrappedTickNode</code>。</p>
+<p>然后真正执行任务的地方是下面这里， <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">void</span> UBehaviorTreeComponent::ExecuteTask(UBTTaskNode* TaskNode)</span><br><span class="line">&#123;</span><br><span class="line">  TaskResult = TaskNode-&gt;WrappedExecuteTask(*<span class="hljs-keyword">this</span>, NodeMemory);</span><br><span class="line">  OnTaskFinished(TaskNode, TaskResult);</span><br></pre></td></tr></table></figure> 会调用虚函数， <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">EBTNodeResult::Type UBTTaskNode::ExecuteTask(UBehaviorTreeComponent&amp; OwnerComp, uint8* NodeMemory)</span><br></pre></td></tr></table></figure> 派生类自行实现，自然会调到蓝图类里的<code>UBTTask_BlueprintBase::ReceiveExecute</code>。</p>
+<p>函数需要返回一个结果。不管什么结果都会调用<code>OnTaskFinished</code>，当结果为InProgress的时候就不会做什么事情。当有了非InProgress的结果之后再用新结果去调用即可。可参考蓝图类的写法<code>UBTTask_BlueprintBase::FinishExecute</code>。</p>
+<h2 id="流程总结">流程总结</h2>
+<p>Unreal的行为树，从它的Tick可知，它的主流程就是，要么就是在请求执行下一个任务节点，要么就是在等待请求。</p>
+<p>所谓的请求执行下一个任务节点，就是从一个任务节点行走至另一个任务节点。行走过程中，就会调用适时调用节点的生命周期函数。</p>
+<h2 id="激活与反激活">激活与反激活</h2>
+<p>知道整个流程后，我们再来整理一下激活的逻辑。激活与反激活是一个重要概念，它发生在组合节点、Service和Decorator身上。</p>
+<p>假设当前搜索到一个组合节点上时，搜索指针会逐个子节点尝试，当一个子节点的装饰器检查通过后，说明我们应该移动到该子节点上，就会调用组合节点的<code>OnChildActivation</code>并传入目标子节点，不管该子节点是什么类型，都会先激活其装饰器<code>NotifyDecoratorsOnActivation</code>，会调用装饰器的<code>WrappedOnNodeActivation</code>，同时也会缓存住装饰器；如果该子节点是一个组合节点，还会调用其<code>OnNodeActivation</code>，该函数会缓存其身上所有Service，注意是先缓存住，调用的地方就是<a href="#调用缓存的回调">调用缓存的回调</a>章节里的阶段。</p>
+<p>对于反激活，有两个执行的地方。</p>
+<p>一个是搜索之前，反激活掉当前任务节点，具体见<a href="#反激活">反激活</a>章节。</p>
+<p>另一个就是在搜索过程中，当决定要从该节点返回其父节点时，就会调用该节点的反激活逻辑。同理，通过组合节点的<code>OnChildDeactivation</code>来反激活目标子节点。之所以从组合节点这层调用是因为要读取组合节点本身的配置。反激活时，如果该节点是任务节点，首先缓存该节点的素有Service；其次如果该节点是组合节点，会调用其<code>OnNodeDeactivation</code>，也是先缓存住所有Service；然后不管是什么类型，再调用该子节点的所有装饰器的反激活函数，同时缓存住。</p>
+<p>Service和Decorator的调用的先后顺序和激活刚好是反过来的。Decorator的反激活既有马上执行的部分，也有缓存的部分。而Service则是先缓存住。</p>
+<p>在执行任务节点前，会把缓存的都拿出来执行，激活对应的函数是<code>OnBecomeRelevant</code>，反激活对应的函数是<code>OnCeaseRelevant</code>。</p>
+<h2 id="service的回调总结">Service的回调总结</h2>
+<p><code>ReceiveActivation</code>和<code>ReceiveDeactivation</code>分别对应激活和反激活。</p>
+<p><code>ReceiveSearch</code>在搜索时调用。<a href="#搜索过程中的装饰器检查和回调触发">搜索过程中的装饰器检查和回调触发</a>章节中提到过。</p>
+<p>而<code>ReceiveTick</code>则是在<code>WrappedTickNode</code>函数中被调用，不只是在Tick的时候调用，还会在部分时机手动调用，具体全局搜索该函数即可。</p>
+<h2 id="decorator的回调总结">Decorator的回调总结</h2>
+<p><code>PerformConditionCheck</code>是在搜索过程中经过组合节点时被调用的。<a href="#搜索过程中的装饰器检查和回调触发">搜索过程中的装饰器检查和回调触发</a>章节中提到过。</p>
+<p><code>ReceiveExecutionStart</code>和<code>ReceiveExecutionFinish</code>分别在对应激活和反激活，搜索过程中马上执行时调用。</p>
+<p><code>ReceiveObserverActivated</code>和<code>ReceiveObserverDeactivated</code>分别在对应激活和反激活，执行缓存时调用。</p>
+<p><code>ReceiveTick</code>则也可搜索<code>WrappedTickNode</code>查找调用的地方。</p>
+
+    
+    </div>
+    
+    <div class="columns is-variable is-1 is-multiline is-mobile">
+    
+        <span class="column is-narrow"><a class="tag is-light article-tag" href="/tags/%E6%B8%B8%E6%88%8F%E5%BC%80%E5%8F%91/">#游戏开发</a></span>
+    
+        <span class="column is-narrow"><a class="tag is-light article-tag" href="/tags/Unreal/">#Unreal</a></span>
+    
+    </div>
+    
+    <!-- 
+    <span id="post/btree/" class="leancloud_visitors" data-flag-title="Unreal BehaviorTree 源码分析">
+        <em class="post-meta-item-text">阅读量 </em>
+        <i class="leancloud-visitors-count">1000000</i>
+    </span>
+     -->
+    
+    <div class="go-next columns is-mobile is-multiline article-nav">
+        <span class="column is-12-mobile is-half-desktop is-hidden-mobile article-nav-prev">
+            
+        </span>
+        <span class="column is-12-mobile is-half-desktop  article-nav-next">
+            
+            <a href="/post/GAS-GE/">Unreal GameplayEffect 源码分析</a>
+            
+        </span>
+    </div>
+    
+</article>
+
+
+
+<div class="comments">
+    <h3 class="title is-4">Comments</h3>
+    
+<div id="valine-thread"></div>
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+<script>
+    new Valine({
+        el: '#valine-thread',
+        appId: 'DEXiOMuMN86LKmdUtJYX4FRL-MdYXbMMI',
+        appKey: 'tPt6E0GhkwXKEBUacbugDcWb',
+        notify: true,
+        verify: false,
+        avatar: '',
+        placeholder: 'Say something...',
+        meta: ['nick', 'mail'],
+        visitor: true,
+        lang: ''
+    })
+</script>
+
+
+</div>
+
+    </div>
+</section>
+    <footer class="footer">
+    <div class="container">
+        <div class="columns content">
+            <div class="column is-narrow has-text-centered">
+                &copy; 2024 Black Redscarf&nbsp;
+                Powered by <a href="http://hexo.io/" target="_blank">Hexo</a> & <a
+                        href="http://github.com/ppoffice/hexo-theme-minos">Minos</a>
+            </div>
+            <div class="column is-hidden-mobile"></div>
+
+            
+            <div class="column is-narrow">
+                <div class="columns is-mobile is-multiline is-centered">
+                
+                    
+                <a class="column is-narrow has-text-black" title="GitHub" href="https://github.com/blackredscarf" target="_blank" rel="noopener">
+                    
+                    GitHub
+                    
+                </a>
+                
+                </div>
+            </div>
+            
+            
+        </div>
+    </div>
+</footer>
+    <script src="https://lf6-cdn-tos.bytecdntp.com/cdn/expire-1-M/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/moment.js/2.22.2/moment-with-locales.min.js"></script>
+
+<!-- test if the browser is outdated -->
+<div id="outdated">
+    <h6>Your browser is out-of-date!</h6>
+    <p>Update your browser to view this website correctly. <a id="btnUpdateBrowser" href="http://outdatedbrowser.com/" target="_blank" rel="noopener">Update my browser now </a></p>
+    <p class="last"><a href="#" id="btnCloseUpdateBrowser" title="Close">&times;</a></p>
+</div>
+<script src="https://lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/outdated-browser/1.1.5/outdatedbrowser.min.css"></script>
+<script>
+    $(document).ready(function () {
+        // plugin function, place inside DOM ready function
+        outdatedBrowser({
+            bgColor: '#f25648',
+            color: '#ffffff',
+            lowerThan: 'flex'
+        })
+    });
+</script>
+
+<script>
+    window.FontAwesomeConfig = {
+        searchPseudoElements: true
+    }
+    moment.locale("en-AU");
+</script>
+
+
+    
+    
+<script src="https://lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/mathjax/2.7.4/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+<script>
+    MathJax.Hub.Config({
+        "HTML-CSS": {
+            matchFontHeight: false
+        },
+        SVG: {
+            matchFontHeight: false
+        },
+        CommonHTML: {
+            matchFontHeight: false
+        },
+        tex2jax: {
+            inlineMath: [ ['$','$'],['\\(','\\)'] ],
+            displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+            processEscapes: false
+        }
+    });
+</script>
+
+    
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/katex.min.css" integrity="sha384-9eLZqc9ds8eNjO3TmqPeYcDj8n+Qfa4nuSiGYa6DjLNcv9BtN69ZIulL9+8CqC9Y" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/katex.min.js" integrity="sha384-K3vbOmF2BtaVai+Qk37uypf7VrgBubhQreNQe9aGsz9lB63dIFiQVlJbr92dw2Lx" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/contrib/auto-render.min.js" integrity="sha384-kmZOZB5ObwgQnS/DuDg6TScgOiWWBiVt0plIRkZCmE6rDZGrEOQeHM5PcHi+nyqe" crossorigin="anonymous"
+        onload="renderMathInElement(document.body);"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    renderMathInElement(document.body, {
+        // ...options...
+    });
+});
+</script>
+
+    
+    
+<script src="https://lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/lightgallery/1.6.8/js/lightgallery-all.min.js"></script>
+<script src="https://lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/justifiedGallery/3.8.1/jsjustifiedGallery.min.js/jquery."></script>
+<script>
+    (function ($) {
+        $(document).ready(function () {
+            if (typeof($.fn.lightGallery) === 'function') {
+                $('.article.gallery').lightGallery({ selector: '.gallery-item' });
+            }
+            if (typeof($.fn.justifiedGallery) === 'function') {
+                $('.justified-gallery').justifiedGallery();
+            }
+        });
+    })(jQuery);
+</script>
+
+    
+    
+    <script src="https://lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/clipboard.js/2.0.0/clipboard.min.js"></script>
+    <style>
+        .hljs {
+            position: relative;
+        }
+
+        .hljs .clipboard-btn {
+            float: right;
+            color: #9a9a9a;
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+
+        .hljs .clipboard-btn:hover {
+          color: #8a8a8a;
+        }
+
+        .hljs > .clipboard-btn {
+            display: none;
+            position: absolute;
+            right: 4px;
+            top: 4px;
+        }
+
+        .hljs:hover > .clipboard-btn {
+            display: inline;
+        }
+
+        .hljs > figcaption > .clipboard-btn {
+            margin-right: 4px;
+        }
+    </style>
+    <script>
+      $(document).ready(function () {
+        $('figure.hljs').each(function(i, figure) {
+          var codeId = 'code-' + i;
+          var code = figure.querySelector('.code');
+          var copyButton = $('<button>Copy <i class="far fa-clipboard"></i></button>');
+          code.id = codeId;
+          copyButton.addClass('clipboard-btn');
+          copyButton.attr('data-clipboard-target-id', codeId);
+
+          var figcaption = figure.querySelector('figcaption');
+
+          if (figcaption) {
+            figcaption.append(copyButton[0]);
+          } else {
+            figure.prepend(copyButton[0]);
+          }
+        })
+
+        var clipboard = new ClipboardJS('.clipboard-btn', {
+          target: function(trigger) {
+            return document.getElementById(trigger.getAttribute('data-clipboard-target-id'));
+          }
+        });
+        clipboard.on('success', function(e) {
+          e.clearSelection();
+        })
+      })
+    </script>
+
+    
+    
+
+    
+
+
+<script src="/js/script.js"></script>
+
+    
+    <div class="searchbox ins-search">
+    <div class="searchbox-mask"></div>
+    <div class="searchbox-container ins-search-container">
+        <div class="searchbox-input-wrapper">
+            <input type="text" class="searchbox-input ins-search-input" placeholder="Type something..." />
+            <span class="searchbox-close ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="searchbox-result-wrapper ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+    (function (window) {
+        var INSIGHT_CONFIG = {
+            TRANSLATION: {
+                POSTS: 'Posts',
+                PAGES: 'Pages',
+                CATEGORIES: 'Categories',
+                TAGS: 'Tags',
+                UNTITLED: '(Untitled)',
+            },
+            CONTENT_URL: '/content.json',
+        };
+        window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+    })(window);
+</script>
+<script src="/js/insight.js"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    
+</body>
+</html>
