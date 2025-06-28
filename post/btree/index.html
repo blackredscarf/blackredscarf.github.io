@@ -24,7 +24,7 @@
 <meta property="og:site_name" content="绯色的魔法世界">
 <meta property="og:description" content="虚幻引擎的行为树不同于传统行为树，它新增了Decorator和Service两个功能组件，而且不再是每次都从根节点开始Tick。要搞懂它们内在执行逻辑需要从源码入手，从开始执行到搜索节点，再到各种节点的声明周期回调。">
 <meta property="og:locale" content="en">
-<meta property="og:updated_time" content="2024-08-23T10:01:25.627Z">
+<meta property="og:updated_time" content="2025-06-28T12:56:19.507Z">
 <meta name="twitter:card" content="summary">
 
 
@@ -275,25 +275,31 @@
                     <hr class="navbar-divider">
                     
                     
-                    <a class="navbar-item" href="#流程总结">22&nbsp;&nbsp;<b>流程总结</b></a>
+                    <a class="navbar-item" href="#副流程装饰器变更">22&nbsp;&nbsp;<b>副流程：装饰器变更</b></a>
                     
                     
                     <hr class="navbar-divider">
                     
                     
-                    <a class="navbar-item" href="#激活与反激活">23&nbsp;&nbsp;<b>激活与反激活</b></a>
+                    <a class="navbar-item" href="#流程总结">23&nbsp;&nbsp;<b>流程总结</b></a>
                     
                     
                     <hr class="navbar-divider">
                     
                     
-                    <a class="navbar-item" href="#service的回调总结">24&nbsp;&nbsp;<b>Service的回调总结</b></a>
+                    <a class="navbar-item" href="#激活与反激活">24&nbsp;&nbsp;<b>激活与反激活</b></a>
                     
                     
                     <hr class="navbar-divider">
                     
                     
-                    <a class="navbar-item" href="#decorator的回调总结">25&nbsp;&nbsp;<b>Decorator的回调总结</b></a>
+                    <a class="navbar-item" href="#service的回调总结">25&nbsp;&nbsp;<b>Service的回调总结</b></a>
+                    
+                    
+                    <hr class="navbar-divider">
+                    
+                    
+                    <a class="navbar-item" href="#decorator的回调总结">26&nbsp;&nbsp;<b>Decorator的回调总结</b></a>
                     
                 </div>
             </div>
@@ -342,7 +348,6 @@
         <p>虚幻引擎的行为树不同于传统行为树，它新增了Decorator和Service两个功能组件，而且不再是每次都从根节点开始Tick。要搞懂它们内在执行逻辑需要从源码入手，从开始执行到搜索节点，再到各种节点的声明周期回调。</p>
 <a id="more"></a>
 <h2 id="开始行为树">开始行为树</h2>
-<p>开始时主要做两件事情：</p>
 <ul>
 <li>构建Blackboard组件</li>
 <li>构建BehaviorTree组件</li>
@@ -421,22 +426,36 @@
 </ol>
 <p><figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">if</span> (NextTask)</span><br><span class="line">&#123;</span><br><span class="line">  <span class="hljs-function"><span class="hljs-keyword">const</span> FBTNodeIndex <span class="hljs-title">NextTaskIdx</span><span class="hljs-params">(ActiveInstanceIdx, NextTask-&gt;GetExecutionIndex())</span></span>;</span><br><span class="line">  bIsSearchValid = NextTaskIdx.TakesPriorityOver(ExecutionRequest.SearchEnd);</span><br><span class="line">  </span><br><span class="line">  <span class="hljs-keyword">if</span> (bIsSearchValid &amp;&amp; NextTask-&gt;ShouldIgnoreRestartSelf())</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="hljs-keyword">const</span> <span class="hljs-keyword">bool</span> bIsTaskRunning = InstanceStack[ActiveInstanceIdx].HasActiveNode(NextTaskIdx.ExecutionIndex);</span><br><span class="line">    <span class="hljs-keyword">if</span> (bIsTaskRunning)</span><br><span class="line">    &#123;</span><br><span class="line">      bIsSearchValid = <span class="hljs-literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
 <h2 id="处理搜索结果">处理搜索结果</h2>
-<p>失败时，会调用<code>RollbackSearchChanges</code>回滚SearchData的相关修改。 成功时，会终止当前活跃Task，然后把数据存到<code>PendingExecution</code>，然后调用<code>ProcessPendingExecution</code>对其进行处理。 <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">if</span> (!bIsSearchValid || SearchData.bPostponeSearch)</span><br><span class="line">&#123;</span><br><span class="line">  RollbackSearchChanges();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="hljs-keyword">if</span> (bIsSearchValid)</span><br><span class="line">&#123;</span><br><span class="line">  <span class="hljs-keyword">if</span> (InstanceStack.Last().ActiveNodeType == EBTActiveNode::ActiveTask)</span><br><span class="line">  &#123;</span><br><span class="line">    AbortCurrentTask();</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="hljs-keyword">if</span> (!PendingExecution.IsLocked())</span><br><span class="line">  &#123;</span><br><span class="line">    PendingExecution.NextTask = NextTask;</span><br><span class="line">    PendingExecution.bOutOfNodes = (NextTask == <span class="hljs-literal">NULL</span>);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line">ProcessPendingExecution();</span><br></pre></td></tr></table></figure></p>
+<p>搜索失败时，即没有找到合法的任务节点，会调用<code>RollbackSearchChanges</code>回滚SearchData的相关修改。 搜索成功时，会终止当前活跃Task，然后把数据存到<code>PendingExecution</code>，然后调用<code>ProcessPendingExecution</code>对其进行处理。 <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">if</span> (!bIsSearchValid || SearchData.bPostponeSearch)</span><br><span class="line">&#123;</span><br><span class="line">  RollbackSearchChanges();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="hljs-keyword">if</span> (bIsSearchValid)</span><br><span class="line">&#123;</span><br><span class="line">  <span class="hljs-keyword">if</span> (InstanceStack.Last().ActiveNodeType == EBTActiveNode::ActiveTask)</span><br><span class="line">  &#123;</span><br><span class="line">    AbortCurrentTask();</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="hljs-keyword">if</span> (!PendingExecution.IsLocked())</span><br><span class="line">  &#123;</span><br><span class="line">    PendingExecution.NextTask = NextTask;</span><br><span class="line">    PendingExecution.bOutOfNodes = (NextTask == <span class="hljs-literal">NULL</span>);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line">ProcessPendingExecution();</span><br></pre></td></tr></table></figure></p>
 <h2 id="调用缓存的回调">调用缓存的回调</h2>
 <p>但一个新任务节点被激活，自然旧任务节点应该反激活，前面提到，很多反激活函数其实都存到这个阶段去调用了。 <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">void</span> UBehaviorTreeComponent::ProcessPendingExecution()</span><br><span class="line">&#123;</span><br><span class="line">  ApplySearchData(SavedInfo.NextTask);</span><br></pre></td></tr></table></figure> 首先是如果新任务节点离开了旧任务节点所在的树，就要触发树的对应代理， <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">void</span> UBehaviorTreeComponent::ApplySearchData(UBTNode* NewActiveNode)</span><br><span class="line">&#123;</span><br><span class="line">  <span class="hljs-keyword">for</span> (int32 Idx = <span class="hljs-number">0</span>; Idx &lt; SearchData.PendingNotifies.Num(); Idx++)</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="hljs-keyword">const</span> FBehaviorTreeSearchUpdateNotify&amp; NotifyInfo = SearchData.PendingNotifies[Idx];</span><br><span class="line">    <span class="hljs-keyword">if</span> (InstanceStack.IsValidIndex(NotifyInfo.InstanceIndex))</span><br><span class="line">    &#123;</span><br><span class="line">      InstanceStack[NotifyInfo.InstanceIndex].DeactivationNotify.ExecuteIfBound(*<span class="hljs-keyword">this</span>, NotifyInfo.NodeResult);</span><br><span class="line">    &#125;	</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure> 然后就是执行<code>PendingUpdates</code>里面存下来的回调。第三个参数为<code>bPostUpdate</code>，表明这种回调还分了次序，哪些先调用，哪些后调用。可能给是后调用的会依赖先调用的计算结果。 <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">void</span> UBehaviorTreeComponent::ApplySearchData(UBTNode* NewActiveNode)</span><br><span class="line">&#123;</span><br><span class="line">  ApplySearchUpdates(SearchData.PendingUpdates, NewNodeExecutionIndex);</span><br><span class="line">  ApplySearchUpdates(SearchData.PendingUpdates, NewNodeExecutionIndex, <span class="hljs-literal">true</span>);</span><br></pre></td></tr></table></figure> 每个Update还分了<code>Remove</code>和<code>Add</code>两种情况。标记为<code>Remove</code>的时候会调用其辅助节点的<code>WrappedOnCeaseRelevant</code>，<code>Add</code>的时候会调用<code>WrappedOnBecomeRelevant</code>。 <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">void</span> UBehaviorTreeComponent::ApplySearchUpdates(<span class="hljs-keyword">const</span> TArray&lt;FBehaviorTreeSearchUpdate&gt;&amp; UpdateList, int32 NewNodeExecutionIndex, <span class="hljs-keyword">bool</span> bPostUpdate)</span><br><span class="line">&#123;</span><br><span class="line">  uint8* NodeMemory = (uint8*)UpdateNode-&gt;GetNodeMemory&lt;uint8&gt;(UpdateInstance);</span><br><span class="line">  <span class="hljs-keyword">if</span> (UpdateInfo.Mode == EBTNodeUpdateMode::Remove)</span><br><span class="line">  &#123;</span><br><span class="line">    UpdateInstance.RemoveFromActiveAuxNodes(UpdateInfo.AuxNode);</span><br><span class="line">    UpdateInfo.AuxNode-&gt;WrappedOnCeaseRelevant(*<span class="hljs-keyword">this</span>, NodeMemory);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="hljs-keyword">else</span></span><br><span class="line">  &#123;</span><br><span class="line">    UpdateInstance.AddToActiveAuxNodes(UpdateInfo.AuxNode);</span><br><span class="line">    UpdateInfo.AuxNode-&gt;WrappedOnBecomeRelevant(*<span class="hljs-keyword">this</span>, NodeMemory);</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure> 这个两个词看起来很高大上，其实就是停止关联和开始关联的意思，是Unreal提供的两个生命期钩子，怎么使用取决于你的需求。比如对于监听BlackBoard的装饰器，开始关联的时候，我可以注册对BlackBoard的监听回调；而停止关联的时候就取消注册。</p>
 <h2 id="执行任务">执行任务</h2>
 <p><figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">void</span> UBehaviorTreeComponent::ProcessPendingExecution()</span><br><span class="line">&#123;</span><br><span class="line">  ExecuteTask(SavedInfo.NextTask);</span><br></pre></td></tr></table></figure> 执行任务前，会执行该节点上所有Service的<code>WrappedOnBecomeRelevant</code>和<code>WrappedTickNode</code>。</p>
 <p>然后真正执行任务的地方是下面这里， <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">void</span> UBehaviorTreeComponent::ExecuteTask(UBTTaskNode* TaskNode)</span><br><span class="line">&#123;</span><br><span class="line">  TaskResult = TaskNode-&gt;WrappedExecuteTask(*<span class="hljs-keyword">this</span>, NodeMemory);</span><br><span class="line">  OnTaskFinished(TaskNode, TaskResult);</span><br></pre></td></tr></table></figure> 会调用虚函数， <figure class="highlight cpp hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">EBTNodeResult::Type UBTTaskNode::ExecuteTask(UBehaviorTreeComponent&amp; OwnerComp, uint8* NodeMemory)</span><br></pre></td></tr></table></figure> 派生类自行实现，自然会调到蓝图类里的<code>UBTTask_BlueprintBase::ReceiveExecute</code>。</p>
 <p>函数需要返回一个结果。不管什么结果都会调用<code>OnTaskFinished</code>，当结果为InProgress的时候就不会做什么事情。当有了非InProgress的结果之后再用新结果去调用即可。可参考蓝图类的写法<code>UBTTask_BlueprintBase::FinishExecute</code>。</p>
+<h2 id="副流程装饰器变更">副流程：装饰器变更</h2>
+<p>这里以黑板装饰器为例，检查某一个属性发生变更发现不符合条件或符合条件时会触发请求执行。执行路径如下，</p>
+<ul>
+<li>UBTDecorator_BlackboardBase::OnBecomeRelevant 监听黑板属性Key</li>
+<li>UBTDecorator_Blackboard::OnBlackboardKeyValueChange 发生改变时</li>
+<li>UBTDecorator::ConditionalFlowAbort</li>
+<li>UBehaviorTreeComponent::RequestBranchActivation 条件不通过则调用 RequestBranchDeactivation</li>
+<li>UBehaviorTreeComponent::ActivateBranch</li>
+<li>UBehaviorTreeComponent::RequestExecution</li>
+</ul>
+<p>黑板装饰器里面有一个NotifyObserver，当它为ValueChange时，最终传入了ActivateBranch的bRequestEvenIfNotExecuting=true，即当发现当前正在执行当前子树，就打断当前子树，重新请求执行。（看代码才看明白是这样的，官方定义的名字很抽象）</p>
 <h2 id="流程总结">流程总结</h2>
-<p>Unreal的行为树，从它的Tick可知，它的主流程就是，要么就是在请求执行下一个任务节点，要么就是在等待请求。</p>
-<p>所谓的请求执行下一个任务节点，就是从一个任务节点行走至另一个任务节点。行走过程中，就会调用适时调用节点的生命周期函数。</p>
+<p>Unreal的行为树，从它的Tick可知，它的主流程就是，要么就是在处理请求，要么就是当前没有请求则等待下一次Tick再看看有没有请求可以处理。</p>
+<p>详细的说就是，加载完行为树后，会主动从根节点请求一次<code>RequestExecution</code>，拉开行为树执行的序幕，查找一个任务节点去执行。当执行完一个任务节点后，需要用户端主动调用<code>FinishExecute</code>，里面再次调用<code>RequestExecution</code>，让它继续搜索下一个节点去执行。</p>
+<p>或者装饰节点监听属性变更。高优先级装饰器条件通过，请求到高优先级Task进而打断当前Task，或者当前装饰器条件不通过，重新请求到了一个新的Task，进而打断当前Task。</p>
+<p>所谓的请求执行下一个任务节点，就是从一个任务节点或根节点行走至另一个任务节点。行走过程中，就会调用适时调用节点的生命周期函数以及辅助节点逻辑。</p>
+<p>Tick并不是每帧执行，而是做了间隔时间执行，注意每次Tick都会执行所有辅助节点的Tick函数，所以辅助节点越少越好。</p>
 <h2 id="激活与反激活">激活与反激活</h2>
 <p>知道整个流程后，我们再来整理一下激活的逻辑。激活与反激活是一个重要概念，它发生在组合节点、Service和Decorator身上。</p>
 <p>假设当前搜索到一个组合节点上时，搜索指针会逐个子节点尝试，当一个子节点的装饰器检查通过后，说明我们应该移动到该子节点上，就会调用组合节点的<code>OnChildActivation</code>并传入目标子节点，不管该子节点是什么类型，都会先激活其装饰器<code>NotifyDecoratorsOnActivation</code>，会调用装饰器的<code>WrappedOnNodeActivation</code>，同时也会缓存住装饰器；如果该子节点是一个组合节点，还会调用其<code>OnNodeActivation</code>，该函数会缓存其身上所有Service，注意是先缓存住，调用的地方就是<a href="#调用缓存的回调">调用缓存的回调</a>章节里的阶段。</p>
 <p>对于反激活，有两个执行的地方。</p>
 <p>一个是搜索之前，反激活掉当前任务节点，具体见<a href="#反激活">反激活</a>章节。</p>
-<p>另一个就是在搜索过程中，当决定要从该节点返回其父节点时，就会调用该节点的反激活逻辑。同理，通过组合节点的<code>OnChildDeactivation</code>来反激活目标子节点。之所以从组合节点这层调用是因为要读取组合节点本身的配置。反激活时，如果该节点是任务节点，首先缓存该节点的素有Service；其次如果该节点是组合节点，会调用其<code>OnNodeDeactivation</code>，也是先缓存住所有Service；然后不管是什么类型，再调用该子节点的所有装饰器的反激活函数，同时缓存住。</p>
+<p>另一个就是在搜索过程中，当决定要从该节点返回其父节点时，就会调用该节点的反激活逻辑。同理，通过组合节点的<code>OnChildDeactivation</code>来反激活目标子节点。之所以从组合节点这层调用是因为要读取组合节点本身的配置。反激活时，如果该节点是任务节点，首先缓存该节点的持有Service；其次如果该节点是组合节点，会调用其<code>OnNodeDeactivation</code>，也是先缓存住所有Service；然后不管是什么类型，再调用该子节点的所有装饰器的反激活函数，同时缓存住。</p>
 <p>Service和Decorator的调用的先后顺序和激活刚好是反过来的。Decorator的反激活既有马上执行的部分，也有缓存的部分。而Service则是先缓存住。</p>
 <p>在执行任务节点前，会把缓存的都拿出来执行，激活对应的函数是<code>OnBecomeRelevant</code>，反激活对应的函数是<code>OnCeaseRelevant</code>。</p>
 <h2 id="service的回调总结">Service的回调总结</h2>
@@ -512,7 +531,7 @@
     <div class="container">
         <div class="columns content">
             <div class="column is-narrow has-text-centered">
-                &copy; 2024 Black Redscarf&nbsp;
+                &copy; 2025 Black Redscarf&nbsp;
                 Powered by <a href="http://hexo.io/" target="_blank">Hexo</a> & <a
                         href="http://github.com/ppoffice/hexo-theme-minos">Minos</a>
             </div>
