@@ -6,8 +6,10 @@ steps:
 - name: deploy
   image: appleboy/drone-ssh:1.6
   volumes:
-  - /root/.ssh/id_rsa:/root/.ssh/id_rsa
-  - /root/.ssh/authorized_keys:/root/.ssh/authorized_keys
+  - name: ssh
+    path: /root/.ssh/id_rsa
+  - name: public
+    path: /root/.ssh/authorized_keys
   settings:
     port: 22
     host: zzjw.cc
@@ -16,3 +18,11 @@ steps:
     script:
     - chmod +x /data/myblog/deploy.sh
     - /data/myblog/deploy.sh
+
+volumes:
+- name: ssh
+  host:
+      path: /root/.ssh/id_rsa
+- name: public
+  host:
+      path: /root/.ssh/authorized_keys
